@@ -2,8 +2,8 @@ import sys
 
 import pandas as pd
 
-ENTRADA = "data-contenedor/ventas.csv"
-SALIDA = "data-contenedor/resumen_ventas.csv"
+ENTRADA = "datos/ventas.csv"
+SALIDA = "datos/resumen_ventas.csv"
 
 if __name__ == "__main__":
     print("Python", sys.version.split()[0], "| pandas", pd.__version__)
