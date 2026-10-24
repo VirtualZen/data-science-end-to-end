@@ -1,6 +1,12 @@
 services:
   base-datos:
     image: postgres:13
+    environment:
+      POSTGRES_PASSWORD: ejemplo
 
   ingesta:
     build: .
+    depends_on:
+      - base-datos
+    volumes:
+      - ./datos:/app/data-contenedor

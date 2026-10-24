@@ -1,5 +1,5 @@
-ENTRADA = "datos/clientes.csv"
-SALIDA = "datos/conteo.txt"
+ENTRADA = "data-contenedor/clientes.csv"
+SALIDA = "data-contenedor/conteo.txt"
 
 if __name__ == "__main__":
     with open(ENTRADA) as archivo:
