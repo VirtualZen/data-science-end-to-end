@@ -1,0 +1,6 @@
+services:
+  base-datos:
+    image: postgres:13
+
+  ingesta:
+    build: .
