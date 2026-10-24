@@ -1,7 +1,7 @@
 import pandas as pd
 
-ENTRADA = "data-contenedor/clientes.csv"
-SALIDA = "data-contenedor/clientes_por_ciudad.csv"
+ENTRADA = "datos/clientes.csv"
+SALIDA = "datos/clientes_por_ciudad.csv"
 
 if __name__ == "__main__":
     clientes = pd.read_csv(ENTRADA)
