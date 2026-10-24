@@ -8,11 +8,16 @@ WORKDIR /app
 # TODO 1: cambia una linea de procesar.py y vuelve a construir: pandas se
 # instala otra vez. Reordena estas lineas para que un cambio en el codigo
 # no repita la instalacion de dependencias.
-COPY requirements.txt . 
-RUN pip install -r requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # TODO 2: la imagen no dice que correr. Define el comando por defecto:
 # python procesar.py
 
 COPY . .
+
+# Carpeta de datos: se monta como volumen (datos/ local -> /app/data-contenedor).
+RUN mkdir -p /app/data-contenedor
+VOLUME /app/data-contenedor
+
 CMD ["python", "procesar.py"]
