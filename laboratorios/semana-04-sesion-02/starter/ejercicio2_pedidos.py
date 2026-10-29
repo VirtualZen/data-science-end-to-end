@@ -16,7 +16,7 @@ print(datos)
 
 print()
 print("Paso 1: duplicados")
-# TODO 1: cuenta las filas que repiten todas sus columnas y quitalas.
+# DONE 1: cuenta las filas que repiten todas sus columnas y quitalas.
 duplicados = datos.duplicated().sum()
 print(f"Filas duplicadas: {duplicados}")
 datos = datos.drop_duplicates()
@@ -25,14 +25,14 @@ print(f"Filas despues de quitarlas: {len(datos)}")
 print()
 print("Paso 2: tipos y faltantes visibles")
 print(datos.dtypes)
-# TODO 2: cuenta los valores faltantes de cada columna.
+# DONE 2: cuenta los valores faltantes de cada columna.
 faltantes = datos.isna().sum()
 print(faltantes)
 
 print()
 print("Paso 3: faltantes disfrazados de texto")
+# DONE 3: convierte monto a numero en una columna nueva, monto_num.
 print("Valores distintos de monto:", datos["monto"].unique())
-# TODO 3: convierte monto a numero en una columna nueva, monto_num.
 datos["monto_num"] = pd.to_numeric(datos["monto"], errors="coerce")
 print(f"Montos faltantes antes de convertir: {datos['monto'].isna().sum()}")
 print(f"Montos faltantes despues de convertir: {datos['monto_num'].isna().sum()}")
@@ -53,7 +53,7 @@ print(datos[["pedido_id", "fecha", "fecha_normalizada"]])
 
 print()
 print("Paso 5: lo que duplicated() no ve")
-# TODO 5: cuantos pedido_id aparecen mas de una vez despues del Paso 1.
+# DONE 5: cuantos pedido_id aparecen mas de una vez despues del Paso 1.
 # Pista: compara la cantidad de filas con la cantidad de pedido_id
 # distintos.
 pedidos_repetidos = (datos["pedido_id"].value_counts() > 1).sum()
