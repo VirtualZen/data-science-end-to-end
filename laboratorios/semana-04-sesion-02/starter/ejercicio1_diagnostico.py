@@ -42,9 +42,9 @@ print()
 print("Paso 4: fechas con dos formatos")
 
 
+# DONE 4: si valor tiene "/", viene como dia/mes/anio; si no, como
+# anio-mes-dia. Convierte cada caso con su formato explicito.
 def normalizar_fecha(valor):
-    # DONE 4: si valor tiene "/", viene como dia/mes/anio; si no, como
-    # anio-mes-dia. Convierte cada caso con su formato explicito.
     formato = "%d/%m/%Y" if "/" in valor else "%Y-%m-%d"
     return pd.to_datetime(valor, format=formato)
 
