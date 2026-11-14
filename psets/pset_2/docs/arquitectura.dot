@@ -1,0 +1,38 @@
+digraph arquitectura {
+  rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#555555"]; edge [fontname="Helvetica", fontsize=9, color="#555555"];
+  compound=true; newrank=true;
+
+  subgraph cluster_fuentes { label="Fuentes públicas"; style="rounded,dashed"; color="#999999"; fontsize=12;
+    yahoo [label="Yahoo Finance\n(yfinance)\nOHLCV diario, ^GSPC, ^NYA, ^IRX"];
+    comp  [label="GitHub hanshof/\nsp500_constituents\ncomposición histórica"];
+    nasdaq[label="Nasdaq Trader\nlistados y bolsa"];
+  }
+
+  subgraph cluster_local { label="docker-compose.yml (máquina local / USFQ)"; style="rounded"; color="#3b6ea5"; fontsize=12;
+    subgraph cluster_kestra { label="Kestra (orquestación)"; style="rounded,filled"; fillcolor="#eef3fa"; color="#3b6ea5";
+      sched [label="Trigger Schedule\nL–V 18:30 NY\nrecoverMissedSchedules"];
+      f1 [label="ingesta_diaria\n(retry exponencial x4)"];
+      f3 [label="backfill_historico\n(ForEach por año)"];
+      f2 [label="transformar\n(subflow)"];
+      pg [label="Postgres\n(estado de Kestra)", fillcolor="#f4f4f4"];
+    }
+    ing [label="contenedor pset2-ingesta\nextraer_cargar.py", fillcolor="#fff7e6"];
+    dbt [label="contenedor pset2-dbt\ndbt build (modelos + tests)", fillcolor="#fff7e6"];
+    subgraph cluster_spark { label="Spark"; style="rounded,filled"; fillcolor="#f2f8ee"; color="#4f8a3c";
+      sm [label="spark-master"]; sw [label="spark-worker"]; job [label="construir_obt.py\n(driver)"];
+    }
+  }
+
+  subgraph cluster_sf { label="Snowflake · base PORTAFOLIO"; style="rounded,filled"; fillcolor="#eaf6fb"; color="#29b5e8"; fontsize=12;
+    raw [label="RAW\nappend-only + lote"]; brz [label="BRONZE\nstaging: tipos,\ndeduplicación"]; slv [label="SILVER\nlimpieza, calendario,\nretornos, membresía"]; gold [label="GOLD\nstar schema"]; obt [label="OBT\nOBT_ACCION_MES\nVALIDACION_OBT"]; cal [label="CALIDAD\ndq_metricas"];
+    raw -> brz -> slv -> gold; slv -> cal [style=dashed]; gold -> obt [style=invis];
+  }
+
+  sched -> f1; f1 -> f2 [label="al terminar"]; f3 -> f2;
+  f1 -> ing [label="diario"]; f3 -> ing [label="histórico"];
+  yahoo -> ing; comp -> ing; nasdaq -> ing;
+  ing -> raw [label="write_pandas"];
+  f2 -> dbt; dbt -> brz [label="SQL en Snowflake", lhead=cluster_sf];
+  f2 -> job; job -> sm; sm -> sw;
+  gold -> job [label="lee Gold"]; job -> obt [label="escribe OBT"];
+}

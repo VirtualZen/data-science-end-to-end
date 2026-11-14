@@ -1,0 +1,50 @@
+version: 2
+models:
+- name: brz_precios_diarios
+  description: Precios tipados, una fila por ticker y fecha (carga mas reciente).
+  data_tests:
+  - combinacion_unica:
+      arguments:
+        columnas:
+        - ticker
+        - fecha
+  columns:
+  - name: ticker
+    data_tests:
+    - not_null
+  - name: fecha
+    data_tests:
+    - not_null
+- name: brz_composicion_sp500
+  description: Composicion del S&P 500 por foto, un ticker por fila.
+  data_tests:
+  - combinacion_unica:
+      arguments:
+        columnas:
+        - fecha_foto
+        - ticker
+  columns:
+  - name: fecha_foto
+    data_tests:
+    - not_null
+  - name: ticker
+    data_tests:
+    - not_null
+- name: brz_listados_bolsa
+  description: Simbolos listados actualmente y su bolsa.
+  columns:
+  - name: ticker
+    data_tests:
+    - not_null
+    - unique
+  - name: codigo_bolsa
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - N
+          - A
+          - P
+          - Z
+          - V
+          - Q

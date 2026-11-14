@@ -1,0 +1,114 @@
+version: 2
+models:
+- name: dim_fecha
+  description: Dias bursatiles de la NYSE con atributos de calendario, cierre de mes y conjunto.
+  columns:
+  - name: fecha_key
+    data_tests:
+    - not_null
+    - unique
+  - name: fecha
+    data_tests:
+    - not_null
+    - unique
+  - name: dia_semana_iso
+    description: Regla de negocio, la NYSE solo abre de lunes a viernes.
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          quote: false
+  - name: conjunto
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - entrenamiento
+          - prueba
+- name: dim_accion
+  description: Acciones del universo (S&P 500 historico) con su bolsa.
+  columns:
+  - name: accion_key
+    data_tests:
+    - not_null
+    - unique
+  - name: ticker
+    data_tests:
+    - not_null
+    - unique
+  - name: codigo_bolsa
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - N
+          - A
+          - P
+          - Z
+          - V
+          - Q
+- name: fct_precios_diarios
+  description: 'Grano: accion x dia bursatil.'
+  data_tests:
+  - combinacion_unica:
+      arguments:
+        columnas:
+        - accion_key
+        - fecha_key
+  columns:
+  - name: accion_key
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('dim_accion')
+          field: accion_key
+  - name: fecha_key
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('dim_fecha')
+          field: fecha_key
+  - name: precio_cierre_ajustado
+    data_tests:
+    - not_null
+    - rango_valores:
+        arguments:
+          minimo: 1.0e-07
+  - name: volumen
+    data_tests:
+    - rango_valores:
+        arguments:
+          minimo: 0
+  - name: periodo_sp500_key
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('slv_membresia_sp500')
+          field: periodo_key
+- name: fct_mercado_diario
+  description: 'Grano: dia bursatil.'
+  columns:
+  - name: fecha_key
+    data_tests:
+    - not_null
+    - unique
+    - relationships:
+        arguments:
+          to: ref('dim_fecha')
+          field: fecha_key
+  - name: rf_diaria
+    data_tests:
+    - not_null:
+        config:
+          where: '{{ var(''exigir_tasa_libre_riesgo'') }}'
+    - rango_valores:
+        arguments:
+          minimo: -0.0001
+          maximo: 0.001

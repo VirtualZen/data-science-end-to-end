@@ -1,0 +1,73 @@
+# Transformaciones: dbt (Bronze -> Silver -> Gold, con tests) y Spark (OBT).
+# Lo llaman ingesta_diaria y backfill_historico; tambien se puede correr solo.
+id: transformar
+namespace: usfq.portafolio
+description: |
+  dbt build construye y prueba Bronze, Silver, Gold y las metricas de CALIDAD. Si un
+  test con severidad error falla, el flow se detiene y la OBT no se reconstruye con
+  datos que no pasaron las reglas. Despues Spark lee Gold y escribe OBT.OBT_ACCION_MES.
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "2"
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+tasks:
+  - id: dbt_build
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset2-dbt:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+    timeout: PT1H
+    retry:
+      type: constant
+      interval: PT1M
+      maxAttempts: 2
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+      FECHA_CORTE_ENTRENAMIENTO: "{{ secret('FECHA_CORTE_ENTRENAMIENTO') }}"
+    commands:
+      - dbt build --target snowflake
+
+  - id: obt_spark
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset2-spark:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+      # La misma red de docker-compose, para llegar a spark://spark-master:7077.
+      networkMode: pset2_red
+    timeout: PT1H
+    retry:
+      type: constant
+      interval: PT2M
+      maxAttempts: 2
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+    commands:
+      - >
+        /opt/spark/bin/spark-submit --master spark://spark-master:7077
+        --conf spark.driver.host=$(hostname -i)
+        /opt/jobs/construir_obt.py --modo snowflake
+
+errors:
+  - id: registrar_falla
+    type: io.kestra.plugin.core.log.Log
+    level: ERROR
+    message: >
+      Las transformaciones {{ execution.id }} fallaron. Si fue dbt, revisa que test
+      no paso (dbt build lo muestra en el log); la OBT anterior queda intacta.

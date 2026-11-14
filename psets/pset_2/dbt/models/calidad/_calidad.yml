@@ -1,0 +1,18 @@
+version: 2
+models:
+- name: dq_metricas
+  description: Metricas de completitud, precision, consistencia y validez por capa.
+  columns:
+  - name: metrica
+    data_tests:
+    - not_null
+    - unique
+  - name: dimension
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - completitud
+          - precision
+          - consistencia
+          - validez

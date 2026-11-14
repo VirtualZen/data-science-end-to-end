@@ -1,0 +1,75 @@
+version: 2
+models:
+- name: slv_calendario_nyse
+  description: Dias bursatiles de la NYSE (dias con cierre del S&P 500).
+  columns:
+  - name: fecha
+    data_tests:
+    - not_null
+    - unique
+- name: slv_precios_acciones
+  description: Precios validos de acciones en dias bursatiles, con retorno log y banderas.
+  data_tests:
+  - combinacion_unica:
+      arguments:
+        columnas:
+        - ticker
+        - fecha
+  columns:
+  - name: precio_cierre_ajustado
+    data_tests:
+    - not_null
+    - rango_valores:
+        arguments:
+          minimo: 1.0e-07
+  - name: dias_bursatiles_desde_anterior
+    data_tests:
+    - rango_valores:
+        arguments:
+          minimo: 1
+- name: slv_mercado_diario
+  description: Indices de referencia y tasa libre de riesgo por dia bursatil.
+  columns:
+  - name: fecha
+    data_tests:
+    - not_null
+    - unique
+  - name: cierre_sp500
+    data_tests:
+    - not_null
+  - name: ret_log_sp500
+    description: El peor dia del S&P 500 desde 1950 cayo cerca de 20% (log -0.23).
+    data_tests:
+    - rango_valores:
+        arguments:
+          minimo: -0.25
+          maximo: 0.25
+  - name: tasa_irx_anual_pct
+    data_tests:
+    - not_null:
+        config:
+          where: '{{ var(''exigir_tasa_libre_riesgo'') }}'
+    - rango_valores:
+        arguments:
+          minimo: -1
+          maximo: 20
+- name: slv_membresia_sp500
+  description: Periodos de pertenencia al S&P 500 (desde, hasta) por accion.
+  columns:
+  - name: periodo_key
+    data_tests:
+    - not_null
+    - unique
+  - name: ticker
+    data_tests:
+    - not_null
+  - name: fecha_inicio
+    data_tests:
+    - not_null
+- name: slv_acciones
+  description: Universo de acciones con bolsa, fechas en el indice y fechas con precios.
+  columns:
+  - name: ticker
+    data_tests:
+    - not_null
+    - unique

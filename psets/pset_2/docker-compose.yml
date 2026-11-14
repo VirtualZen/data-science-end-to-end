@@ -1,0 +1,140 @@
+# PSet 2 - Pipeline de datos del portafolio de inversiones (Idea 3).
+# Fuente -> Kestra -> Raw -> dbt -> Bronze -> Silver -> Gold -> Spark -> OBT (Snowflake)
+#
+# Servicios que quedan corriendo con `docker compose up -d`:
+#   postgres      base de datos interna de Kestra
+#   kestra        orquestador (UI en http://localhost:8080)
+#   spark-master  maestro del cluster Spark (UI en http://localhost:8081)
+#   spark-worker  trabajador del cluster Spark
+#
+# Imagenes de herramientas (perfil "herramientas"): no quedan corriendo; Kestra las
+# lanza como contenedores de cada tarea y tambien se pueden correr a mano:
+#   docker compose build                       construye pset2-ingesta, pset2-dbt y pset2-spark
+#   docker compose run --rm dbt dbt build      corre dbt a mano
+#   docker compose run --rm spark-job          corre el job de la OBT a mano
+#
+# Las credenciales nunca van en este archivo: se leen de .env (Spark, dbt, ingesta)
+# y de .env_encoded (secretos de Kestra). Ninguno de los dos se sube al repositorio.
+
+name: pset2
+
+x-snowflake-env: &snowflake-env
+  env_file:
+    - path: .env
+      required: false
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: ${KESTRA_DB_PASSWORD:-k3str4}
+    volumes:
+      - datos_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kestra -d kestra"]
+      interval: 10s
+      retries: 10
+    networks: [red]
+
+  kestra:
+    image: kestra/kestra:${KESTRA_VERSION:-v2.0.7}
+    user: "root"
+    command: server standalone
+    env_file:
+      - path: .env_encoded
+        required: false
+    volumes:
+      - datos_kestra:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: ${KESTRA_DB_PASSWORD:-k3str4}
+        kestra:
+          server:
+            basic-auth:
+              username: ${KESTRA_USUARIO:-admin@kestra.io}
+              password: ${KESTRA_CLAVE:-Admin1234}
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: "/app/storage"
+          queue:
+            type: postgres
+          tasks:
+            tmp-dir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8080/
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [red]
+
+  spark-master:
+    image: pset2-spark:latest
+    build: ./spark
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
+      - "8081:8080"
+      - "7077:7077"
+    networks: [red]
+
+  spark-worker:
+    image: pset2-spark:latest
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      SPARK_WORKER_CORES: ${SPARK_WORKER_CORES:-2}
+      SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY:-2g}
+    depends_on:
+      - spark-master
+    networks: [red]
+
+  # --- Imagenes de herramientas (Kestra las usa como contenedores de tarea) ---
+
+  ingesta:
+    image: pset2-ingesta:latest
+    build: ./kestra
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    networks: [red]
+
+  dbt:
+    image: pset2-dbt:latest
+    build: ./dbt
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    networks: [red]
+
+  spark-job:
+    image: pset2-spark:latest
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    command: >
+      /opt/spark/bin/spark-submit --master spark://spark-master:7077
+      /opt/jobs/construir_obt.py --modo snowflake
+    depends_on:
+      - spark-master
+      - spark-worker
+    networks: [red]
+
+networks:
+  red:
+    name: pset2_red
+
+volumes:
+  datos_postgres:
+  datos_kestra:

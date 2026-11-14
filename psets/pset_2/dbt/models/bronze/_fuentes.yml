@@ -1,0 +1,43 @@
+version: 2
+sources:
+- name: raw
+  description: Datos tal como los carga Kestra (append-only, con lote y hora de carga).
+  schema: RAW
+  loaded_at_field: ingesta_ts
+  freshness:
+    warn_after:
+      count: 4
+      period: day
+    error_after:
+      count: 7
+      period: day
+  tables:
+  - name: precios_diarios
+    description: OHLCV diario y cierre ajustado de Yahoo Finance, por simbolo y fecha.
+    columns:
+    - name: ticker
+      data_tests:
+      - not_null
+    - name: fecha
+      data_tests:
+      - not_null
+  - name: composicion_sp500
+    description: Fotos de la composicion del S&P 500 (fecha y lista de simbolos).
+    freshness:
+      warn_after:
+        count: 10
+        period: day
+      error_after:
+        count: 21
+        period: day
+  - name: listados_bolsa
+    description: Simbolos listados y su bolsa, de Nasdaq Trader.
+    freshness:
+      warn_after:
+        count: 10
+        period: day
+      error_after:
+        count: 21
+        period: day
+  - name: ingesta_log
+    description: Bitacora por simbolo y lote (OK, SIN_DATOS, ERROR).

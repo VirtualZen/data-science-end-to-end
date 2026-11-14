@@ -1,0 +1,82 @@
+# Ingesta diaria: Yahoo Finance + composicion S&P 500 + listados -> Snowflake RAW,
+# y despues las transformaciones (subflow "transformar": dbt y Spark).
+# Subir a Kestra:  bash kestra/subir_flows.sh
+id: ingesta_diaria
+namespace: usfq.portafolio
+description: |
+  Carga en RAW los precios de los ultimos ~7 dias habiles (Yahoo corrige cierres y
+  ajustes despues del dia) y, los lunes, la composicion del S&P 500 y los listados de
+  bolsa. Termina corriendo el flow "transformar". La fecha sale del trigger; para
+  re-procesar un dia a mano se ejecuta con el input "fecha".
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "2"
+
+inputs:
+  - id: fecha
+    type: DATE
+    required: false
+    description: Dia a procesar. Vacio = fecha programada del trigger (o hoy).
+
+# Nunca dos cargas a la vez sobre las mismas tablas: la segunda espera en cola.
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+tasks:
+  - id: extraer_cargar_raw
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset2-ingesta:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+    timeout: PT2H
+    # Yahoo no es una API oficial: limita peticiones y a veces responde vacio. El script
+    # reintenta cada grupo de 100 simbolos y falla solo si mas del 10% de los grupos
+    # no se pudo bajar; en ese caso Kestra reintenta la tarea completa con espera
+    # creciente (2, 4, 8 minutos...).
+    retry:
+      type: exponential
+      interval: PT2M
+      maxInterval: PT30M
+      maxAttempts: 4
+      warningOnRetry: true
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+    commands:
+      - >
+        python /app/extraer_cargar.py diario
+        --fecha {{ inputs.fecha ?? (trigger.date ?? execution.startDate | date('yyyy-MM-dd')) }}
+
+  - id: transformar
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: usfq.portafolio
+    flowId: transformar
+    wait: true
+    transmitFailed: true
+
+errors:
+  - id: registrar_falla
+    type: io.kestra.plugin.core.log.Log
+    level: ERROR
+    message: >
+      La ingesta diaria {{ execution.id }} fallo despues de agotar los reintentos.
+      Revisa RAW.INGESTA_LOG (estado ERROR) y los logs de la tarea en Kestra. Para
+      recuperar el dia, re-ejecuta este flow con el input fecha.
+
+triggers:
+  # Dias habiles a las 18:30 de Nueva York: la NYSE cierra a las 16:00 y Yahoo publica
+  # el cierre poco despues. El rebalanceo del portafolio es mensual, asi que un dia de
+  # latencia no cambia ninguna decision.
+  - id: cierre_nyse
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "30 18 * * 1-5"
+    timezone: America/New_York
+    # Si Kestra estuvo apagado, corre las fechas que se perdio (backfill automatico).
+    recoverMissedSchedules: ALL

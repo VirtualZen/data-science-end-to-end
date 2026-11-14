@@ -1,0 +1,45 @@
+digraph estrella {
+  graph [fontname="Helvetica", rankdir=LR, nodesep=0.5, ranksep=0.9];
+  node [shape=plaintext, fontname="Helvetica", fontsize=10];
+  edge [color="#555555", arrowhead=crow, arrowtail=tee, dir=both];
+
+  dim_accion [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#dbe8f5"><b>GOLD.DIM_ACCION</b></td></tr>
+    <tr><td align="left"><b>accion_key (PK)</b></td></tr>
+    <tr><td align="left">ticker · nombre</td></tr>
+    <tr><td align="left">codigo_bolsa · bolsa · es_nyse</td></tr>
+    <tr><td align="left">primera/ultima_fecha_sp500 · sigue_en_sp500</td></tr>
+    <tr><td align="left">primera/ultima_fecha_precio · tiene_precios</td></tr></table>>];
+
+  dim_fecha [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#dbe8f5"><b>GOLD.DIM_FECHA</b></td></tr>
+    <tr><td align="left"><b>fecha_key (PK, AAAAMMDD)</b></td></tr>
+    <tr><td align="left">fecha · anio · trimestre · mes · anio_mes</td></tr>
+    <tr><td align="left">dia_semana_iso · dia_bursatil_del_mes</td></tr>
+    <tr><td align="left">mes_cerrado · es_cierre_de_mes</td></tr>
+    <tr><td align="left">conjunto (entrenamiento / prueba)</td></tr></table>>];
+
+  fct [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#fde3c8"><b>GOLD.FCT_PRECIOS_DIARIOS</b><br/>grano: acción × día bursátil</td></tr>
+    <tr><td align="left"><b>accion_key (FK) · fecha_key (FK)</b></td></tr>
+    <tr><td align="left">precio_apertura · maximo · minimo · cierre</td></tr>
+    <tr><td align="left">precio_cierre_ajustado · volumen</td></tr>
+    <tr><td align="left">ret_log_diario</td></tr>
+    <tr><td align="left">en_sp500 · periodo_sp500_key</td></tr>
+    <tr><td align="left">hay_hueco_previo · es_retorno_extremo</td></tr>
+    <tr><td align="left">cierre_fuera_de_rango · volumen_cero</td></tr></table>>];
+
+  mkt [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4">
+    <tr><td bgcolor="#fde3c8"><b>GOLD.FCT_MERCADO_DIARIO</b><br/>grano: día bursátil</td></tr>
+    <tr><td align="left"><b>fecha_key (FK)</b></td></tr>
+    <tr><td align="left">cierre_sp500 · ret_log_sp500</td></tr>
+    <tr><td align="left">cierre_nyse_composite · ret_log_nyse_composite</td></tr>
+    <tr><td align="left">tasa_irx_anual_pct · rf_diaria · tasa_irx_rellenada</td></tr></table>>];
+
+  memb [label=<<table border="0" cellborder="1" cellspacing="0" cellpadding="4" color="#888888">
+    <tr><td bgcolor="#eeeeee"><b>SILVER.SLV_MEMBRESIA_SP500</b></td></tr>
+    <tr><td align="left"><b>periodo_key (PK)</b></td></tr>
+    <tr><td align="left">ticker · fecha_inicio · fecha_fin · vigente</td></tr></table>>];
+
+  dim_accion -> fct; dim_fecha -> fct; dim_fecha -> mkt; memb -> fct [style=dashed];
+}

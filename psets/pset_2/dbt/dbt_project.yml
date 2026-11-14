@@ -1,0 +1,42 @@
+name: 'portafolio'
+version: '1.0.0'
+config-version: 2
+profile: 'portafolio'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Simbolo cuyo historial define los dias bursatiles de la NYSE (calendario).
+  ticker_calendario: '^GSPC'
+  ticker_sp500: '^GSPC'
+  ticker_nyse_composite: '^NYA'
+  ticker_tasa_libre_riesgo: '^IRX'
+  # Corte entrenamiento/prueba del PSet 1 (sujeto a cambios).
+  fecha_corte: "{{ env_var('FECHA_CORTE_ENTRENAMIENTO', '2023-12-31') }}"
+  fecha_inicio: '2010-01-01'
+  # Un retorno logaritmico diario mayor a este valor absoluto se marca como extremo.
+  umbral_retorno_extremo: 0.40
+  # Si es false, los tests de la tasa libre de riesgo no se exigen (prueba local sin ^IRX).
+  exigir_tasa_libre_riesgo: true
+
+models:
+  portafolio:
+    bronze:
+      +schema: BRONZE
+      +materialized: view
+    silver:
+      +schema: SILVER
+      +materialized: table
+    gold:
+      +schema: GOLD
+      +materialized: table
+    calidad:
+      +schema: CALIDAD
+      +materialized: table
+
+tests:
+  portafolio:
+    +store_failures: false

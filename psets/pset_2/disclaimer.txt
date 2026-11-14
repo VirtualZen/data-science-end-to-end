@@ -1,0 +1,61 @@
+DISCLAIMER - PSet 2 (Allan Paul Gomez Ehmig, Banner 00351916)
+Fecha: 2026-11-14
+
+Las instrucciones del PSet 2 que recibi en el curso (CD_PSet_2.pdf, copia en
+psets/pset-02/CD_PSet_2.pdf) son distintas de las de este repositorio
+(psets/pset-02/README.md y psets/pset-02/rubrica.md). Este trabajo sigue CD_PSet_2.pdf.
+
+Diferencias principales:
+
+  Aspecto              CD_PSet_2.pdf (lo que se siguio)        psets/pset-02/README.md
+  -------------------  --------------------------------------  --------------------------------------
+  Carpeta de trabajo   pset_2/ con docker-compose.yml,         psets/proyecto/ (orquestacion/,
+                       .env.example, README.md, kestra/,       calidad/, warehouse/, procesamiento/)
+                       dbt/, spark/, docs/
+  Destino de datos     Snowflake                               DuckDB local (archivo .duckdb)
+  Capas                Raw, Bronze, Silver, Gold (+ OBT)       staging, intermedia, marts
+  Modelado             Gold como star schema: grano del       Un mart que responda una pregunta
+                       hecho, dimensiones, diagrama            del proyecto
+  Pruebas de dbt       not_null, unique, relationships y       Al menos una prueba sobre la columna
+                       pruebas de reglas del negocio           que identifica cada fila
+  Kestra               Ingesta a Raw sin intervencion          Flow con reintento y horario que
+                       manual: trigger, retries y backfill     corre la imagen del PSet 1
+  Calidad de datos     Completitud, precision, consistencia    Notebook de diagnostico y script
+                       y validez; tabla Problema/Evidencia/    limpiar.py que deja un archivo en
+                       Accion/Justificacion; limpieza en dbt   data/processed/
+  Spark                OBT construida desde Gold, con grano    Job sobre el historico cuyo resultado
+                       definido, validacion de joins y         coincida con dbt o pandas
+                       escritura en Snowflake
+  Streaming            No se implementa; solo se justifica     Opcional (productor y consumidor) si
+                       el batch y cuando cambiaria             el proyecto lo justifica
+  Infraestructura      docker-compose.yml con Kestra y Spark   La del PSet 1 (infra/, Dockerfile)
+                       como minimo; dbt Core o dbt Cloud
+  Documentacion        Documento tecnico de hasta 6 paginas    Seccion "Como correr el pipeline de
+                       (sin anexos), PSet2_memo_Gomez_         datos" en proyecto/README.md, con un
+                       Ehmig.pdf, 7 secciones y diagramas      parrafo batch vs streaming
+  Evaluacion           7 criterios con pesos (Kestra 15%,      4 criterios en escala 0 a 4
+                       calidad 20%, dbt 15%, star schema 15%,
+                       Spark 15%, infraestructura 10%,
+                       documento 10%)
+  Entrega              Repositorio + documento PDF             Tag de git pset-02 sobre proyecto/
+
+Criterio aplicado (el mismo del PSet 1): cuando las dos instrucciones se contradicen,
+manda la guia recibida (CD_PSet_2.pdf). Lo que el repositorio pide y la guia no
+contradice tambien se cubre:
+  - Ninguna credencial ni dato se sube al repositorio (.env, .env_encoded y secrets/
+    estan en .gitignore; solo se sube .env.example).
+  - El README explica, en orden y desde que carpeta, como levantar la infraestructura y
+    correr Kestra, dbt y Spark.
+  - El parrafo batch vs streaming usa el criterio de la Semana 6, Sesion 2 (si la
+    decision pierde valor con datos de horas o dias de antiguedad).
+  - Los patrones de los laboratorios de las Semanas 4 a 6 (imagen de Kestra, API para
+    subir flows, plantilla de dbt, job de Spark) se reutilizaron como punto de partida.
+
+Al cerrar el PSet, el contenido de pset_2/ se lleva a psets/proyecto/ (las carpetas
+equivalentes: orquestacion/ <- kestra/, warehouse/dbt/ <- dbt/, procesamiento/ <- spark/,
+docs/ <- docs/), como acordamos.
+
+Datos de prueba: pruebas_locales/ carga una muestra real pequena en DuckDB solo para
+verificar que el codigo de dbt y Spark corre sin cuenta de Snowflake. Usa VTI y QQQ
+como sustitutos de ^GSPC y ^NYA porque esa muestra no trae los indices. No son los datos
+del proyecto ni se usan en el memo.

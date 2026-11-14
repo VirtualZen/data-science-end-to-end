@@ -1,0 +1,23 @@
+# Sin credenciales escritas: todo sale de variables de entorno (.env o secretos de Kestra).
+portafolio:
+  target: snowflake
+  outputs:
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ACCOUNT') }}"
+      user: "{{ env_var('SNOWFLAKE_USER') }}"
+      # Cuerpo de la llave privada PKCS#8 en una linea (lo arma scripts/preparar_env.sh).
+      private_key: "{{ env_var('SNOWFLAKE_PRIVATE_KEY') }}"
+      role: "{{ env_var('SNOWFLAKE_ROLE', 'PSET2_ROL') }}"
+      warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'PSET2_WH') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'PORTAFOLIO') }}"
+      schema: GOLD
+      threads: 4
+      client_session_keep_alive: false
+
+    # Solo para probar el codigo sin Snowflake (pruebas_locales/README.md).
+    local:
+      type: duckdb
+      path: "{{ env_var('DUCKDB_RUTA', '../pruebas_locales/portafolio_local.duckdb') }}"
+      schema: GOLD
+      threads: 4
