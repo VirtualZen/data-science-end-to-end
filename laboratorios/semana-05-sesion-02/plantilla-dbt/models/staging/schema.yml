@@ -3,9 +3,11 @@ version: 2
 models:
   # TODO: reemplaza por el nombre real de tu modelo de staging
   - name: stg_TODO
+    description: "Datos de la tabla del proyecto seleccionados y preparados para las capas posteriores."
     columns:
       # TODO: elige la columna que deberia identificar cada fila sin repetirse
       - name: TODO_columna_identificadora
+        description: "Columna que identifica de manera unica cada fila del modelo."
         tests:
           - unique
           - not_null

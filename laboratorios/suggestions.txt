@@ -1,0 +1,33 @@
+Revision de semana-05-sesion-01/starter/ejercicio2_ventas.py
+(solo revision, no se hicieron cambios al codigo)
+
+Resultado: el script es correcto y corre con 5/5 TODO en OK.
+
+Lo que hace bien
+- Pasos 1-2: CREATE OR REPLACE permite volver a correr el script sin error.
+  El conteo de 12 ventas coincide con ventas.csv.
+- Paso 3: agrupar por id_producto da 5 filas (P1, P2, P3, P4 y P9). P9 aparece
+  porque todavia no hay JOIN.
+- Paso 4: el JOIN interno da 3 categorias: papeleria, accesorios y electronica.
+- Paso 5: 12 - 11 = 1 venta perdida. Es id_venta 6, cuyo producto P9 no existe
+  en productos.csv, y el JOIN la descarta sin avisar.
+
+Puntos debiles
+1. Comprobaciones con valores fijos: los 12, 5, 3 y 1 dependen de los CSV
+   actuales. Es aceptable en un laboratorio, pero fallarian si cambian los datos.
+2. Comprobaciones flojas en los TODO 3 y 4: "unidades_por_producto is not None"
+   siempre es verdadero. Solo el numero de filas prueba algo, asi que una suma
+   incorrecta igual pasaria.
+3. El Paso 5 cuenta pero no identifica: dice que se pierde una venta, no cual.
+   Un LEFT JOIN ... WHERE p.id_producto IS NULL mostraria id_venta 6 y P9.
+4. Impacto en dinero: la venta perdida no tiene precio, asi que no suma a los
+   montos por categoria. Los ingresos quedan subestimados sin ninguna
+   advertencia. Probablemente es el punto de las preguntas del README.
+5. Estilo: COUNT(0) funciona, pero lo habitual es COUNT(*). Los nombres de tabla
+   van en f-strings dentro del SQL; es seguro aqui porque son constantes. Hay una
+   linea en blanco sobrante despues de print("Tablas en el warehouse:").
+6. Cierre de la conexion: con.close() esta al final, asi que un error previo
+   dejaria la conexion abierta. Un bloque with seria mas robusto, aunque en un
+   script corto no importa.
+7. Los comentarios TODO estan marcados DONE y el encabezado dice "No la
+   modifiques" sobre la comprobacion: es consistente.

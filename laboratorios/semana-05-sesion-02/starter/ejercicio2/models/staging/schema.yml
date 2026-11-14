@@ -1,5 +1,22 @@
 version: 2
 
-# TODO 2: pruebas unique y not_null sobre la columna que identifica cada
+# DONE 2: pruebas unique y not_null sobre la columna que identifica cada
 # fila de stg_ventas y de stg_productos.
-models: []
+
+models:
+  - name: stg_ventas
+    description: "Ventas preparadas para analizarse junto con la informacion de productos."
+    columns:
+      - name: id_venta
+        description: "Identificador unico de cada venta."
+        tests:
+          - unique
+          - not_null
+  - name: stg_productos
+    description: "Productos disponibles y sus atributos para los analisis de ventas."
+    columns:
+      - name: id_producto
+        description: "Identificador unico de cada producto."
+        tests:
+          - unique
+          - not_null
