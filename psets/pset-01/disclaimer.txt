@@ -1,0 +1,37 @@
+DISCLAIMER - PSet 1 (Allan Paul Gomez Ehmig, Banner 00351916)
+Fecha: 2026-11-14
+
+Las instrucciones del PSet 1 que recibi en el curso (documento "CD_PSet_1_00351916.docx")
+son distintas de las de este repositorio (psets/pset-01/README.md y rubrica.md del curso).
+Diferencias principales:
+
+  Aspecto                    Guia recibida                         Este repositorio
+  -------------------------  ------------------------------------  --------------------------------------
+  Ideas a evaluar            Tres ideas con plantilla I-VI y        Un solo proyecto (Canvas)
+                             matriz de comparacion
+  Documento                  Memo de 3 a 5 paginas, sin portada,   Propuesta de 1 a 2 paginas en cuatro
+                             con riesgos clasificados y alcance    secciones, mas el Canvas
+  Presentacion               Pitch de 10 a 15 laminas              Presentacion de 5 a 8 diapositivas
+                             (secuencia I a VII)
+  Ambiente del proyecto      No se pedia                           Dockerfile, requirements.txt,
+                                                                   ingesta/ e infra/
+  Entrega                    Archivos PDF                          Tag de git pset-01 sobre proyecto/
+
+Criterio aplicado: esta carpeta cubre lo que pide el repositorio, pero cuando hay una
+contradiccion se mantiene lo que ya se entrego con la guia recibida (por ejemplo, la
+extension del documento y el numero de laminas).
+
+Version usada: la revision del 2026-11-14 con el feedback del profesor (archivos con
+sufijo _v2: memo, Excel de comparacion y presentacion). Los archivos originales y los
+corregidos estan en Google Drive, carpeta PSet01 y su subcarpeta feedback; no se suben
+a este repositorio.
+
+Archivos de esta carpeta:
+  - README.md: resumen de la entrega y Canvas de Viabilidad y Riesgos (version final).
+  - plantilla-documento-propuesta.md: la propuesta en Markdown.
+  - plantilla-presentacion-negocio.md: el contenido de cada lamina de la presentacion.
+  - rubrica.md: sin cambios (rubrica del curso).
+  - disclaimer.txt: este archivo.
+
+El ambiente del proyecto (Dockerfile, ingesta e infraestructura en psets/proyecto/) no
+formaba parte de la guia recibida; queda pendiente y se construye como base del PSet 2.

@@ -1,35 +1,28 @@
-# Guía de la Presentación de negocio: 5 a 8 diapositivas
+# Presentación de negocio: Portafolio de inversiones
 
-> Esto no es un guion para pegar en Gemini o Gamma como las presentaciones de clase: es una guía de qué debe llevar cada diapositiva de tu propia presentación, que armas en la herramienta que prefieras (Google Slides, PowerPoint, Gamma, Canva). Formato de pitch a un patrocinador o inversionista: cada diapositiva debe verse como algo que le mostrarías a alguien que decide si apoya tu proyecto o no, no como una diapositiva de clase con texto denso. Prioriza una idea grande por diapositiva, apoyada en un dato o una imagen, no párrafos.
+**Autor:** Allan Paul Gómez Ehmig (Banner 00351916)
+**Archivo de la presentación:** `PSet1_pitch_Gomez_Ehmig_v2.pptx` / `.pdf` (versión con el feedback, 2026-11-14)
 
-## Diapositiva 1: Título
+> Contenido de cada lámina de la presentación entregada. La guía del PSet 1 que recibí pedía de 10 a 15 láminas con la secuencia I a VII que sigue; este repositorio pide de 5 a 8. Ante la contradicción se mantiene la versión entregada (ver [`disclaimer.txt`](./disclaimer.txt)). La última columna indica a qué diapositiva de la guía de este repositorio corresponde cada lámina.
 
-Nombre del proyecto, tu nombre, y una sola frase que resuma qué hace (no la formulación técnica completa, la versión que entendería alguien sin contexto técnico).
+| Lámina | Título | Contenido | Diapositiva de la guía del repo |
+|---|---|---|---|
+| 1 | I. Título | Portafolio de inversiones: una herramienta para que el asesor de inversiones proponga cada mes a su cliente un portafolio de acciones del S&P 500 listadas en la NYSE, con la mayor rentabilidad esperada dentro de la volatilidad que el cliente tolera. Motivación: 79% de los fondos activos no le ganó al S&P 500 en 2025 y el inversionista promedio pierde 1,2 puntos al año por decidir en mal momento | 1. Título |
+| 2 | II. Problema y oportunidad (1) | Qué ocurre hoy (el portafolio se arma y se cambia por intuición o noticias), a quién afecta (al inversionista y al asesor que le propone el portafolio) y qué decisión se toma (qué comprar, en qué proporción y cuándo cambiarlo) | 2. Problema y oportunidad |
+| 3 | II. Problema y oportunidad (2) | 79% (SPIVA) y 1,2 pp (Morningstar), con el gráfico del retorno del inversionista (8,7%) frente al de sus fondos (9,9%). Las reglas fijas (rebalanceo solo una vez al mes, tope de volatilidad acordado y umbral mínimo de cambio) reemplazan las compras y ventas impulsivas | 2. Problema y oportunidad |
+| 4 | III. Solución propuesta | Qué se construye: módulo de datos, pronóstico del retorno a 1 mes, armado del portafolio (10 acciones con pesos inversos a su volatilidad, dentro del tope) y backtest con monitoreo. Cómo opera cada mes: precios y pronósticos en fecha fija, la herramienta propone, el asesor revisa y pide la aprobación del inversionista, se ejecuta en el bróker y se mide frente a los índices | 3. Solución propuesta |
+| 5 | IV. Viabilidad: técnica y de negocio (1) | Datos públicos y confirmados (yfinance; alternativas Stooq, FINSABER y Kaggle), validación contra el random walk y un portafolio aleatorio, despliegue en contenedor (infraestructura local y de la USFQ), y la partición: entrenamiento hasta dic-2023, prueba desde ene-2024 | 4. Evidencia de viabilidad |
+| 6 | IV. Viabilidad: técnica y de negocio (2) | Diagrama de carriles (inversionista, asesor, herramienta) con los 6 pasos del proceso mensual. El criterio humano interviene dos veces: el asesor revisa y el inversionista aprueba | 4. Evidencia de viabilidad |
+| 7 | IV. Viabilidad: técnica y de negocio (3) | Justificación económica sobre una cartera de US$ 100.000: US$ 1.200 al año de brecha conductual, US$ 1.500 al año de la meta de Sharpe + 0,1, US$ 30 al año del fondo indexado. Condición de valor: la mejora neta de costos debe superar al fondo indexado | 4. Evidencia de viabilidad |
+| 8 | V. Riesgos (1) | Riesgos técnicos más relevantes, de mayor a menor severidad: no superar al random walk (Alta), registros incompletos (Media), sesgo de supervivencia (Media) | 5. Riesgos principales |
+| 9 | V. Riesgos (2) | Riesgos de negocio más relevantes: un fondo indexado barato es más atractivo (Alta), el inversionista no sigue las recomendaciones (Media), los costos de transacción anulan la ganancia (Media) | 5. Riesgos principales |
+| 10 | VI. Qué se necesita para avanzar (1) | Investigación de fuentes: datasets con datos de Yahoo que evitan el screen scraping o `yfinance`, con su cobertura de 2024 en adelante y su estado de verificación | 6. Qué se necesita para avanzar |
+| 11 | VI. Qué se necesita para avanzar (2) | Qué necesito del patrocinador. Aprobación: alcance del MVP, criterio de éxito y corte de datos. Información: entrevista con un asesor, perfiles de riesgo típicos y comisiones reales. Recursos: contenedor en la infraestructura de IA de la USFQ y horas de GPU | 6. Qué se necesita para avanzar |
+| 12 | VI. Qué se necesita para avanzar (3) | MVP del semestre (propuesta mensual de 10 acciones con pesos), fuera de alcance y un entregable verificable por etapa | 6. Qué se necesita para avanzar |
+| 13 | VII. Anexos (1) | Por qué esta idea: matriz de las tres ideas; empate 15 a 15 con crédito, desempate por acceso a datos reales | 7-8. Apoyo adicional |
+| 14 | VII. Anexos (2) | Formulación de ciencia de datos y modelos a comparar, en una sola lámina | 7-8. Apoyo adicional |
+| 15 | VII. Anexos (3) | Referencias | 7-8. Apoyo adicional |
 
-## Diapositiva 2: El problema y la oportunidad
+El pie de cada lámina dice: «Allan Paul Gomez Ehmig - 00351916 - 2026.10.26 (rev. 2026.11.14) · Sales pitch: Portafolio de inversiones». La versión con el feedback trae, además, dos láminas de «Anexo de revisión» con el registro de cambios, que no forman parte de las 15 láminas de la entrega.
 
-¿Qué problema tiene el usuario o el negocio hoy, sin tu proyecto? ¿Por qué importa resolverlo ahora? Un dato o un ejemplo concreto vale más aquí que una descripción abstracta.
-
-## Diapositiva 3: La solución propuesta
-
-Qué vas a construir, en términos que alguien sin formación técnica entienda: qué predice tu sistema y qué decisión o acción habilita, no la arquitectura técnica ni el modelo que planeas usar.
-
-## Diapositiva 4: Evidencia de viabilidad
-
-La evidencia concreta, no la afirmación, de que este proyecto es realizable: qué datos ya tienes o sabes cómo conseguir, y qué te da confianza de que la acción que propones realmente cambia algo. Si tienes un número (tamaño del dataset, una fuente confirmada, un caso similar que ya funcionó en otro contexto), este es el lugar para mostrarlo.
-
-## Diapositiva 5: Riesgos principales
-
-Los mismos riesgos de tu Canvas y tu documento de propuesta, en versión resumida: qué podría hacer que esto fallara, y qué harías para verificarlo o mitigarlo antes de invertir más tiempo. Mostrar que ya pensaste en esto genera más confianza que omitirlo.
-
-## Diapositiva 6: Qué se necesita para avanzar
-
-Qué necesitas de aquí en adelante para que el proyecto avance: tiempo, acceso a un dato específico, una decisión que alguien más debe tomar. Sé concreto, no "más recursos" en general.
-
-## Diapositivas 7-8 (opcionales): apoyo adicional
-
-Usa estas diapositivas solo si tienes algo que realmente lo amerita: una captura de datos reales, una maqueta visual de cómo se vería el resultado, o una comparación con cómo se resuelve este problema hoy sin tu proyecto. No las agregues solo para llegar al número mínimo.
-
----
-
-*Antes de entregar, verifica: si alguien viera solo esta presentación, sin leer tu documento de propuesta, ¿entendería por qué tu proyecto vale la pena apoyar? ¿los datos, la predicción y los riesgos que muestras aquí son exactamente los mismos que en tu Canvas y tu documento?*
+**Consistencia con la propuesta.** Los datos, la predicción (retorno a 1 mes), el umbral (10 acciones con pesos inversos a su volatilidad dentro del tope), la métrica (Sharpe y drawdown) y los riesgos son los mismos de [`plantilla-documento-propuesta.md`](./plantilla-documento-propuesta.md) y del Canvas en [`README.md`](./README.md).

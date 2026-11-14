@@ -1,42 +1,63 @@
-# PSet 1: Propuesta del proyecto y su ambiente
+# PSet 1: Propuesta del proyecto (entrega de Allan Paul Gómez Ehmig)
 
-**Asignado:** Semana 2, Sesión 2. **Vence:** Semana 4, Sesión 1.
+**Proyecto:** Portafolio de inversiones con volatilidad acotada (idea 3 de tres evaluadas)
+**Autor:** Allan Paul Gómez Ehmig (Banner 00351916)
+**Fecha:** 2026-10-26, revisada el 2026-11-14 con el feedback del profesor
 
-Formaliza, con la calidad de un documento profesional real (el que le mostrarías a un patrocinador para conseguir su aprobación, no un ejercicio de clase), la evaluación de viabilidad que empezaste en el laboratorio de la Semana 2, Sesión 2, y deja listo el ambiente donde va a correr el proyecto (Semana 3). Los tres primeros entregables van en [`psets/proyecto/docs/`](../proyecto/docs/), la carpeta de documentos del proyecto que vas a construir el resto del semestre; el cuarto, en la raíz de [`psets/proyecto/`](../proyecto/):
+> Las instrucciones del PSet 1 que recibí en clase son distintas de las de este repositorio. Esta carpeta cubre lo que pide el repositorio, pero cuando hay contradicción se mantiene lo que ya se entregó. El detalle está en [`disclaimer.txt`](./disclaimer.txt). El enunciado original de este README sigue en el repositorio del curso y en el historial de git.
 
-## 1. Canvas de Viabilidad y Riesgos (versión final)
+## Qué hay en esta carpeta
 
-Parte del `canvas-<tu-nombre>.md` que llenaste en el laboratorio (`laboratorios/semana-02-sesion-02/`) y guarda la versión final como `docs/canvas.md`. Revísalo con lo que aprendiste de la retroalimentación de tu pareja y de la puesta en común: corrige cualquier sección que haya quedado genérica, y confirma que los dos riesgos mínimos tengan evidencia real, no solo una intuición.
+| Entregable del repo | Dónde está | Estado |
+|---|---|---|
+| 1. Canvas de Viabilidad y Riesgos | Sección «Canvas» de este README | Completo, con la versión del feedback |
+| 2. Documento de propuesta | [`plantilla-documento-propuesta.md`](./plantilla-documento-propuesta.md) (versión en Markdown del memo `PSet1_memo_Gomez_Ehmig_v2`) | Completo |
+| 3. Presentación de negocio | [`plantilla-presentacion-negocio.md`](./plantilla-presentacion-negocio.md) (contenido de cada lámina de `PSet1_pitch_Gomez_Ehmig_v2`) | Completo |
+| 4. Ambiente del proyecto (`Dockerfile`, `requirements.txt`, `ingesta/`, `infra/`) | `../proyecto/` | Pendiente: no estaba en la guía recibida; se construye como base del PSet 2 |
+| Rúbrica | [`rubrica.md`](./rubrica.md) | Sin cambios (es la del curso) |
 
-## 2. Documento de propuesta (1 a 2 páginas)
+Los archivos originales (memo en Word y PDF, Excel de comparación y presentación) no están en el repositorio; están en la carpeta del curso en Google Drive (`PSet01/feedback/`).
 
-Un documento de texto (`docs/propuesta.pdf`, o en Markdown como `docs/propuesta.md`) que desarrolla el canvas en prosa, dirigido a alguien que no estuvo en la sesión de clase y necesita entender el proyecto desde cero. Debe cubrir, en este orden:
+## Canvas de Viabilidad y Riesgos (versión final)
 
-1. El problema de negocio y la métrica de éxito (de la Semana 2, Sesión 1).
-2. La viabilidad técnica: qué se predice, qué datos existen y con qué estado de acceso.
-3. La viabilidad de negocio: qué acción cambia, quién aplica juicio, cómo se mide el resultado.
-4. Los riesgos principales, con el supuesto que rompen y cómo se mitigarían o se verificarían antes de invertir más tiempo.
+Basado en el marco P(S) = P(T) × P(C), el AI Canvas y el método premortem.
 
-Parte de la plantilla [`plantilla-documento-propuesta.md`](./plantilla-documento-propuesta.md) si quieres una estructura de arranque; no es obligatoria, pero cubre exactamente estas cuatro secciones en el orden pedido.
+### 1. Problema y usuario
 
-## 3. Presentación de negocio (5 a 8 diapositivas)
+El asesor de inversiones arma y cambia el portafolio de sus clientes por intuición o noticias, sin controlar la volatilidad; el inversionista suele rendir por debajo del índice y pierde rentabilidad por comprar y vender en mal momento.
 
-Una presentación visual, en el formato de una propuesta a un patrocinador o inversionista (no el formato de la presentación de clase, que es texto plano): problema y oportunidad, la solución propuesta, evidencia de viabilidad, riesgos principales y qué se necesita para avanzar. Herramienta libre (Google Slides, PowerPoint, Gamma, Canva); lo que se evalúa es la claridad y el rigor del contenido, no el diseño. Exporta la versión final a `docs/presentacion.pdf`.
+### 2. Viabilidad técnica, parte 1: predicción
 
-Consulta [`plantilla-presentacion-negocio.md`](./plantilla-presentacion-negocio.md) para una guía de qué debe llevar cada diapositiva.
+El retorno logarítmico a 1 mes (21 días hábiles) de cada acción del S&P 500 listada en la NYSE, en cada fecha de rebalanceo mensual. El horizonte es igual al período de rebalanceo.
 
-## 4. El ambiente del proyecto
+### 3. Viabilidad técnica, parte 2: datos
 
-Lo que construiste en el Ejercicio 3 de la Semana 3, Sesión 1, y el patrón de la Semana 3, Sesión 2, aplicados a tu proyecto:
+- [x] **Ya existe, acceso confirmado:** precios diarios ajustados, índices ^GSPC y ^NYA y tasa ^IRX en Yahoo Finance vía `yfinance`; composición histórica del S&P 500 en GitHub (`hanshof/sp500_constituents`); respaldo en Kaggle (2010–2018), Stooq y FINSABER-data (2000–2024).
+- [ ] **Existe, sin acceso confirmado:** dos datasets de Kaggle actualizados a diario con datos de Yahoo (andrewmvd, tanavbajaj); falta verificar su contenido y licencia.
+- [ ] **No existe todavía:** el tope de volatilidad de cada cliente; lo registra el asesor. Para el MVP se usan topes de ejemplo.
 
-- `Dockerfile` y `requirements.txt`, en la raíz de `proyecto/`: la imagen que corre tu ingesta, con las versiones de las librerías fijadas.
-- `ingesta/`: el script que trae los datos de tu fuente y los deja en `data/raw/`.
-- `infra/docker-compose.yml` o `infra/main.tf`: la base de datos de tu proyecto, levantada con un solo comando, a la que tu ingesta se conecta por nombre de servicio.
+### 4. Viabilidad de negocio, parte 1: acción
 
-En `proyecto/README.md`, completa la sección **Datos**: de dónde salen, cómo se obtienen y en qué archivo de `data/raw/` quedan.
+Hoy el asesor decide qué acciones comprar, en qué proporción y cuándo cambiarlas, por criterio propio o noticias. Con la predicción, cada mes en fecha fija se propone un portafolio de 10 acciones con pesos inversos a su volatilidad, dentro del tope del cliente, y solo se rebalancea si el cambio de pesos supera un umbral mínimo.
 
-## Cómo se evalúa
+### 5. Viabilidad de negocio, parte 2: juicio
 
-Los cuatro entregables se evalúan como una sola entrega dentro del componente de PSets (25% de la nota final entre los 4 PSets). Para entregar, sigue la sección "Cómo entregar" de [`psets/README.md`](../README.md): el tag de este PSet es `pset-01`. El criterio central: que la viabilidad técnica y de negocio esté sustentada con evidencia concreta del proyecto propio, no con afirmaciones genéricas, y que los riesgos identificados sean específicos y verificables, siguiendo el mismo criterio de evidencia usado en la Semana 1, Sesión 2 y en el laboratorio de esta sesión.
+El asesor de inversiones (casa de valores o fintech) revisa la propuesta y pide la aprobación del inversionista. El sistema nunca actúa solo: no ejecuta órdenes. El criterio humano interviene dos veces: el asesor revisa y el inversionista aprueba o rechaza.
 
-La rúbrica completa, con los seis criterios de calificación y sus niveles, está en [`rubrica.md`](./rubrica.md). Revísala antes de entregar.
+### 6. Viabilidad de negocio, parte 3: resultado
+
+Sharpe anualizado, (Rp − Rf)/σp con Rf = ^IRX, y drawdown máximo del portafolio en el periodo de prueba (desde ene-2024), con costos de transacción incluidos. Meta: Sharpe al menos 0,1 mayor que el del S&P 500 y el del NYSE Composite, y mayor que el de un portafolio aleatorio.
+
+### 7. Riesgos
+
+**Riesgo 1 (técnico, severidad Alta)**
+- Supuesto que rompe: que el retorno a 1 mes sea predecible; el modelo puede no superar al random walk fuera de muestra.
+- Evidencia que lo confirmaría o descartaría: validación en ventanas móviles hasta dic-2023, prueba desde ene-2024 y prueba Diebold-Mariano frente al random walk. Un estudio de 2026 con modelos fundacionales encontró mejoras pequeñas y rara vez significativas sobre el random walk.
+- Qué tan grave sería: alta; el proyecto se reorientaría a gestión de riesgo (control de volatilidad).
+
+**Riesgo 2 (negocio, severidad Alta)**
+- Supuesto que rompe: que el usuario prefiera el portafolio a un fondo indexado barato; en 2025, el 79% de los fondos activos rindió menos que el S&P 500 (SPIVA).
+- Evidencia que lo confirmaría o descartaría: comparar el Sharpe del portafolio, neto de costos, con el de un fondo indexado del S&P 500 (gastos de 0,03%) en el mismo periodo.
+- Qué tan grave sería: alta; si el modelo no aporta mejora, la recomendación honesta es el índice.
+
+Los riesgos de severidad Media (registros incompletos, sesgo de supervivencia, que el inversionista no siga las recomendaciones y costos de transacción) están en la sección 4 de la propuesta.
