@@ -1,0 +1,8 @@
+,vara
+MAE de B1 (menor es mejor),0.0641
+MAE de B2 (menor es mejor),0.0647
+MAE de B3 (menor es mejor),0.0652
+Sharpe neto de B3 (deriva por accion),0.5849
+Sharpe neto de B5 (mayor es mejor),0.5441
+Drawdown de B5 (referencia del error más costoso),-0.2929
+Sharpe neto mediano de B4 (azar),0.3443

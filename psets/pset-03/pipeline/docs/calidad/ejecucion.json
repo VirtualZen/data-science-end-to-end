@@ -1,0 +1,12 @@
+{
+  "inicio_utc": "2026-11-17T18:33:15.240522+00:00",
+  "fin_utc": "2026-11-17T18:33:43.313314+00:00",
+  "base": "PORTAFOLIO_P3",
+  "zona_sesion": "UTC (INGESTA_TS se almacena como UTC sin zona)",
+  "modo": "solo SELECT; no se escribe Snowflake",
+  "alcance": "RAW profundo; otras capas perfil descriptivo posterior",
+  "tablas": 22,
+  "columnas": 236,
+  "porcentaje": "100 * afectados / filas de tabla, salvo denominador expl\u00edcito de problemas_raw",
+  "advertencia": "RAW ya incluye extracci\u00f3n y tipado de ingesta; no es el archivo original sin procesar. Consultas secuenciales, no snapshot transaccional \u00fanico. Blancos/nulos no incluidos en inv\u00e1lidos. Precisi\u00f3n real no verificada contra proveedor independiente."
+}

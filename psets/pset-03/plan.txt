@@ -1,367 +1,509 @@
-# Traido desde la rama draft (psets/pset-02/plan.txt, version del 2026-11-15 con J10 e I4
-# cerrados). Las rutas psets/pset-02/analisis/ ahora estan en psets/pset-03/analisis/; las demas
-# rutas de pset-02 siguen vigentes. Las secciones K1-K10 son las del PSet 3.
+PLAN DEL PSET 3 (Allan Paul Gomez Ehmig, 00351916)
+Rama: work (clon local MSDS_6003/data-science-end-to-end-work). Carpeta: psets/pset-03/
+Fecha: 2026-11-17. Reemplaza al plan anterior traido de draft (secciones 0, A-J del PSet 2
+y K del PSet 3), que sigue en git: git show 86f5ed0:psets/pset-03/plan.txt
 
-PLAN DEL PSET 2 (Allan Paul Gomez Ehmig, 00351916)
-Ramas: draft (borrador de trabajo) -> proyecto (version limpia que se entrega; parte de master)
-Fecha: 2026-11-15 (actualizado 21:00 tras el trabajo con Codex en proyecto)
-Referencias: CD_PSet_2.pdf (guia que manda), CD_PSet_1.pdf, la version v2 del PSet 1 y
-PSet01/Feedback/FeedbackPSet01.rtf del 11-nov (ante contradicciones del PSet 1, manda lo
-ultimo de la carpeta Feedback). Ante contradiccion guia del profesor vs repo del curso,
-gana la estructura del PDF: psets/pset-02/{docker-compose.yml, .env.example, README.md,
-kestra/, dbt/, spark/, docs/}, no psets/proyecto/; constancia en disclaimer.txt.
+Estado: [x] hecho   [~] hecho en parte o sin evidencia   [ ] pendiente   [!] hallazgo a corregir
+Quien:  (C) Claude   (P) Paul (necesita su Mac, Docker, Snowflake o una decision)
 
-Estado: [x] hecho   [~] hecho en codigo, falta probar o completar   [ ] pendiente
-Quien:  (C) Claude en este entorno   (P) Paul, necesita su cuenta o su computador
+Objetivo: saber en que estado esta la copia del pipeline (pipeline/), corregirla si hace falta
+y recien entonces hacer los experimentos del PSet 3 sobre la OBT de PORTAFOLIO_P3.
 
-======================================================================================
-0. PREPARACION DESDE CERO (si se rehace el PSet 2 en una maquina o repo nuevos)
-======================================================================================
-[ ] 0.1 (P) Herramientas en la maquina: Git, Docker Desktop con Compose >= 2.24,
-        Python 3.12, Java 17 (solo para Spark local), openssl, editor (VS Code).
-[ ] 0.2 (P) Clonar VirtualZen/data-science-end-to-end y trabajar en la rama draft
-        (git switch draft). Nunca en master.
-[ ] 0.3 (C) Armar las carpetas de la guia (CD_PSet_2.pdf):
-          psets/pset-02/{kestra/{flows,scripts,sql},dbt/{models/{bronze,silver,gold,calidad},
-          macros,tests},spark/jobs,docs,scripts,analisis/listas,pruebas_locales}
-[ ] 0.4 (C) .gitignore antes del primer commit: .env, .env_encoded, secrets/, *.p8,
-        *.duckdb, dbt/target/, dbt/logs/, datos de prueba.
-[ ] 0.5 (C) Entorno de Python para analisis: venv + requirements (yfinance, pandas, duckdb,
-        pyarrow, statsmodels, pandas_market_calendars, dbt-duckdb, pyspark==3.5.3).
-        Hecho para analisis/ (analisis/requirements.txt).
-[ ] 0.6 (C) Dockerfiles, uno por imagen:
-          kestra/Dockerfile  -> pset2-ingesta (python:3.12-slim + requirements.txt + scripts/)
-          dbt/Dockerfile     -> pset2-dbt (python:3.12-slim + dbt-core + dbt-snowflake)
-          spark/Dockerfile   -> pset2-spark (apache/spark:3.5.3-python3 + conector Snowflake)
-        Construir cada uno por separado y probar: docker run --rm <imagen> python --version,
-        dbt --version, spark-submit --version.
-[ ] 0.7 (C) docker-compose.yml: postgres + kestra (imagen del curso v2.0.7), spark-master,
-        spark-worker; perfil "herramientas" para las tres imagenes; red pset2_red.
-[ ] 0.8 (C) .env.example con todas las variables (sin valores reales) y
-        scripts/preparar_env.sh para generar .env_encoded (secretos de Kestra).
-[ ] 0.9 (P) Cuenta de Snowflake (https://app.snowflake.com/ o prueba en
-        https://signup.snowflake.com/), par de llaves y snowflake_setup.sql.
-[ ] 0.10 (C) README con los pasos en orden; disclaimer.txt con las diferencias con
-        psets/pset-02/README.md; plan.txt (este archivo).
-[ ] 0.11 (C) Prueba de humo: docker compose config (valida el YAML), docker compose up -d,
-        Kestra en :8080, Spark en :8081, dbt debug contra Snowflake.
+Regla (Paul, 2026-11-17): todo cambio por cumplimiento del PSet 2, y todo cambio de esquema o
+columna nueva en la OBT que necesiten los modelos, se hace en psets/pset-03/pipeline/ de la rama
+work (nunca en psets/pset-02/ ni en otra rama), con su antes y despues en
+docs/migracion_pipeline.md y su prueba (dbt o spark/tests).
 
 ======================================================================================
-A. DATOS Y UNIVERSO (base de todo lo demas)
+REFERENCIAS (que manda en cada caso)
 ======================================================================================
-[x] A1 (C) Listas de acciones desde fuentes publicas (analisis/construir_listas.py):
-       S&P 500 actual (503), historico desde 2010 (797, fuente chinobing al dia), bolsa
-       actual de cada simbolo, comparacion (universo_comparado) y subconjunto nucleo (193:
-       en el S&P 500 hoy, miembro en todas las fotos desde 2010 y en la NYSE hoy).
-[x] A1b (C) Tabla de equivalencias de tickers con fecha de cambio
-       (analisis/equivalencias_tickers.py -> equivalencias_tickers): 38 cambios desde 2010,
-       13 verificados con fuente, 11 detectados en la composicion, 14 manuales por verificar;
-       5 falsos positivos marcados como huecos de la fuente (CEG, DOW, FOX, FOXA, IR).
-[ ] A1c (C) Verificar con fuente los 14 cambios "manual: verificar" (fecha oficial).
-[x] A2a (C) traer_yahoo.py con cache (cache_yahoo_precios + cache_yahoo_consultas): solo
-       pide lo que falta y los ultimos 10 dias; no reintenta SIN_DATOS por 30 dias.
-       Usa ticker_a_yahoo (equivalencias). Probado con un yfinance simulado.
-[ ] A2 (P) Correr analisis/traer_yahoo.py en tu computador (Yahoo esta bloqueado aqui):
-       primero --universo nucleo, despues el universo completo y --info.
-[x] A2b (C) fechas_y_faltantes.py: tablas fechas_accion (inicio y fin por accion),
-       huecos_accion, precios_imputados (cierre y apertura ajustados con 3 imputaciones:
-       lineal, lineal + puente browniano, Kalman) y evaluacion_imputacion. Probado en local.
-[x] A2c (C) series_y_arima.py: 7 series (niveles, diferencias de apertura y cierre,
-       intradia, nocturno, diferencia en USD), ADF/KPSS, ARIMA por accion y serie elegido
-       por AIC y por BIC; tablas estacionariedad, arima_candidatos, arima_modelos,
-       arima_coeficientes. Probado en local.
-[x] A2f (C) comparar_modelos.py: modelos del PSet 1 (rw_cero, rw_deriva, ARIMA AIC y BIC,
-       random forest, XGBoost, hibrido ARIMA+MLP) en el retorno del mes siguiente, con
-       validacion 2022-2023 y prueba desde 2024; RMSE, MAE, acierto direccional, R2 fuera de
-       muestra y Diebold-Mariano. Probado en local.
-[ ] A2g (C) Modelos B que faltan: LSTM (instalar PyTorch), Chronos, TimesFM y Moirai
-       (necesitan pesos de Hugging Face; correr en tu computador o en la USFQ).
-[ ] A2h (C) Elegir los ordenes ARIMA de la fase de validacion solo con datos hasta 2021
-       (hoy se eligen con datos hasta 2023: fuga leve en la validacion).
-[x] A2d (C) Revision de tecnicas: analisis/tecnicas_sesgo_y_faltantes.md.
-[ ] A2e (P+C) Correr A2b y A2c con los datos reales de Yahoo y revisar resultados.
-[ ] A3 (C) Analizar yahoo.duckdb: que simbolos del historico no tienen datos en Yahoo
-       (sesgo de supervivencia), huecos por ticker, primera y ultima fecha, bolsa segun
-       Yahoo (yahoo_info.exchange = NYQ) contra la lista de rreichel3.
-[ ] A4 (C) Resolver cambios de simbolo (ej. BK -> BNY): la composicion historica usa el
-       simbolo viejo y Yahoo el nuevo, la misma empresa aparece dos veces. Tabla de
-       equivalencias manual o desde la fuente; documentar en el memo.
-[ ] A5 (C+P) Decidir el universo final del PSet 2 con los resultados de A3:
-       a) universo historico completo filtrado a NYSE (lo que pide el PSet 1, evita el
-          sesgo de supervivencia, pero Yahoo no tiene las acciones que dejaron de cotizar);
-       b) subconjunto nucleo (193 acciones con historia completa; tiene sesgo de
-          supervivencia, se documenta como limitacion).
-       Recomendacion: pipeline con a), y b) como subconjunto para el MVP de 10 acciones.
-[ ] A6 (C) Reemplazar Nasdaq Trader por rreichel3/US-Stock-Symbols en la ingesta si
-       nasdaqtrader.com sigue sin responder (mismo dato, origen Nasdaq, en GitHub).
-[x] A7 (C) Cambiar la fuente historica de hanshof (termina 2025-08-23) a
-       chinobing/historical_sp500_constituents (al dia, 2026-11-14) en analisis/.
-[x] A7b (C) Fuente chinobing y listados rreichel3 tambien en la ingesta de Kestra
-       (extraer_cargar.py) y en la muestra local; diagrama actualizado.
-[x] A8 (C) Equivalencias en el pipeline: la ingesta pide a Yahoo el simbolo actual segun la
-       fecha de cada foto; dbt las carga como seed y la membresia sigue a la empresa (un
-       cambio de simbolo no corta el periodo); periodos separados por fotos sueltas
-       faltantes se unen (tolerancia 7 dias) y se cuentan en CALIDAD.
-[ ] A9 (C) Prueba de auditoria del sesgo de supervivencia: retorno igual-ponderado del
-       universo de hoy aplicado al pasado frente al universo point-in-time.
+- PSet 1 cerrado, version con feedback (manda ante contradicciones del PSet 1):
+    psets/pset-01/feedback/PSet1_memo_Gomez_Ehmig_v2.pdf (y su .docx), PSet1_memo_..._largo_v2.docx,
+    PSet1_pitch_Gomez_Ehmig_v2.pdf. Guia original: psets/pset-01/CD_PSet_1.pdf.
+- PSet 2 (entregado, tag pset-02; psets/pset-02/ no se modifica): psets/pset-02/CD_PSet_2.pdf.
+- PSet 3 (guia vigente): psets/pset-03/CD_PSet_3.pdf; rubrica del curso: psets/pset-03/rubrica.md.
+- Contradicciones con lo entregado: psets/pset-03/disclaimer.txt. Antes y despues de cada cambio:
+  docs/migracion_pipeline.md y docs/migracion_analisis.md.
+
+Lo que el PSet 1 (v2) fija para el PSet 3 y no se reabre:
+- Prediccion: retorno log a 1 mes (21 dias habiles) por accion y fecha de rebalanceo (cierre de mes).
+- Particion: entrenamiento y validacion con objetivos hasta dic-2023; prueba desde ene-2024.
+  Ninguna feature usa informacion posterior a la fecha de rebalanceo.
+- Metrica tecnica: RMSE/MAE frente al random walk y acierto direccional; prueba Diebold-Mariano.
+- Lineas base: random walk (retorno 0), portafolio aleatorio de igual peso, S&P 500 (^GSPC),
+  NYSE Composite (^NYA) y portafolio equal-weight del universo.
+- Modelos: A) ARIMA por accion, random forest o XGBoost con rezagos y volatilidad.
+  B) hibrido ARIMA + red (MLP/LSTM) y fundacionales en zero-shot (Chronos, TimesFM, Moirai).
+- Regla de decision: 10 acciones de mayor retorno predicho bajo el tope de volatilidad; pesos
+  inversos a la volatilidad; si la volatilidad del portafolio supera el tope, se reemplaza la mas
+  volatil. Solo compras, sin apalancamiento; rebalanceo mensual con umbral minimo de cambio.
+- Metrica de negocio: Sharpe anualizado (Rf = ^IRX) y drawdown maximo desde ene-2024, con
+  comisiones y spread; meta: Sharpe >= indices + 0,1 y mayor que el portafolio aleatorio.
+  Si no se cumple, la recomendacion honesta es el indice (riesgos 4 y 8).
+- Entregable "Modelo": notebook que compara A y B con las lineas base (RMSE/MAE, acierto
+  direccional, Diebold-Mariano). El backtest completo con costos es la etapa Monitoreo (PSet 4),
+  pero el PSet 3 ya exige calcular la metrica de negocio para elegir el ganador.
 
 ======================================================================================
-B. INFRAESTRUCTURA Y SNOWFLAKE (rubrica: 10%)
+1. AUDITORIA DEL PSET 2 EN pipeline/  (antes de tocar el PSet 3)
 ======================================================================================
-[ ] B1 (P) Crear o confirmar la cuenta de Snowflake (https://app.snowflake.com/).
-[ ] B2 (P) Generar el par de llaves y correr kestra/sql/snowflake_setup.sql (README, pasos 2-3).
-[~] B3 (P) docker compose build y up: Kestra, Postgres, Spark maestro y trabajador.
-       Verificar las imagenes apache/spark:3.5.3-python3 y las versiones del conector
-       (spark-snowflake 3.2.3, snowflake-jdbc 4.0.2).
-[x] B4 (C) .env.example, .gitignore, scripts/preparar_env.sh; sin credenciales en git.
-[x] B5 (C) Diagrama de arquitectura (docs/arquitectura.png).
-[ ] B6 (C) Actualizar el diagrama si cambian las fuentes (A6, A7).
+1.1 Estado por requisito de CD_PSet_2.pdf (evidencia actual de la corrida en PORTAFOLIO_P3)
+
+ Req. PDF (peso)              Evidencia en pipeline/                                   Estado
+ ---------------------------  -------------------------------------------------------  ------
+ 1 Arquitectura: compose con   docker-compose.yml: postgres, kestra v2.0.7, spark-      [x]
+   Kestra y Spark; diagrama    master/worker; imagenes pset3-*. Diagramas solo en
+                               pset-02/docs (arquitectura, C4, modelo dimensional).      [~] H2
+ 2 Ingesta Kestra (15%):       ingesta_diaria (cron 18:30 NY L-V, backfill automatico),  [x]
+   trigger, retries, backfill  retry exponencial x4, errors -> registrar_falla,
+   sin intervencion; RAW       backfill_historico; RAW append-only con LOTE_ID.
+                               Corridas: backfill 3pBXt3em y transformar 3BqxttMw (16-nov),
+                               ingesta manual 7SXMpaCi y 6ZVfwqea (17-nov) en SUCCESS.
+                               Trigger programado: fallo 1LkyGFQk (fecha), corregido;     [~] V2.4
+                               falta ver un SUCCESS lanzado por el propio cron.
+ 3 Calidad (20%): completitud, dq_metricas (22 filas), 12 tests singulares y tests      [~] H3
+   precision, consistencia,    genericos (not_null, unique, relationships); en el PSet 2:
+   validez; problema/evidencia 82 tests (dbt parse) y PASS=97 WARN=1 (transformar 4OsR2Nj3).
+   /accion/justificacion       Bronze cumple el rol de "Staging" que pide la guia (E3).
+                               El informe por columna y el diagnostico MAD (docs/calidad)
+                               existen solo para PORTAFOLIO (pset-02); no se regeneraron
+                               en P3. Outliers: MAD > 3,5 solo en el diagnostico; en
+                               Silver/OBT, marca fija de 40% (hubo_retorno_extremo_mes).
+ 4 Star schema dbt (15%):      Gold: fct_precios_diarios (accion x dia), fct_mercado_     [x]
+   grano, dims, source/ref,    diario, dim_accion, dim_fecha, dim_membresia_sp500;
+   not_null/unique/relationships source() en bronze, ref() en el resto.
+ 5 Spark OBT (15%): grano,     OBT accion x mes cerrado: 87.178 filas = claves distintas; [x]
+   joins sin duplicados,       13/13 controles (validacion_obt.csv); 6 pruebas en Docker.
+   escrita en Snowflake        Mercado "mes siguiente" usa el mes abierto.                [!] H1
+ 6 Batch vs streaming          Argumentado en el memo del PSet 2 (no cambia).             [x]
+ Repo/README (10%)             pipeline/README.md, .env.example, sin credenciales.        [x]
+ Promesas del PSet 1 para la   % de huecos por ticker y universo de cada fecha frente a   [~] H10
+ etapa Datos                   la composicion historica: verificar donde quedan en P3.
+                               Diccionario de datos: solo pset-02/docs/diccionario_datos.md.
+ Ingesta sin intervencion      Primera carga automatica si RAW esta vacia (H12).          [x] H12
+
+1.2 Hallazgos (H) y correccion propuesta
+[x] H1 (C) Spark (17-nov: codigo, prueba y OBT reconstruida; transformar 3iFjuQmq, 14/14 controles): ret_log_sp500_mes_siguiente, ret_log_nyse_composite_mes_siguiente y
+       rf_mes_siguiente del ultimo mes cerrado (hoy 202610, 517 filas) se calculan con el mes
+       en curso (noviembre incompleto) y cambian con cada ingesta. El objetivo de la accion si
+       queda nulo. Correccion: en construir_obt.py, calcular mercado_mes solo con meses
+       cerrados (mes_cerrado de dim_fecha) antes del lead(); nueva prueba en
+       spark/tests; regenerar la OBT y el snapshot. Antes y despues en migracion_pipeline.md.
+[x] H2 (C) (17-nov: pipeline/docs con arquitectura, modelo dimensional y C4 actualizados: avisos,
+       Gmail, reconstruir_obt.sh, CALIDAD nueva; C4 validado con el CLI de Structurizr) Diagramas: decidir si pset-03 enlaza los de pset-02/docs o se regeneran con los
+       nombres de la copia (PORTAFOLIO_P3, pset3-*). Propuesta: enlazar y anotar diferencias
+       (no cambian la arquitectura).
+[x] H3 (P+C) (17-nov, ver V3.4) Calidad en P3: correr scripts/diagnosticar_calidad.py y
+       scripts/generar_informe_calidad.py contra PORTAFOLIO_P3 y comparar con pset-02/docs/calidad
+       (RAW de P3 tiene una sola carga: deben cambiar los conteos de RAW, no Bronze en adelante).
+[x] H4 (C) (17-nov: EQR->VMRK y PSKY->SKYD verificados con fuentes publicas; el resto son
+       cambios de nombre o fusiones conocidas; pipeline/docs/limitaciones.md; ver H16) Equivalencias de tickers: 14 cambios "manual: verificar" sin fuente (A1c del plan
+       anterior). Verificar con fuente o documentar como limitacion.
+[x] H5 (C) (17-nov: documentado en pipeline/docs/limitaciones.md) Huecos por anos sin datos: la ingesta historica baja por ano solo a los miembros del
+       indice; Silver deja nulo el retorno al reanudar (despues_de_tramo_excluido). Medir cuantas
+       filas de la OBT afecta y llevarlo al EDA.
+[x] H6 (C) (17-nov: documentado en pipeline/docs/limitaciones.md) Precios ajustados de Yahoo cambian levemente entre descargas (hasta 5e-4 USD;
+       retornos hasta 1,6e-6; comparado PORTAFOLIO vs PORTAFOLIO_P3 el 17-nov). Documentar que la
+       OBT no es bit a bit reproducible y que el snapshot con sha256 es la referencia del PSet 3.
+[x] H7 (C) (17-nov: documentado en pipeline/docs/limitaciones.md) Imagen de Spark con Python 3.8 (apache/spark:3.5.3-python3), no 3.11 como el resto.
+       Documentar; no cambiar la version de Spark.
+[x] H8 (P) (17-nov, ver V2.1) Evidencia de dbt en P3: guardar run_results.json y sources.json (freshness) de la
+       corrida en pipeline/docs/corrida/, como en pset-02.
+[x] H9 Fecha del trigger de ingesta_diaria corregida solo en la copia (disclaimer.txt, item 3).
+[x] H10 (C) (17-nov: dq_huecos_por_ticker y dq_universo_por_fecha en P3, transformar
+       60BmPag3; docs/corrida/huecos_por_ticker.csv y universo_por_mes.csv; cuadran con
+       dq_metricas: 12,757% de dias como miembro sin precio) Promesas del PSet 1 (etapa Datos): ubicar o construir el % de huecos por ticker y la
+       comparacion del universo por fecha con la composicion historica (tabla o consulta en
+       CALIDAD); si ya existen en dq_metricas, citarlas. En analisis/datos/fechas_y_faltantes.py
+       existe la logica (tabla fechas_accion) como referencia (D2 del plan anterior).
+[~] H11 (C) (17-nov, cuantificado: 160 de 768 simbolos de la composicion (20,8%) sin ningun
+       precio en Yahoo, repartidos en todos los anios de salida; cobertura del universo con
+       precio 75,6% en 2010 -> 99,2% en 2026. Falta la prueba de auditoria A9 en el EDA, 3.1) Sesgo de supervivencia: la ingesta de P3 dejo 166 simbolos con SIN_DATOS (Yahoo no
+       tiene muchas acciones que dejaron de cotizar; ingesta_resumen.csv). Medir que parte del
+       universo historico falta por ano y llevarlo al EDA y a limitaciones. Prueba de auditoria
+       (A9 del plan anterior): retorno igual ponderado del universo de hoy aplicado al pasado
+       frente al universo point-in-time.
+[x] H12 (C) (17-nov, opcion 1 elegida por Paul: ingesta_diaria hace el historico si RAW esta
+       vacia; 4 pruebas en kestra/tests) "La ingesta debe poder realizarse sin intervencion manual" (CD_PSet_2): hoy la
+       primera carga se lanza a mano. Opcion (C3 del plan anterior): que ingesta_diaria lance
+       backfill_historico si RAW esta vacio, o documentarlo como paso unico de instalacion.
+[x] H13 (C) (17-nov: spark/tests, 8 pruebas; detecta una ventana que mira un dia adelante) Prueba de no fuga en la OBT (F4 del plan anterior): ninguna columna de features usa
+       datos posteriores al cierre de mes; hoy se cubre con la lista de columnas excluidas en
+       src/pipeline.py, sin un test explicito sobre la OBT.
+[~] H15 (C) Barra del dia en curso (codigo y pruebas hechos 17-nov; aplica a la proxima ingesta): las ingestas manuales del 17-nov (7SXMpaCi a las 11:33 y
+       6ZVfwqea a las 12:34 de Nueva York) bajaron la fila del 2026-11-17 con el mercado
+       abierto: precio parcial guardado como si fuera el cierre. Evidencia (consulta en RAW,
+       17-nov): ~470 simbolos (incluye ^GSPC y ^NYA) con 1 sola fecha revisada, 2026-11-17,
+       cambio de hasta 0,8% y factor adj_close/close sin cambio (descarta la hipotesis de
+       dividendos). Se corrige solo cuando corre la ingesta de las 18:30 (Bronze se queda con
+       la carga mas reciente), pero si el ultimo dia de un mes se ingesta intradia y luego
+       corre transformar, el cierre del mes en la OBT queda con un precio parcial.
+       Correccion: en extraer_cargar.py no guardar la sesion de hoy si en Nueva York aun no
+       pasa el cierre (16:00 + margen); prueba en kestra/tests; nota en el README.
+[x] H16 (C+P) (17-nov, decision de Paul: se mantienen y se documentan en
+       pipeline/docs/limitaciones.md) Fusiones tratadas como cambio de simbolo: EQR->VMRK usa la serie de VMRK (desde
+       2010) para toda la membresia de EQR mientras AVB queda con 1 dia con precio; BMS->AMCR da
+       a Bemis 2010-2014 precios de Amcor (AMCR 19% de huecos). Decidir: quitar esas
+       equivalencias (salida del indice) o mantenerlas documentadas (pipeline/docs/limitaciones.md).
+[ ] H17 (C+P) (17-nov, encontrado por Q1 en la muestra; confirmar en Snowflake) La fuente de composicion trae
+        el simbolo "RVTY (Previously PKI)": Bronze solo lo pasa a mayusculas y llega a Silver y Gold como una
+        accion mas ("RVTY (PREVIOUSLY PKI)", sin precios), y esos dias RVTY no cuenta como miembro. Propuesta:
+        en brz_composicion_sp500 quitar el sufijo "(PREVIOUSLY ...)" antes de las equivalencias, con prueba dbt
+        (simbolo sin espacios ni minusculas) y antes/despues en migracion_pipeline.md. Decide Paul.
+[x] H18 (C+P) (18-nov, aprobado por Paul: condicion_elegible() en construir_obt.py exige volumen_prom_21d > 0;
+        prueba test_elegible_exige_volumen_positivo, 14 pruebas OK; corrida 3XOei8TFYGlqjjYCTo9eFI SUCCESS,
+        17/17 controles, 58.627 elegibles (antes 58.628); snapshot c3568917..., entrenamiento 46.925)
+        (17-nov, encontrado por el EDA) AMCR 2014-08 es elegible con vol_21d = 0 y volumen 0 (precio plano:
+        relleno de Yahoo antes de cotizar). Propuesta: elegible exige volumen_prom_21d > 0 en construir_obt.py, con
+        prueba y antes/despues en migracion_pipeline.md. Decide Paul (1 fila de 46.926 en entrenamiento).
+[~] H19 (C+P) (18-nov, decidido por Paul: BMS y AMCR fuera en src/pipeline.py EXCLUIDAS, 109 filas elegibles;
+        huecos intermedios por interpolacion lineal por accion a cada lado del corte (interpolar_huecos en dividir),
+        inicio/final con mediana del Pipeline; 2 pruebas nuevas, 18 OK; entrenamiento 46.851, hold-out 11.326, 0 nulos.
+        Pendiente opcional: corregir la semilla en el pipeline)
+        (18-nov, encontrado por el EDA 01_eda secc. 2) La semilla equivalencias_tickers mapea BMS -> AMCR
+        (2019-06-07). Amcor compro Bemis: es una adquisicion, no un cambio de simbolo. AMCR 2012-2014 queda en el
+        S&P 500 con barras de solo cierre (rango maximo-minimo 0, volumen medio ~40-300): 9 filas de entrenamiento
+        con cambio_rango_log_hl_21_63 nulo (division 0/0) y 20 elegibles dudosas. Propuesta: quitar la fila BMS
+        de la semilla (Bemis queda como accion propia hasta 2019-06) o fijar fecha_desde 2019-06-11, con prueba dbt
+        y antes/despues en migracion_pipeline.md. Decide Paul.
+[x] H14 (C) (17-nov: pipeline/docs/diccionario_datos.md con CALIDAD nueva y H1) Diccionario de datos de Gold y OBT para P3 (E5 del plan anterior): enlazar
+       pset-02/docs/diccionario_datos.md y anotar cambios (H1) si los hay.
+
+1.3 Pasos para verificar el pipeline (en este orden; nunca con MLflow levantado)
+    Desde psets/pset-03/pipeline/ salvo que se indique.
+[x] V1.1 (P) bash scripts/preparar_env.sh (9 secretos) y .env con SNOWFLAKE_DATABASE=PORTAFOLIO_P3.
+[x] V1.2 (C) git grep de secretos y check-ignore de .env, .env_encoded, secrets/ antes de cada commit.
+        (17-nov, antes del commit "updates pset-03": 72 archivos revisados, sin cuenta, llave ni correo
+        personal; .env ignorado. Repetir antes de cada commit.)
+[x] V1.3 (P) docker compose --profile pruebas run --rm --build spark-pruebas  -> 6 passed (17-nov).
+[x] V1.4 (P) (17-nov, probar_ingesta_y_reintentos.sh: 11 passed) uv sync --group dev && uv run pytest kestra/tests -> pruebas de la ingesta.
+[x] V1.5 (P) docker compose --profile herramientas build (capas en cache) y docker compose up -d.
+[x] V1.6 (P) bash kestra/subir_flows.sh -> 4 flows (incluye usfq.avisos.avisos).
+[x] V2.1 (P) dbt a mano con evidencia (17-nov): PASS=97 WARN=1 ERROR=0 (98 nodos); el WARN es
+        assert_cobertura_sp500_por_dia = 1615, igual que en el PSet 2 (fotos de composicion
+        incompletas de la fuente). Freshness: 4 fuentes PASS. run_results.json y sources.json
+        en docs/corrida/. Comandos:
+        docker compose --profile herramientas run --rm dbt dbt build --target snowflake
+        docker compose --profile herramientas run --rm dbt dbt source freshness --target snowflake
+        copiar dbt/target/run_results.json y sources.json a docs/corrida/ (H8).
+[x] V2.2 (P) Backfill completo y transformar en SUCCESS (16-nov).
+[x] V2.3 (P) Ingesta manual sin input fecha en SUCCESS + correo "Success" (17-nov).
+[x] V2.4 (P) (17-nov, probar_ingesta_y_reintentos.sh, docs/corrida/kestra_pruebas.json): manual
+        482URcBmyMR6eY6IkmcLZZ SUCCESS (7 min 20 s) y cron de las 18:30 NY 7VmVq3bzxGjGt1vMwAodMz
+        SUCCESS (system.from = trigger, 7 min 10 s). Correos Success: confirmar Paul.
+[x] V2.5 (P) (17-nov) 4lCj0sgIhG5OyAIkz1PoBr con simular_falla: extraer_cargar_raw FAILED tras 4
+        intentos (14 min), registrar_falla SUCCESS, ejecucion FAILED. Correo Fail: confirmar Paul.
+[x] V3.1 (P) uv run python scripts/verificar_snowflake.py -> 13/13 controles (17-nov).
+[x] V3.2 (P) uv run python scripts/exportar_metricas.py -> docs/corrida/*.csv (17-nov).
+[x] V3.3 (P) (17-nov) grano y joins OK en todas las capas; DAG sin ciclos; 439 de 1130
+        acciones con bolsa_desconocida (llevar al EDA, H11). uv run python scripts/auditar_obt.py, scripts/auditar_capas_modelo.py (grano por capa)
+        y scripts/verificar_kestra.py (estados de las ejecuciones) -> docs/corrida/.
+[x] V3.4 (P) (17-nov) 22 tablas, 236 columnas en PORTAFOLIO_P3. Igual al PSet 2 salvo RAW
+        (una carga) y revisiones de cierre ajustado (H15). Top 30 MAD: mismos eventos.
+        uv run python scripts/diagnosticar_calidad.py && uv run python
+        scripts/generar_informe_calidad.py (H3); comparar con pset-02/docs/calidad.
+[ ] V3.5 (C) Comparar conteos P3 vs PSet 2: Bronze en adelante iguales salvo los dias nuevos;
+        RAW distinto (una carga vs dos). Documentar en migracion_pipeline.md.
+[x] V3.6 (C) (17-nov, tras F1: transformar 3bCTRKESZAhdNt1G86o1Co SUCCESS en 6 min 44 s; 17/17 controles;
+        OBT_ACCION_MES 87.178 filas, 58.628 elegibles, 75 columnas; OBT_ACCION_DIA 1.832.433 filas = Gold,
+        33 columnas; dbt PASS=112 WARN=1) (17-nov, scripts/reconstruir_obt.sh) Corregir H1, repetir V1.3 (pruebas Spark), V2.1 (transformar) y V3.1-V3.2.
+[x] V3.7 (P) (18-nov, tras H18: snapshot c3568917...; 17-nov, tras F1) snapshot sha256 37dac0ce..., 87.178 filas, H1 OK (antes: 7ba7ba6a..., sin F1). docker compose down (sin -v) y snapshot: cd .. && uv run python -m src.datos
+        (tabla PORTAFOLIO_P3.OBT.OBT_ACCION_MES; anotar sha256 en el memo).
+[x] V3.8 (C+P) (17-nov) Recursos de Spark, con antes y despues en docs/migracion_pipeline.md:
+        - OOM de F1 (UNABLE_TO_ACQUIRE_MEMORY): poda de columnas y ejecutor 2g -> 5g, driver 1g -> 2g.
+        - Worker registrado con 2 GB aunque .env decia 6g (contenedor no recreado): 50 min en
+          "Initial job has not accepted any resources"; se arreglo con --force-recreate.
+        - 4 nucleos (Docker tiene 16 CPU y 15,6 GB): worker 4 nucleos/8g, ejecutor 7g, 32 particiones
+          de shuffle, AQE. Hasta el ultimo control de OBT_ACCION_DIA: 4 min 08 s (1 nucleo: 5 min 32 s).
+        - WARN "No Partition Defined" del mercado mensual: Window.partitionBy(F.lit(1)); 13 pruebas OK.
+        - No usar Kill en Kestra por el aviso "sobre lo habitual" (la mediana es de la OBT sin F1).
 
 ======================================================================================
-C. INGESTA CON KESTRA (rubrica: 15%)
+2. VALIDAR analisis/  (antecedentes; no es la ruta activa del PSet 3)
 ======================================================================================
-[~] C1 (C) Flows ingesta_diaria, backfill_historico y transformar: trigger L-V 18:30 NY,
-       retry exponencial, errores, recoverMissedSchedules, backfill por anio.
-[ ] C2 (P) Subir los flows (kestra/subir_flows.sh), correr el backfill y una ingesta diaria;
-       guardar capturas de Kestra (ejecuciones, reintentos, backfill) para el memo.
-[ ] C3 (C) Ingesta sin intervencion manual tambien en la primera carga: que ingesta_diaria
-       lance el backfill si RAW esta vacio, o documentar que se corre una sola vez.
-[x] C4 (C) El universo de la ingesta sale de la composicion historica al dia + equivalencias.
+[x] 2.1 Separado en analisis/datos/ y analisis/modelos/ con analisis/README.md (17-nov).
+[x] 2.2 (C) (17-nov: compilan; los 4 con argparse responden --help; construir_listas y
+        equivalencias_tickers corren al ejecutarse, sin --help) uv sync --group analisis; py_compile y --help de los 6 scripts (desde psets/pset-03/).
+[x] 2.3 (C) (17-nov: semilla de dbt = kestra/scripts (38 filas); las 38 coinciden con
+        analisis/datos/listas en ticker_yahoo; listas tiene 5 filas mas, 'no es cambio: hueco de la
+        fuente', que no van a la semilla) La semilla del pipeline sale de analisis/datos/equivalencias_tickers.py: comparar
+        analisis/datos/listas/equivalencias_tickers.csv con pipeline/dbt/seeds y
+        pipeline/kestra/scripts (columnas de la semilla) y anotar diferencias.
+[x] 2.4 (C) (17-nov: listas 797 simbolos, P3 768; las 29 diferencias son simbolos viejos
+        traducidos por la semilla, mas 'RVTY (PREVIOUSLY PKI)', un error de la fuente en una foto;
+        FBIN solo en P3 por FBHS->FBIN. Hallazgo H16) Comparar el universo de analisis/datos/listas (sp500_historico, universo_comparado)
+        con GOLD.DIM_MEMBRESIA_SP500 y DIM_ACCION de P3: acciones que faltan o sobran (H10).
+[ ] 2.5 (P) Opcional: correr analisis/modelos/series_y_arima.py y comparar_modelos.py sobre
+        analisis/datos/yahoo.duckdb para tener numeros de referencia (RW vs ARIMA vs XGBoost).
+        Tiene fuga leve conocida (ordenes ARIMA elegidos con datos hasta 2023; A2h). Solo
+        referencia: no se reporta como resultado del PSet 3.
+[x] 2.6 (C) (17-nov: se rescata diebold_mariano() con correccion HLN y metricas() de
+        analisis/modelos/comparar_modelos.py para 3.8, y su lista de familias para 3.6) Decidir que se rescata para src/: lista de familias, hiperparametros razonables y
+        la implementacion de Diebold-Mariano de comparar_modelos.py.
 
 ======================================================================================
-D. CALIDAD Y LIMPIEZA (rubrica: 20%, el criterio con mas peso)
+3. PSET 3 (CD_PSet_3.pdf) SOBRE LA OBT DE PORTAFOLIO_P3
 ======================================================================================
-[x] D1 (C) dq_metricas: completitud, precision, consistencia y validez por capa.
-[~] D2 (C) Metricas del PSet 1: dias imputados, dias excluidos por hueco largo y acciones
-       afectadas ya estan en dq_metricas; falta el detalle POR TICKER (en analisis/ existe:
-       fechas_accion) como tabla de CALIDAD en dbt.
-[~] D3 (C) Limpieza alineada con el PSet 1:
-       [x] calendario NYSE con pandas_market_calendars (seed calendario_nyse) + test de
-           que cubre los dias con cierre del S&P 500;
-       [x] huecos de hasta 5 dias imputados (interpolacion lineal del log-precio, el metodo
-           ganador en la evaluacion) y tramos largos excluidos, con marca imputado y
-           despues_de_tramo_excluido; la volatilidad de la OBT ignora dias imputados;
-       [ ] outliers con MAD/z-score (hoy umbral fijo 40%): decidir si se cambia.
-[ ] D5 (C) Confirmar con datos reales la regla de imputacion: lineal o Kalman para niveles
-       (menor error) y lineal + ruido para volatilidad (no la aplana); llevarla a dbt (Silver).
-[ ] D4 (C) Tabla Problema | Evidencia | Accion | Justificacion con metricas reales (despues
-       de C2 o A2). Hallazgos ya medidos con datos reales de la composicion:
-       48,9% de las fotos desde 2010 con menos de 495 acciones (minimo 444);
-       BRK y BF en dos formatos (punto y guion); fuente termina en ago-2025.
+Ya existe (rama work): src/datos.py (snapshot con sha256), src/pipeline.py (Pipeline +
+ColumnTransformer, probado), src/experimentos.py (2 bases y 4 familias), notebooks 01-05
+(01-02 ejecutados con el snapshot de PORTAFOLIO), MLflow en docker-compose.yml (SQLite +
+artefactos en mlflow/), verificacion de entorno (docs/verificacion/). Ver docs/pendientes_entrega.md.
+
+3.1 EDA (15% junto con features) - notebooks/01_eda.ipynb
+[x] (C+P) (18-nov: Paul lo corrio en la Mac) (18-nov: notebooks/01_eda.ipynb con el snapshot c3568917, 27 celdas: 6b covarianza de la OBT,
+        6c covarianza de las variables normalizadas (= Pearson), detalle de nulos y motivo de la mediana frente a
+        interpolar; 9 figuras. 17-nov: rehecho contra CD_PSet_3.pdf; falta que Paul lo corra en la Mac)
+        Re-ejecutar con el snapshot de P3: tamano, tipos, faltantes por columna, descriptivos,
+        distribucion del target (ret_log_mes_siguiente), IQR (boxplot), Z-score >= 3,
+        Spearman (justificar frente a Pearson: colas gruesas) con el target.
+[x] (C) (18-nov: docs/hallazgos_eda.csv generado en la Mac) (17-nov: 7 hallazgos calculados en el notebook: colas del target (curtosis 9,6), el mes explica el 34,5 %
+        de la varianza, IC dentro del mes debil (max 0,020, ninguna |t| >= 2), 24 pares |rho| > 0,9, escala de
+        riesgo 2,8x, faltantes casi nulos, fila AMCR 2014-08 plana y sin volumen; apoyan W3: MAE + IC)
+        3 o mas hallazgos con evidencia y consecuencia (docs/hallazgos_eda.csv), por ejemplo:
+        colas gruesas del target -> MAE como metrica principal y modelos robustos;
+        filas con huecos o tramo excluido (H5) -> imputacion dentro del Pipeline;
+        columnas de mercado del mes siguiente (H1) y sigue_en_sp500 -> excluir por fuga.
+[x] Q1 (C+P) (17-nov: Paul lo corrio contra Snowflake: 92 consultas, 37,6 s, CSV en docs/calidad/analisis_pipeline/) (17-nov: notebook hecho y probado completo con la muestra DuckDB; falta que Paul lo corra
+        contra Snowflake: MOTOR=snowflake, Restart + Run All; guarda CSV en docs/calidad/analisis_pipeline/)
+        (pedido de Paul 17-nov) pipeline/docs/calidad/analisis_calidad_pipeline.ipynb con todos los
+        resultados: por columna y capa (RAW, BRONZE, SILVER, GOLD, CALIDAD, OBT_ACCION_MES y
+        OBT_ACCION_DIA) % de faltantes, % de invalidos por regla de dominio y % de imputados; informe de
+        las operaciones de cada nivel; estilo de MSDS_6010 Proyecto.ipynb. Solo SELECT; probar con DuckDB.
+3.2 Features - notebooks/02_features.ipynb
+[x] F1 (C+P) (17-nov, src/pipeline.py y src/datos.py actualizados: 35 predictores, OBT diaria con --grano dia; 16 pruebas OK) (17-nov: Paul pidio todas, en % y log, con OHLCV y diferencias aritmeticas, % y log.
+        Hecho en Silver, Gold, OBT_ACCION_MES (75 col.) y OBT_ACCION_DIA nueva; probado en DuckDB, Spark
+        local y en Snowflake (V3.6, commit "updates pset-03"); src/pipeline.py y src/datos.py ya actualizados
+        con las columnas nuevas y la OBT diaria; docs/series_de_tiempo.md) Columnas de los modelos:
+        intradia del mes (cierre vs apertura), nocturno del mes, rango maximo-minimo (Parkinson),
+        rezagos del retorno mensual (1-3 meses), exceso sobre el S&P 500, beta 252d, volumen
+        relativo. Las que vayan a la OBT se agregan en pipeline/spark con antes y despues en
+        docs/migracion_pipeline.md y su prueba; las que dependen del pliegue (residuo y
+        coeficientes ARIMA) se calculan en src/, nunca en la OBT.
+[x] (C+P) (18-nov: corrido en la Mac con semillas 42-44) (18-nov: notebooks/02_features.ipynb rehecho, probado completo)
+        Derivadas: dispersion_mes (desviacion de ret_log_mes entre elegibles del mes, H-EDA 2) y mes calendario
+        del objetivo en one-hot (11 columnas, enero referencia). src/pipeline.py: derivar(), FEATURES = 45,
+        FEATURES_LINEALES (sin 4 REDUNDANTES, rango completo), DESCARTADAS; tabulares.py: DE_MERCADO incluye las
+        derivadas; 21 pruebas OK. Ablacion walk-forward 7 ventanas (Ridge y LightGBM x 3 semillas) en
+        docs/ablacion_features.csv (semillas 42-44, 18-nov): dispersion baja el MAE en ambos (no significativo),
+        mes calendario t -2,0 en LightGBM, juntas mejoran 7/7 anios en LightGBM; vol_relativa, momentum_por_riesgo,
+        ret_idiosincratico y regimen_vol no bajan el MAE (en LightGBM lo suben, t +1,0 a +1,5). Pruebas de disponibilidad: alterar
+        t+1 no cambia las derivadas; dispersion se calcula antes de filtrar por objetivo.
+        Al menos 2 derivadas, una ligada a un hallazgo; por cada una: evidencia de aporte (ablacion en CV), por que
+        existe al cierre de mes (inferencia) y codificacion si es categorica.
+[ ] F2 (C) Distancia a medias moviles en Spark (log y %): ln(P/SMA_w), P/SMA_w - 1 y lo mismo con
+        EMA, w = 21, 63, 200; con prueba y antes/despues (docs/diseno_experimental.md, sec. 2).
+[ ] F3 (C) ADF y KPSS por accion con la primera ventana de entrenamiento (EDA): ln P con raiz
+        unitaria; retornos y cocientes estacionarios; variable que falle en > 20% se transforma.
+3.3 Preparacion y validacion (15%) - src/validacion.py, src/modelos/tabulares.py
+    Diseno completo en docs/diseno_experimental.md (17-nov): auditoria de fuga, walk-forward,
+    Optuna, ensamble, presupuesto M4/Colab y estructura de src/ (16 pruebas en tests/).
+[x] W1 (C) (18-nov: unificado en src/pipeline.py pliegues() = TimeSeriesSplit(7, test_size=12 meses, gap=1)
+        sobre meses; mismos 84 meses de validacion que el walk-forward; validacion.py queda para ventanas a medida)
+        (17-nov: src/validacion.py probado) Walk-forward anual expansivo 2017-2023 (7 ventanas,
+        84 meses) con embargo de 1 mes; tuning en 2021-2023; hold-out desde 2024-01 una vez.
+        Reemplaza a pliegues() de src/pipeline.py (TimeSeriesSplit) al migrar los notebooks.
+[x] W2 (C) (18-nov: tabulares.py reutiliza preparacion() de src/pipeline.py) (17-nov: probado) Pipeline: rango transversal, imputar,
+        escalar, SelectKBest (filtro) y modelo; FEATURES_F1 en logaritmo.
+[x] W3 (C+P) (18-nov, decision de Paul con la evidencia del EDA: MAE es la metrica tecnica unica; el IC de
+        Spearman por mes se reporta siempre para el ranking; ver docs/diseno_experimental.md)
+        Decidir metrica principal: IC de Spearman (propuesta, ranking) o MAE; RMSE/MAE y
+        Diebold-Mariano frente al RW se reportan siempre (src/evaluacion.py, probado).
+[x] (C) (18-nov, notebooks/03_preparacion_validacion.ipynb secc. 1: 46.851 / 11.326 filas; las 332 de 2023-12
+        van al hold-out con objetivo_cruza_corte) Division unica: objetivos hasta 2023-12 entrenamiento; desde 2024-01 hold-out.
+        Revisar el mes que cruza el corte (objetivo_cruza_corte) para que no se filtre.
+[x] (C) (18-nov, 03_preparacion_validacion secc. 3: KFold aleatorio y GroupKFold por accion dan MAE 27 % mas
+        optimista; TimeSeriesSplit sobre filas corta meses) CV temporal por mes (TimeSeriesSplit por meses con purga de 1 mes); justificar frente a
+        GroupKFold por accion y frente a aleatorio.
+[~] (C+P) (18-nov: validar() devuelve MAE (decide) y RMSE, MSE, MedAE, error maximo, R2, varianza explicada,
+        R2 contra RW y acierto direccional (PUNTAJES, metricas_regresion, resumir_cv); experimentos.py registra
+        todas en MLflow; 03_preparacion_validacion secc. 4.2 define la metrica de negocio paso a paso con un
+        ejemplo de 4 acciones; tabla de fechas de corte en docs/cortes_cv.csv; README documenta chmod 644.
+        metrica_negocio() en src/negocio.py con REGLA top 10 1/vol_63d, 10 pb, sin tope.
+        DECIDIDO por Paul (18-nov): tope relativo por accion (sin el 20 % mas volatil del mes, percentil 80
+        de vol_63d), tope de portafolio 1,35 x vol del S&P 500 (covarianza de 63 dias de OBT_ACCION_DIA; si se
+        pasa, la fraccion sobrante queda en efectivo a rf), costo 15 pb por US$ operado; todo en US$.
+        Implementado en src/negocio.py (REGLA, RiesgoDiario) con 2 pruebas en tests/test_diseno.py.
+        FALTA: exportar data/obt_dia.parquet (uv run python -m src.datos --grano dia) para activar el tope
+        de portafolio en el notebook 03; sin ese archivo solo se aplica el tope relativo.
+        Pendiente de la propuesta del PSet 1: umbral minimo de cambio de ponderaciones para operar)
+        Metricas: tecnica unica para todos (propuesta: MAE, con RMSE y acierto direccional
+        como secundarias, segun PSet 1); negocio: Sharpe neto de costos y drawdown del
+        portafolio de la regla del PSet 1 (top 10, pesos 1/vol, tope de volatilidad) frente al
+        random walk, al portafolio aleatorio y a los indices. Decidir tope de volatilidad, costos
+        y la ventana de volatilidad para los pesos (vol_21d o vol_63d; F5 del plan anterior).
+3.4 MLflow (20%) - docker-compose.yml de pset-03
+[~] (C+P) (18-nov: src/experimentos.py reescrito: CATALOGO con familia y modelo (tags separados), semilla 42
+        (src/entorno.py), metricas de validar() + IC por mes + metrica de negocio por corrida, SHA-256 de la OBT
+        mensual y diaria, predicciones fuera de muestra como artefacto, log_model con tipos skops confiables,
+        --verificar <run_id> recarga en proceso nuevo (probado en la nube: recarga_ok, diferencia 0).
+        docker-compose usa "portafolio-inversiones". Primera corrida en la Mac (18-nov): M3_lightgbm, run
+        636a13c62e0c4adab6dece4ffb2689e8, git_dirty False, MAE CV 0,0651, IC 0,024, Sharpe neto 0,31;
+        --verificar: recarga_ok, diferencia 0. FALTA: corridas de lineas base y candidatos, y la captura)
+[x] (C) (18-nov: cumplido por src/experimentos.py; corrida 636a13c6 en la Mac) Experimento "portafolio-inversiones". Cada corrida: parametros y semilla; datos (tabla,
+        fecha del snapshot, sha256); metricas train, CV media y desviacion, segundos; tags (fase,
+        familia, commit); artefacto mlflow.sklearn.log_model con firma y ejemplo de entrada.
+[x] (C) (18-nov: regla en CLAUDE.md y en los comandos: docker ps sin Kestra/Spark y /health) No levantar MLflow con Kestra/Spark (OOM previo). Copiar mlflow/ de la carpeta
+        proyecto si se quieren conservar las 4 corridas de verificacion del 16-nov.
+3.5 Lineas base (15% con candidatos) - notebooks/03_baseline_candidatos.ipynb
+    Origen: PDF del PSet 3 (ingenua y de negocio) y PSet 1 con feedback (filas "Baseline" y
+    "Metrica tecnica" del memo v2; hoja Modelos, "Piso aleatorio (obligatorio)"). Todas con el
+    mismo hold-out; tag fase=baseline y origen. Todo candidato debe superar B1 y B2; si no, hallazgo.
+[~] B1 (C) (18-nov: notebooks/03_baseline_candidatos.ipynb la registra en MLflow, familia linea_base; MAE CV 0,0641) Ingenua del PDF: DummyRegressor(strategy='mean') (existe: dummy_media). Registrar
+        tambien la mediana y justificar cual se usa (colas gruesas del target, 3.1).
+[~] B2 (C) (18-nov: registrada igual que B1; MAE CV 0,0647) Random walk con retorno 0 (PSet 1, piso de la metrica tecnica):
+        DummyRegressor(constant=0) (existe: regla_cero). Es la referencia de Diebold-Mariano en 3.8.
+[~] B3 (C) (18-nov: src/modelos/lineas_base.py MediaPorAccion, en el catalogo como B3_rw_deriva; MAE CV 0,0652,
+        IC 0,018, Sharpe neto 0,58 > B5 0,54: hallazgo, la historia de cada accion ya supera al universo) Random walk con deriva: media historica del retorno mensual de cada accion, solo con
+        el pliegue de entrenamiento. No esta en el PSet 1 (viene de analisis/modelos, rw_deriva):
+        se incluye como referencia extra y se dice asi en el memo.
+[~] B4 (C+P) (18-nov: 200 sorteos con la regla completa; Sharpe neto mediana 0,34; en MLflow como 'Portafolio al azar, regla PSet 1', familia N/A) Portafolio aleatorio de igual peso (PSet 1, piso de la metrica de negocio):
+        cada mes 10 acciones elegibles al azar con igual peso, N sorteos con semilla fija; Sharpe
+        y drawdown en hold-out como distribucion (media y percentiles 5-95). No es un estimador:
+        va en un modulo nuevo src/negocio.py junto con la regla top 10 con pesos 1/vol.
+[~] B5 (C+P) (18-nov, decision de Paul: es la LINEA BASE DE NEGOCIO, universo S&P 500 ∩ NYSE con igual ponderacion y 15 pb;
+        Sharpe neto 0,54, drawdown -29,3 %; familia N/A en MLflow; docs/lineas_base.csv) Portafolio igual peso de todo el universo elegible (PSet 1): Sharpe y drawdown.
+[~] B6 (C) (18-nov: contexto, indices de precio sin dividendos; S&P 500 Sharpe 0,63 > B5: hallazgo, el universo NYSE
+        no compra las tecnologicas de NASDAQ; NYSE Composite 0,34; familia N/A en MLflow) Indices S&P 500 y NYSE Composite (PSet 1): Sharpe y drawdown con
+        ret_log_sp500_mes_siguiente, ret_log_nyse_composite_mes_siguiente y rf_mes_siguiente de
+        la OBT (H1: solo meses cerrados). Meta del PSet 1: Sharpe del modelo >= indice + 0,1.
+
+3.6 Candidatos - un paso por modelo. Todos con la misma preparacion (src/pipeline.py), los
+    mismos pliegues (3.3) y la misma metrica; reportar train, CV, brecha y segundos; tags
+    fase=candidato, familia y origen (PSet1-A, PSet1-B o PDF). Los modelos de series (M1, M6-M10)
+    no pasan por el ColumnTransformer: se envuelven en un estimador sklearn que recibe
+    accion_key y anio_mes y pronostica con la serie hasta el cierre de ese mes, para usar los
+    mismos pliegues y entrar al Registry igual que los demas.
+[ ] M1 (C) (18-nov: queda para el PSet 4, documentado en el memo) ARIMA por accion (PSet 1, modelo A; statsmodels/pmdarima). Serie mensual de
+        ret_log_mes por accion (la diaria con suma de 21 pasos, como en analisis/, solo si se
+        justifica). Orden elegido por AIC dentro de cada pliegue de entrenamiento (corrige la
+        fuga A2h del analisis). El PDF no lo lista: candidato extra. Variante por BIC opcional
+        (el analisis ya comparaba AIC y BIC); pmdarima.auto_arima o statsmodels, como el PSet 1.
+[x] M2 (C) (18-nov: MAE CV 0,0757, brecha 0,061) Random forest con rezagos y volatilidad (PSet 1, modelo A; PDF bagging). Existe:
+        random_forest, pero sin rezagos explicitos del retorno mensual: depende de F1.
+[x] M3 (C) (18-nov: LightGBM 0,0706 y XGBoost 0,0732) XGBoost con rezagos y volatilidad (PSet 1, modelo A; PDF boosting). Hoy el codigo
+        usa HistGradientBoostingRegressor: agregar xgboost.XGBRegressor, que es el que nombra el
+        PSet 1, y dejar HGB como variante o justificar el cambio.
+[x] M4 (C) (18-nov: MAE CV 0,0681) Lineal regularizado: Ridge (PDF; no esta en el PSet 1). Existe: ridge. Lasso opcional.
+[x] M5 (C) (18-nov: MAE CV 0,0896) Red neuronal tabular: MLPRegressor (PDF; en el PSet 1 la MLP solo aparece dentro del
+        hibrido). Existe: mlp.
+[ ] M6 (C) (PSet 4) Hibrido ARIMA + MLP (PSet 1, modelo B; enfoque de Zhang): M1 explica la parte lineal
+        y una MLP modela su residuo. Entradas de la red, como dice el PSet 1: residuos y
+        coeficientes ARIMA de cada accion (mas las features de la OBT). Residuos y coeficientes
+        se calculan dentro de cada pliegue.
+[ ] M7 (C+P) (PSet 4) Hibrido ARIMA + LSTM (PSet 1, modelo B; Choi 2018): como M6, con una LSTM sobre la
+        secuencia de residuos. Necesita PyTorch: correr en la Mac si no cabe aqui, o justificar en
+        el memo por que queda fuera.
+    Nota del PSet 1 (hoja Modelos): un estudio de 2026 con 5 acciones de Yahoo Finance encontro
+    que los fundacionales ganan la mayoria de comparaciones, pero mejoran poco y rara vez de
+    forma significativa al random walk: se reportan como referencia, no como fuente de alfa.
+[x] M8 (C+P) (18-nov: chronos-bolt-small, MAE CV 0,0670, Sharpe 0,568) Chronos en zero-shot (PSet 1, modelo B; PDF state of the art): pronostico del mes
+        siguiente con la serie hasta el cierre del mes, sin entrenamiento. Anotar la fecha del
+        corpus de preentrenamiento: si es posterior a 2023, el hold-out puede estar contaminado.
+[x] M9 (C+P) (18-nov: timesfm-2.5-200m, 26.750 filas, run eff5db04; prueba 11ba2e86 descartada) TimesFM en zero-shot (PSet 1, modelo B; el PDF lo nombra). Igual que M8.
+[x] M10 (C+P) (18-nov: moirai-2.0-R-small, MAE CV 0,0693) Moirai en zero-shot (PSet 1, modelo B). Igual que M8.
+[x] M11 (C) (18-nov: justificado como no aplicable en el memo, seccion 5) LLM por prompting (PDF): pedir el retorno del mes siguiente con la serie hasta el
+        cierre del mes en una muestra de acciones, o justificar por que no aplica (costo, y fuga
+        porque el LLM conoce precios posteriores a 2023).
+[x] M12 (C) (18-nov) Tabla docs/candidatos.csv con B1-B3 y M1-M11 (origen, familia, metrica train y CV,
+        brecha, segundos) y diagnostico de sobreajuste por modelo. Los zero-shot no tienen
+        metrica de train ni hiperparametros: no entran al tuning de 3.7.
+3.7 Tuning (15%) - notebooks/04_tuning.ipynb
+[x] (C) (18-nov: Ridge, LightGBM, XGBoost x 30 con Optuna TPE; ninguna mejora supera la desviacion) 3 mejores x >= 30 configuraciones (90+ corridas hijas dentro de una padre por modelo);
+        RandomizedSearch/ParameterSampler u Optuna (justificar); espacios con escala (log para
+        tasas); mejora frente al modelo por defecto comparada con la desviacion entre pliegues.
+[~] E1 (C) (17-nov: src/ensamble.py probado) Ensamble transversal por estadisticos de orden
+        (mediana, minimo, maximo de los rangos de M modelos); el estadistico se elige en las 7
+        ventanas; candidato mas, registrado como mlflow.pyfunc si gana.
+[ ] D1 (C) Diagnosticos (src/diagnostico.py): t-SNE 2D por regimen y por direccion; graficas de
+        Optuna (historia, importancia, coordenadas); curvas de aprendizaje por anios de
+        entrenamiento y por epoca (LSTM).
+[ ] A1 (P) Fase pesada en la Mac M4: tabla ARIMA-GARCH (~15 min con joblib), Chronos, LSTM;
+        artefactos/*.parquet y *.pt con sha256 (src/entorno.py).
+[ ] C1 (C+P) notebooks/00_colab_entrega.ipynb: clona el repo, carga snapshot y artefactos desde
+        Drive (PSET3_DATOS), MLflow con almacen de archivos, corre evaluacion, tuning, seleccion
+        y graficas en < 1 h en Colab gratis. Decidir: Drive o Snowflake con secretos de Colab.
+3.8 Seleccion y registro (15%) - notebooks/05_seleccion.ipynb
+[x] (C) (18-nov: champion LightGBM, challenger Ridge, diferencia 0,00006 vs desv 0,016; hold-out una vez; DM/Wilcoxon quedan para el PSet 4) Ganador vs segundo con media y desviacion de CV; hold-out una sola vez para ambos;
+        Diebold-Mariano frente al random walk; metrica de negocio; costo y explicabilidad.
+[x] (C) (18-nov: version 1 champion, version 2 challenger; 06_champion reproduce MAE 0,0673399888) Model Registry: portafolio-inversiones-modelo con alias champion y challenger;
+        notebook limpio que carga models:/portafolio-inversiones-modelo@champion y reproduce
+        la metrica registrada.
+3.9 Entrega (5% + resto)
+[x] (C) (18-nov: 142 corridas) docs/corridas.csv con mlflow.search_runs (minimo 2 + 5 + 90 + 1 corridas).
+[~] (C) (18-nov: borrador de 5 paginas + anexos; fuente en docs/memo/) Memo docs/PSet3_memo_Gomez_Ehmig.pdf (<= 6 paginas + anexos): EDA, features,
+        preparacion y validacion, diseno experimental (captura de MLflow), resultados, tuning,
+        decision (run_id, version), limitaciones (H1-H14, analisis/, contradicciones).
+        Coherencia con el feedback del PSet 1 (H5-H8 del plan anterior): el usuario es el
+        asesor (propone; el inversionista aprueba); MVP de 10 acciones con pesos 1/vol bajo el
+        tope; despliegue en contenedor local y USFQ queda para el PSet 4; fuentes iguales a las
+        del memo del PSet 2 (yfinance, chinobing, rreichel3).
+[~] (C) (18-nov: orden de notebooks 01-06 actualizado) README (levantar MLflow, conexion a Snowflake, orden de notebooks); Restart + Run All
+        de los 5 notebooks con salidas guardadas; requirements.txt desde uv.lock.
+[ ] (P) Commit, push de work, PR a master y tag pset-03.
 
 ======================================================================================
-E. DBT: BRONZE / SILVER / GOLD (rubrica: 15% + star schema 15%)
+4. ORDEN PROPUESTO
 ======================================================================================
-[x] E1 (C) Bronze (staging: tipos, deduplicacion), Silver (calendario, retornos, membresia),
-       Gold (star schema), source() y ref(), tests not_null/unique/relationships y 7 tests
-       de reglas de negocio. Probado en local (DuckDB): PASS=76 WARN=1.
-[ ] E2 (P) dbt build contra Snowflake y dbt source freshness.
-[ ] E3 (C) Nombrar en el memo y en el codigo que Bronze cumple el rol de "Staging" que pide
-       la guia (seccion 3).
-[x] E4 (C) Bolsa: una accion sin bolsa conocida (ya no cotiza) es elegible y queda marcada
-       con bolsa_desconocida en la OBT, para no reintroducir el sesgo de supervivencia.
-       Pendiente: contrastar con la bolsa segun Yahoo (--info) cuando haya datos reales.
-[ ] E5 (C) Diccionario de datos de Gold y de la OBT (entregable de la etapa Datos del PSet 1).
-[x] E6 (C) Diagrama del modelo dimensional (docs/modelo_dimensional.png).
+ 1) V2.1, V3.3, V3.4 (evidencia de dbt, auditorias y calidad en P3).
+ 2) H1 (Spark), V3.6, V3.7 y V3.8 (OBT y snapshot corregidos) [hecho 17-nov].
+ 2b) Q1 (notebook de calidad), luego F1 en src/ (pipeline.py, datos.py) y W3/F2/L2-L8 por decidir.
+ 3) H10-H13, 2.2-2.4 (promesas del PSet 1, sesgo de supervivencia, no fuga, analisis/).
+ 4) H2-H9 y H14 documentados en migracion_pipeline.md y disclaimer.txt.
+ 5) PSet 3: 3.1 -> 3.2 -> 3.3 -> 3.4 -> 3.5 -> 3.6 -> 3.7 -> 3.8 -> 3.9.
+ 6) V2.4 y V2.5 en paralelo, cuando Kestra pueda quedar encendido (sin MLflow a la vez).
+ 7) Al final: integrar en psets/proyecto/ (fase siguiente, sin duplicar datos).
 
 ======================================================================================
-F. SPARK Y OBT (rubrica: 15%)
+5. PENDIENTES HEREDADOS FUERA DEL PSET 3
 ======================================================================================
-[x] F1 (C) OBT accion x mes desde Gold, 11 controles de joins y de grano, escritura en
-       Snowflake y tabla VALIDACION_OBT. Probado en local.
-[ ] F2 (P) Correr el job contra Snowflake desde Kestra.
-[x] F3 (C) objetivo_cruza_corte marca la fila cuyo objetivo cae en el periodo de prueba.
-[ ] F4 (C) Revisar que las features cumplan la regla del PSet 1: ninguna usa informacion
-       posterior a la fecha de rebalanceo (test de no fuga en la OBT).
-[~] F5 (C) La OBT ya trae vol_21d, vol_63d, vol_apertura_21d, intradia_prom_21d y
-       nocturno_prom_21d (solo dias observados); confirmar la ventana del peso con el
-       feedback del PSet 1.
+[ ] (P) I5 del plan anterior: subir el memo y el ZIP del PSet 2 a donde se entregue
+        (el ZIP esta en la carpeta proyecto: psets/pset-02/entregables/).
+[ ] (P) Copiar psets/pset-03/mlflow/ y psets/pset-02/entregables/ de la carpeta proyecto a work
+        antes de borrar esa carpeta.
+Del plan anterior se dan por cerrados o superados: seccion 0 (preparacion desde cero), A1-A8,
+B, C1-C2, C4, D1, D3, D5 (forward-fill decidido), E1-E2, E4, E6, F1-F3, G (memo del PSet 2
+entregado), I1-I4, J8-J11. A2/A2e/A3 (correr analisis/ con Yahoo) pasan a la seccion 2.
 
 ======================================================================================
-G. DOCUMENTO TECNICO: PSet2_memo_Gomez_Ehmig.pdf (rubrica: 10%; maximo 6 paginas sin anexos)
+5. ALINEACION CON laboratorios/ (17-nov; regla de Paul: lo que prefiere el profesor;
+   desviarse requiere justificacion en disclaimer.txt o en el memo; ver CLAUDE.md)
 ======================================================================================
-ESTADO 2026-11-15 (analisis de la rama proyecto, commit 9d34203): el memo existe en
-proyecto: psets/pset-02/docs/PSet2_memo_Gomez_Ehmig.pdf, 9 paginas fisicas = 6 tecnicas
-+ 3 anexos (mapa seccion->pagina en docs/revision_entrega.md); fuente en
-docs/PSet2_memo_fuente.txt y generador scripts/generar_memo.py. Lo hizo Codex.
-[x] G0 (P+C) Memo revisado (2026-11-15): cifras verificadas contra corrida/ y calidad/; 9
-       cambios aplicados en scripts/generar_memo.py (Python 3.11 en anexo C, numeros en formato
-       espanol, columna Dimension en Data Quality, corte 2023-12-31, titulos de la guia, frase
-       del horizonte, cita al repo, sin relleno, anexo A vertical legible). Sigue en 6+3 paginas.
-       Antes/despues en pset-02/docs/revision_entrega.md. Sin commit.
-[ ] G1 (C) 1 Arquitectura: diagrama y flujo de datos.
-[ ] G2 (C) 2 Ingesta: fuente, frecuencia, granularidad, carga, retries y backfill.
-[ ] G3 (C) 3 Data Quality: tabla de D4 con porcentajes concretos.
-[ ] G4 (C) 4 Transformaciones y modelado: Bronze, Silver, Gold, grano y star schema.
-[ ] G5 (C) 5 Spark y OBT: como se construye, grano, validacion de joins; cuando usar el star
-       schema (analisis, reportes de Sharpe y drawdown) y cuando la OBT (entrenar el modelo).
-[ ] G6 (C) 6 Batch vs streaming: rebalanceo mensual con cierres diarios; streaming solo si la
-       decision fuera intradia (por ejemplo stop-loss automatico), que esta fuera de alcance.
-[ ] G7 (C) 7 Limitaciones: Yahoo no oficial, acciones que dejaron de cotizar, cambios de
-       simbolo, composicion hasta ago-2025, bolsa historica, ^IRX como tasa simple.
-[ ] G8 (C) Explicar la implementacion, no la teoria de Kestra, dbt, Spark o Snowflake.
-[ ] G9 (C) Mismo estilo que el memo del PSet 1 v2 (sin portada, referencias numeradas).
-
-======================================================================================
-H. COHERENCIA CON EL PSET 1 Y SU FEEDBACK (verificar antes de entregar)
-======================================================================================
-[x] H1 Universo: acciones del S&P 500 listadas en la NYSE, con composicion historica.
-[x] H2 Horizonte igual al rebalanceo: 1 mes (21 dias habiles); objetivo de la OBT = retorno
-       log del mes siguiente (feedback: igualar horizontes).
-[x] H3 Corte: entrenamiento hasta dic-2023, prueba desde ene-2024, sujeto a cambios.
-[x] H4 Referentes de la meta: ^GSPC y ^NYA; tasa libre de riesgo ^IRX (para el Sharpe).
-[ ] H5 Usuario = asesor de inversiones (feedback): la OBT y el memo hablan de la decision
-       mensual del asesor y la aprobacion del inversionista.
-[ ] H6 MVP acotado (feedback 4B): 10 acciones con pesos inversos a la volatilidad, dentro del
-       tope; el pipeline debe dejar listo el entregable de la etapa Datos del PSet 1:
-       dataset limpio accion-fecha, diccionario de datos y verificacion (huecos por ticker,
-       universo contra composicion historica).
-[ ] H7 Despliegue en contenedor en infraestructura local y de la USFQ (pitch y memo v2):
-       el docker-compose del PSet 2 es la base; mencionarlo.
-[ ] H8 Las fuentes del memo del PSet 2 coinciden con la tabla de fuentes del PSet 1
-       (yfinance [9], hanshof [14]); agregar rreichel3 o Nasdaq Trader como fuente nueva.
-
-======================================================================================
-I. REPOSITORIO Y ENTREGA
-======================================================================================
-[x] I1 Estructura pset-02/ (docker-compose.yml, .env.example, README.md, kestra/, dbt/,
-       spark/, docs/) y disclaimer.txt con las diferencias con psets/pset-02/README.md.
-[ ] I2 README final con los pasos probados de verdad (despues de B-F).
-[ ] I3 Revisar que no haya credenciales ni datos en git (git grep antes de cada push).
-[x] I4 Migracion draft -> proyecto -> master: PR #2 fusionado (0f378ed), tag pset-02.
-[ ] I5 Subir el memo PDF a Google Drive (carpeta del PSet 2) si se entrega por ahi.
-
-======================================================================================
-J. MIGRACION A LA RAMA proyecto (estado tras el analisis del 2026-11-15, 21:00)
-======================================================================================
-Regla nueva: la rama proyecto es la fuente de verdad del PSet 2 y del PSet 3. draft queda
-como antecedente: NO se copia draft sobre proyecto (sobrescribiria el trabajo de Codex).
-Lo que falte se corrige directamente en proyecto, pieza por pieza, y Paul hace los commits.
-Fases del ambiente (decidido 2026-11-15): psets/pset-02/ de proyecto (pipeline) ->
-psets/pset-03/ (EDA, features, modelos, MLflow; incremental, solo lee la OBT) -> al final
-todo pasa a psets/proyecto/.
-Objetivo del PSet 2 (del PDF): pipeline ELT reproducible Fuente -> Kestra -> Raw -> dbt
--> Bronze -> Silver -> Gold -> Spark -> OBT en Snowflake; termina con datos limpios,
-modelados y preparados para las siguientes etapas.
-
-Estado de las ramas (verificado con git en las dos carpetas del Mac y en GitHub):
-  draft    = origin/draft = 5009724 (PSet03 load); el unico cambio local es este plan.txt.
-  proyecto = origin/proyecto = 1fd41ee: merge de 9d34203 (Codex, 174 archivos, "Consolida
-             pipeline PSet 2 y prepara experimentacion PSet 3") con c7eb379. Ya esta en
-             GitHub (la nota de Codex decia que no hubo push; el merge posterior si se subio).
-Diferencias pset-02 draft -> proyecto: 58 archivos nuevos, 43 modificados, 16 eliminados.
-Docker: no levantar a la vez Spark/Kestra (pset-02) y MLflow (pset-03): hubo OOM
-(docs/corrida/incidencia_oom.json).
-
-[x] J1 pset-01, en etapas.
-       [x] J1a CD_PSet_1.pdf en proyecto (d10285f, md5 igual a draft).
-       [x] J1b pset-01/disclaimer.txt actualizado en proyecto (sin commit), con antes/despues:
-           el ambiente se arma por fases pset-02 -> pset-03 -> proyecto.
-       [x] J1c Entregables del PSet 1 SI van al repo: Entregable/ y feedback/ (Paul en draft
-           3e7446e; en proyecto con cherry-pick c7eb379).
-[x] J2 CD_PSet_2.pdf en proyecto/psets/pset-02 (Codex; md5 34ab945c igual a draft) y
-       CD_PSet_3.pdf en proyecto/psets/pset-03 (md5 fb9e89bd igual a draft).
-[x] J3 Infra (Codex): docker-compose.yml, .env.example sin contrasenas por defecto,
-       kestra/sql/snowflake_setup.sql. Compose validado con config --quiet.
-[x] J4 Kestra (Codex): flows y subir_flows.sh ajustados; corrida aislada SUCCESS
-       (docs/corrida/kestra_ejecucion_aislada.json). Backfill y retry solo con evidencia
-       historica de draft, no repetidos en proyecto (docs/cumplimiento.md).
-[x] J5 dbt (Codex): Gold = dos estrellas que comparten DIM_FECHA (FCT_PRECIOS_DIARIOS
-       accion x sesion, FCT_MERCADO_DIARIO dia) + DIM_ACCION, DIM_FECHA y la nueva
-       DIM_MEMBRESIA_SP500 (ya no depende de Silver). Nuevos tests singulares de
-       intervalos y membresia. Ultimo build: 14 modelos, 2 seeds, 82 tests -> 97 OK,
-       1 WARN (cobertura insuficiente en 1.615 fechas, visible), 0 errores
-       (docs/corrida/run_results_gold.json).
-[x] J6 Spark (Codex): OBT reconstruida desde el Gold nuevo: 87.178 filas, 43 columnas,
-       58.628 elegibles, 13/13 controles; auditoria independiente sin claves nulas,
-       faltantes ni sobrantes vs Gold (docs/corrida/auditoria_obt.json).
-[x] J7 docs (Codex): diagramas actualizados (Graphviz y Structurizr), calidad/ con
-       diagnostico de 22 tablas y 236 columnas, diccionario_datos.md, cumplimiento.md,
-       temporalidad_batch.md, revision_*.md, limite_pset02_pset03.md, migracion.md.
-       Ojo: las evidencias de corrida/ no son todas de la misma ejecucion (lo dice
-       cumplimiento.md); antes de entregar decidir si se hace una corrida unica.
-[~] J8 README + disclaimer (Codex, hecho). Entorno decidido por Paul (2026-11-15):
-       uv por carpeta + Python 3.11 en todo. Hecho en proyecto (sin commit, 18 archivos en
-       el clon de la Mac; antes/despues en pset-02/docs/migracion.md):
-       [x] pyproject.toml + uv.lock en pset-02 (solo pipeline) y en pset-03 (solo modelado).
-       [x] requirements.txt exportados del lock (pset-02, kestra/ grupo ingesta, pset-03):
-           scripts/exportar_requirements.sh y pset-03/exportar_requirements.sh.
-       [x] Imagenes kestra, MLflow y runner a python:3.11-slim; duckdb local >=2,<3.
-       [x] README y docstrings: pip install -> uv sync / uv run.
-       [x] Verificado en la nube con 3.11.17: uv sync, pytest 3+3, imports, dbt 1.12.7.
-       [ ] (P) En la Mac: uv sync en ambas carpetas, docker compose build y una corrida
-           corta (flow transformar en pset-02; luego, aparte, MLflow en pset-03).
-[x] J9 pytest (2026-11-15): spark/tests/test_construir_obt.py, 6 pruebas con datos a mano
-       (2 acciones, nov-2023 a ene-2024): grano, 43 columnas, objetivo del mes siguiente,
-       corte, y controles que fallan con dimension/hecho duplicado o mes sin mercado.
-       6/6 pasan con pyspark; sin pyspark o sin Java se saltan (skip). Junto a
-       kestra/tests (3) y pset-03/tests (3). Documentado en el README. Sin commit.
-[ ] J10a (P) Corrida corta de evidencia con la imagen 3.11 (decidido 2026-11-15): build ingesta,
-       ingesta_diaria con fecha 2026-11-13 (dispara transformar: dbt + Spark) y exportar
-       evidencias (exportar_metricas, verificar_snowflake, auditar_obt, auditar_capas_modelo,
-       verificar_kestra estado). El backfill queda como evidencia historica (asi lo dice el memo).
-       Despues (C): revisar git diff de docs/corrida/ y regenerar el memo si cambian cifras.
-[x] J11 Coherencia con el PSet 1 v2 (decidido por Paul 2026-11-15; detalle en
-       pset-02/docs/migracion.md y disclaimer.txt):
-       [x] Imputacion: interpolacion lineal -> forward-fill (slv_precios_acciones.sql).
-           Probado en DuckDB (ORCL sin 4-5 mar 2020: imputa 48,85 y retorno 0). 0 dias
-           imputados en los datos reales: cifras sin cambio.
-       [x] Outliers: z-score robusto (MAD > 3,5) en diagnosticar_calidad.py + listas
-           outliers_mad_top.csv y outliers_mad_por_fecha.csv para cotejar con eventos.
-           En la muestra local salen eventos reales (mar-2020, ORCL sep-2025, VST ene-2025).
-       [x] Fuentes: nota en memo (seccion 2) y disclaimer.txt (chinobing, rreichel3, sin Kaggle).
-       [x] Imagen pset2-dbt a python:3.11-slim con dbt/requirements.txt del lock (se habia
-           escapado en J8); dbt parse OK (14 modelos, 82 tests, 2 seeds).
-       [x] (P) En la Mac: build dbt (3.11.18), transformar 4OsR2Nj3JNW42qJGrvNj1 SUCCESS
-           (PASS=97 WARN=1 ERROR=0, 13/13, OBT 87.178/58.628/43, 0 imputados), evidencias y
-           diagnostico MAD exportados; memo regenerado (9 paginas).
-       [x] Hallazgo: el MAD sobre RAW medía saltos entre años sin datos (acciones fuera del
-           indice, p. ej. JBL antes de 2023). Factor adj/close constante (no es ajuste); Gold
-           ya tiene ret nulo ahi. Diagnostico corregido a sesiones consecutivas: 0 casos de
-           enero en el top 30; MAD 2,41 %. Eventos verificados: COVID mar-2020, aranceles
-           abr-2025, GL, PCG, OXY, FISV.
-[x] J10 Cierre PSet 2 (2026-11-15):
-       [x] G0 memo revisado; corrida unica de evidencias (ingesta 5mNgM5u + transformar 4OsR2Nj3).
-       [x] scripts/empaquetar_entrega.py empaqueta solo archivos versionados (git ls-files):
-           antes recorria la carpeta y metia caches (.pytest_cache). Commit e5123fe en GitHub.
-       [x] ZIP regenerado desde e5123fe: pset_2/, 154 archivos + MANIFEST_SHA256.json,
-           sin secretos ni la cuenta de Snowflake (sha256 del zip e2803b6b...). Copiado a
-           entregables/ en la Mac (ignorado por git) y enviado por el chat.
-       [x] (P) Tag pset-02 sobre e5123fe, creado por Paul desde la Mac (desde la sesion de
-           Claude GitHub responde 403 al crear tags).
-       [x] PR #2 proyecto -> master (fork VirtualZen) fusionado: merge 0f378ed. CI pytest en
-           verde en el PR y en master; sin secretos; psets de master = rama proyecto.
-       [ ] (P) I5: subir memo y ZIP a donde se entregue.
-NOTA: analisis/ de draft (ARIMA, imputacion, comparacion de modelos, listas de tickers)
-NO esta en proyecto. Codex lo dejo en draft como antecedente; pset-03 tiene su propio
-pipeline en src/ y notebooks/. Decidir en K si algo de analisis/ se recupera.
-
-======================================================================================
-K. PSET 3 EN LA RAMA proyecto (preparado por Codex; detalle en
-   psets/pset-03/docs/pendientes_entrega.md)
-======================================================================================
-Hecho: estructura, lectura de la OBT por SELECT, notebooks 01_eda y 02_features
-ejecutados (docs/hallazgos_eda.csv), Pipeline + ColumnTransformer ajustado solo en train,
-CV temporal por mes con purga de 1 mes y hold-out reservado, MLflow en Compose (SQLite +
-volumen; puerto local 5001), prueba funcional con media, retorno cero y Ridge (alias
-"verificacion"). Esa prueba NO es la experimentacion final.
-[ ] K1 Leer CD_PSet_3.pdf y contrastarlo con el PSet 1 cerrado (modelos A y B, lineas base
-       random walk / igual peso / indices, metricas RMSE-MAE-DM y Sharpe-drawdown).
-[ ] K2 Familia fundacional (Chronos, TimesFM o Moirai en zero-shot, segun PSet 1).
-[ ] K3 Experimento por prompting (LLM) o justificacion de que no aplica.
-[ ] K4 Ablacion de las dos features (aporte predictivo).
-[ ] K5 Confirmar que la segunda linea base coincide con el PSet 1 (portafolio igual peso).
-[ ] K6 Tuning: 3 mejores x 30 configuraciones (nested runs ya preparados, sin correr).
-[ ] K7 Metrica de negocio alineada al PSet 1 (Sharpe con ^IRX, drawdown, costos).
-[ ] K8 Ganador y segundo; hold-out una sola vez; champion/challenger y recarga exacta.
-[ ] K9 docs/corridas.csv desde mlflow.search_runs; memo del PSet 3 (hasta 6 paginas).
-[ ] K10 Decidir si se reaprovecha algo de draft/analisis/ (ARIMA por accion, imputacion
-       Kalman, comparacion de modelos del PSet 1).
-
-ORDEN SUGERIDO
-  0. Seccion 0 si se parte de cero
-  1. A2 (Paul) -> A2e, A3, A4, A5 (Claude)      4. C2, E2, F2 (Paul, con ayuda)
-  2. B1, B2 (Paul)                          5. D4 con metricas reales -> G1-G9
-  3. D2, D3, E4, F3, F4, C3, C4 (Claude)    6. H1-H8, I2-I5
-  7. En proyecto: J1b, J8 (uv y Python), G0 (revisar memo), J9, J10 -> tag pset-02
-  8. PSet 3 en proyecto: K1 -> K10, sin levantar MLflow junto con Kestra/Spark
+[x] L1 (P) (17-nov, decision de Paul: CD_PSet_3.pdf tiene prioridad; psets/proyecto/ se ve
+        despues y la diferencia se anota en disclaimer.txt) Dos guias del profesor que no coinciden:
+        CD_PSet_3.pdf: pset_3/ con notebooks 01-05, src/datos.py y src/pipeline.py, MLflow en
+          docker-compose, Snowflake, 5 familias, tuning de 3 x 30, memo de 6 paginas.
+        README_curso.md + rubrica.md (laboratorios): psets/proyecto/modelado/ con
+          explorar_proyecto, features_proyecto, pipeline_proyecto.py, modelos_proyecto +
+          resultados_proyecto.csv, comparar_proyecto, experimentos_proyecto +
+          corridas_proyecto.csv, validacion_proyecto, y psets/proyecto/docs/decision_modelo.md.
+        Propuesta: cumplir las dos (el trabajo vive en pset-03 segun el PDF y se integra en
+        psets/proyecto/ con los nombres de los laboratorios), y anotarlo en disclaimer.txt.
+[ ] L2 (C) pipeline_proyecto.py con la forma de la plantilla (RUTA_DATOS, OBJETIVO,
+        NUMERICAS, CATEGORICAS, YA_LISTAS, agregar_features, cargar_y_dividir,
+        construir_preparacion, __main__) sobre la OBT; src/validacion.py, src/negocio.py y
+        src/evaluacion.py quedan como modulos que importa (justificar: walk-forward y
+        metrica de negocio del PSet 1).
+[x] L3 (C) (18-nov: SEMILLA = 42 en src/entorno.py; 02_features usa 42, 43 y 44 para LightGBM y 42 en la prueba de
+        disponibilidad; 03 ya usaba 42; diseno_experimental.md corregido) Semilla: los laboratorios usan random_state=42; src/ usa SEMILLA=7. Cambiar a 42
+        o justificar.
+[ ] L4 (C) MLflow como en el laboratorio 11-1: huella_datos = md5[:12] del archivo (hoy sha256),
+        tag candidato = final, MLFLOW_TRACKING_URI solo desde el entorno, corridas_proyecto.csv.
+[x] L5 (C) (18-nov: 03_preparacion_validacion secc. 3.1, docs/comparacion_esquemas_cv.csv) Validacion como en 11-2: el esquema temporal (walk-forward) Y uno al azar (KFold
+        mezclado, random_state=42) solo para comparar y mostrar que sobreestima; tabla con
+        promedio, desviacion y cada pliegue. (Choca con "prohibido KFold aleatorio" del pedido
+        del 17-nov: se usa solo como contraste, nunca para elegir.)
+[ ] L6 (C) Tabla de resultados con las columnas de 10-1: metrica_entrenamiento,
+        metrica_prueba, brecha, segundos; mas la cantidad de parametros de la red (10-2).
+[ ] L7 (C+P) Versiones: la CI instala el requirements.txt de la raiz (scikit-learn 1.5.2,
+        mlflow 2.17.2, pandas 2.2.2, numpy 1.26.4). pset-03 usa scikit-learn 1.9 y mlflow 3.18;
+        lo que vaya a psets/proyecto/ debe correr y probarse con las versiones de la raiz, o
+        justificarse (y sus pruebas no deben importar arch, optuna, lightgbm ni torch).
+[ ] L8 (C) Desviaciones que hay que justificar en el memo: src/ con varios modulos en vez de un
+        solo pipeline_proyecto.py; Optuna (no esta en los laboratorios); ARIMA-GARCH, LSTM y
+        fundacionales (los laboratorios llegan a MLPRegressor); ensamble por rangos.
+[x] L9 (C) (17-nov) Laboratorios 09-01 a 12-02 resueltos (TODO -> DONE), notebooks con
+        Restart + Run All y salida guardada, en Python 3.11 con el requirements.txt de la raiz:
+        todas las comprobaciones OK y las pruebas pytest pasan (12-01: 3 + 4; 12-02: 3 + 2). 10-02:
+        el LLM fue Claude Opus 5.5 (4 USD por millon de tokens de entrada). Pendiente (P): las
+        respuestas "_(tu respuesta)_" de los README, el Ejercicio 3 de cada sesion (va a
+        psets/proyecto/), docker build de 12-02 en la Mac, y 03-01 (Dockerfiles con TODO).

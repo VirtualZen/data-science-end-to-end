@@ -1,0 +1,71 @@
+# Backfill del historico: carga RAW anio por anio (un bucle de shell dentro de la tarea,
+# para no saturar a Yahoo) y al final corre una sola vez las transformaciones.
+# Se ejecuta a mano desde la UI de Kestra (Execute) o por API; no tiene trigger.
+id: backfill_historico
+namespace: usfq.portafolio
+description: |
+  Trae el historico desde anio_desde hasta anio_hasta, un anio por vez. Si un anio falla
+  (tras los reintentos internos del script), la tarea termina con error y Kestra la
+  reintenta completa; recargar un anio no duplica datos, porque Bronze conserva la carga
+  mas reciente de cada clave. Para reanudar desde un anio puntual, ejecutar de nuevo con
+  anio_desde = el anio fallido.
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "3"
+
+inputs:
+  - id: anio_desde
+    type: INT
+    defaults: 2010
+  - id: anio_hasta
+    type: INT
+    defaults: 2026
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+tasks:
+  - id: cargar_por_anio
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset3-ingesta:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+    timeout: PT8H
+    retry:
+      type: exponential
+      interval: PT5M
+      maxInterval: PT1H
+      maxAttempts: 3
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+    commands:
+      - |
+        set -e
+        for anio in $(seq {{ inputs.anio_desde }} {{ inputs.anio_hasta }}); do
+            echo "===== Anio $anio ====="
+            python /app/extraer_cargar.py historico --desde "$anio-01-01" --hasta "$anio-12-31"
+        done
+
+  - id: transformar
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: usfq.portafolio
+    flowId: transformar
+    wait: true
+    transmitFailed: true
+
+errors:
+  - id: registrar_falla
+    type: io.kestra.plugin.core.log.Log
+    level: ERROR
+    message: >
+      El backfill {{ execution.id }} fallo. Los anios que terminaron ya estan en RAW
+      (el log de la tarea muestra el ultimo "===== Anio ====="); re-ejecuta este flow
+      con anio_desde = el anio donde se detuvo.

@@ -1,0 +1,27 @@
+graph LR
+  linkStyle default fill:#ffffff
+
+  subgraph diagram ["System Context View: Pipeline de datos del portafolio"]
+    style diagram fill:#ffffff,stroke:#ffffff
+
+    1["<div style='font-weight: bold'>Asesor de inversiones</div><div style='font-size: 70%; margin-top: 0px'>[Person]</div><div style='font-size: 80%; margin-top:10px'>Usuario de la herramienta:<br />revisa ejecuciones y avisos,<br />y consume la OBT (snapshot)<br />para la decisión mensual.</div>"]
+    style 1 fill:#08427b,stroke:#052e56,color:#ffffff
+    2["<div style='font-weight: bold'>Yahoo Finance</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Precios diarios OHLCV y<br />cierre ajustado (API no<br />oficial, vía yfinance):<br />acciones, ^GSPC, ^NYA, ^IRX.</div>"]
+    style 2 fill:#999999,stroke:#6b6b6b,color:#ffffff
+    3["<div style='font-weight: bold'>GitHub (fuentes de referencia)</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Composición histórica del S&P<br />500 (chinobing) y listados de<br />bolsa (rreichel3).</div>"]
+    style 3 fill:#999999,stroke:#6b6b6b,color:#ffffff
+    4["<div style='font-weight: bold'>Gmail (SMTP)</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>Envía los avisos Success /<br />Fail al correo del asesor<br />(contraseña de aplicación,<br />secreto AVISO_CLAVE_APP).</div>"]
+    style 4 fill:#999999,stroke:#6b6b6b,color:#ffffff
+    5["<div style='font-weight: bold'>Modelado del PSet 3</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>psets/pset-03: src/datos.py<br />exporta la OBT a<br />data/obt.parquet (sha256);<br />notebooks, MLflow y Model<br />Registry.</div>"]
+    style 5 fill:#6b8e23,stroke:#4a6318,color:#ffffff
+    6["<div style='font-weight: bold'>Pipeline de datos del portafolio</div><div style='font-size: 70%; margin-top: 0px'>[Software System]</div><div style='font-size: 80%; margin-top:10px'>ELT reproducible: Fuente →<br />Kestra → Raw → dbt → Bronze →<br />Silver → Gold → Spark → OBT,<br />en PORTAFOLIO_P3.</div>"]
+    style 6 fill:#1168bd,stroke:#0b4884,color:#ffffff
+
+    1-. "<div>Supervisa ejecuciones; lanza<br />recargas puntuales</div><div style='font-size: 70%'>[UI en localhost:8090]</div>" .->6
+    6-. "<div>Envía Success / Fail del<br />script</div><div style='font-size: 70%'>[notificar.py, SMTPS]</div>" .->4
+    4-. "<div>Entrega los avisos</div><div style='font-size: 70%'></div>" .->1
+    6-. "<div>Descarga OHLCV diario<br />(yfinance, por lotes con<br />reintentos)</div><div style='font-size: 70%'></div>" .->2
+    6-. "<div>Descarga composición<br />histórica y listados de bolsa</div><div style='font-size: 70%'></div>" .->3
+    5-. "<div>Exporta la OBT con SELECT<br />(snapshot con sha256)</div><div style='font-size: 70%'></div>" .->6
+
+  end

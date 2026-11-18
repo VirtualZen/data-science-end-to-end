@@ -1,0 +1,237 @@
+tabla,columna,tipo,clase,procedencia
+BRONZE.BRZ_COMPOSICION_SP500,FECHA_FOTO,DATE,origen_transformado,FECHA; ver SQL de la tabla
+BRONZE.BRZ_COMPOSICION_SP500,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_COMPOSICION_SP500,TICKER_COMPOSICION,TEXT,origen_transformado,TICKERS; ver SQL de la tabla
+BRONZE.BRZ_COMPOSICION_SP500,TICKER_ORIGINAL,TEXT,origen_transformado,TICKERS; ver SQL de la tabla
+BRONZE.BRZ_COMPOSICION_SP500,SIMBOLO_TRADUCIDO,BOOLEAN,creada_dbt,dbt/models/bronze/brz_composicion_sp500.sql
+BRONZE.BRZ_COMPOSICION_SP500,LOTE_ID,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_COMPOSICION_SP500,INGESTA_TS,TIMESTAMP_NTZ,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,SIMBOLO_ORIGINAL,TEXT,origen_transformado,SIMBOLO; ver SQL de la tabla
+BRONZE.BRZ_LISTADOS_BOLSA,NOMBRE,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,CODIGO_BOLSA,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,BOLSA,TEXT,creada_dbt,dbt/models/bronze/brz_listados_bolsa.sql
+BRONZE.BRZ_LISTADOS_BOLSA,ES_ETF,BOOLEAN,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,ES_PRUEBA,BOOLEAN,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,ARCHIVO,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,LOTE_ID,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_LISTADOS_BOLSA,INGESTA_TS,TIMESTAMP_NTZ,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_PRECIOS_DIARIOS,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_PRECIOS_DIARIOS,FECHA,DATE,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_PRECIOS_DIARIOS,PRECIO_APERTURA,FLOAT,origen_transformado,OPEN; ver SQL de la tabla
+BRONZE.BRZ_PRECIOS_DIARIOS,PRECIO_MAXIMO,FLOAT,origen_transformado,HIGH; ver SQL de la tabla
+BRONZE.BRZ_PRECIOS_DIARIOS,PRECIO_MINIMO,FLOAT,origen_transformado,LOW; ver SQL de la tabla
+BRONZE.BRZ_PRECIOS_DIARIOS,PRECIO_CIERRE,FLOAT,origen_transformado,CLOSE; ver SQL de la tabla
+BRONZE.BRZ_PRECIOS_DIARIOS,PRECIO_CIERRE_AJUSTADO,FLOAT,origen_transformado,ADJ_CLOSE; ver SQL de la tabla
+BRONZE.BRZ_PRECIOS_DIARIOS,VOLUMEN,FLOAT,origen_transformado,VOLUME; ver SQL de la tabla
+BRONZE.BRZ_PRECIOS_DIARIOS,ES_INDICE,BOOLEAN,creada_dbt,dbt/models/bronze/brz_precios_diarios.sql
+BRONZE.BRZ_PRECIOS_DIARIOS,LOTE_ID,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.BRZ_PRECIOS_DIARIOS,INGESTA_TS,TIMESTAMP_NTZ,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+BRONZE.CALENDARIO_NYSE,FECHA,DATE,referencia_seed,dbt/seeds/calendario_nyse.csv
+BRONZE.CALENDARIO_NYSE,MEDIA_JORNADA,BOOLEAN,referencia_seed,dbt/seeds/calendario_nyse.csv
+BRONZE.EQUIVALENCIAS_TICKERS,TICKER_ANTIGUO,TEXT,referencia_seed,dbt/seeds/equivalencias_tickers.csv
+BRONZE.EQUIVALENCIAS_TICKERS,TICKER_YAHOO,TEXT,referencia_seed,dbt/seeds/equivalencias_tickers.csv
+BRONZE.EQUIVALENCIAS_TICKERS,VALIDO_HASTA,DATE,referencia_seed,dbt/seeds/equivalencias_tickers.csv
+BRONZE.EQUIVALENCIAS_TICKERS,ESTADO,TEXT,referencia_seed,dbt/seeds/equivalencias_tickers.csv
+CALIDAD.DQ_METRICAS,DIMENSION,TEXT,creada_dbt,dbt/models/calidad/dq_metricas.sql
+CALIDAD.DQ_METRICAS,CAPA,TEXT,creada_dbt,dbt/models/calidad/dq_metricas.sql
+CALIDAD.DQ_METRICAS,METRICA,TEXT,creada_dbt,dbt/models/calidad/dq_metricas.sql
+CALIDAD.DQ_METRICAS,VALOR,FLOAT,creada_dbt,dbt/models/calidad/dq_metricas.sql
+CALIDAD.DQ_METRICAS,UNIDAD,TEXT,creada_dbt,dbt/models/calidad/dq_metricas.sql
+CALIDAD.DQ_METRICAS,DESCRIPCION,TEXT,creada_dbt,dbt/models/calidad/dq_metricas.sql
+CALIDAD.DQ_METRICAS,CALCULADO_EN,TIMESTAMP_LTZ,creada_dbt,dbt/models/calidad/dq_metricas.sql
+GOLD.DIM_ACCION,ACCION_KEY,TEXT,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+GOLD.DIM_ACCION,NOMBRE,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+GOLD.DIM_ACCION,CODIGO_BOLSA,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+GOLD.DIM_ACCION,BOLSA,TEXT,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,ES_NYSE,BOOLEAN,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,EN_LISTADO_ACTUAL,BOOLEAN,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,PRIMERA_FECHA_SP500,DATE,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,ULTIMA_FECHA_SP500,DATE,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,SIGUE_EN_SP500,BOOLEAN,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,PERIODOS_EN_SP500,NUMBER,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,PRIMERA_FECHA_PRECIO,DATE,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,ULTIMA_FECHA_PRECIO,DATE,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,DIAS_CON_PRECIO,NUMBER,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_ACCION,TIENE_PRECIOS,BOOLEAN,creada_dbt,dbt/models/gold/dim_accion.sql
+GOLD.DIM_FECHA,FECHA_KEY,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,FECHA,DATE,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+GOLD.DIM_FECHA,ORDEN_BURSATIL,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,ANIO,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,TRIMESTRE,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,MES,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,ANIO_MES,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,DIA_SEMANA_ISO,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,DIA_BURSATIL_DEL_MES,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,DIAS_BURSATILES_DEL_MES,NUMBER,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,MES_CERRADO,BOOLEAN,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,ES_CIERRE_DE_MES,BOOLEAN,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_FECHA,CONJUNTO,TEXT,creada_dbt,dbt/models/gold/dim_fecha.sql
+GOLD.DIM_MEMBRESIA_SP500,PERIODO_KEY,TEXT,heredada_o_normalizada,SILVER.SLV_MEMBRESIA_SP500; publicada en Gold
+GOLD.DIM_MEMBRESIA_SP500,TICKER,TEXT,heredada_o_normalizada,SILVER.SLV_MEMBRESIA_SP500; publicada en Gold
+GOLD.DIM_MEMBRESIA_SP500,FECHA_INICIO,DATE,heredada_o_normalizada,SILVER.SLV_MEMBRESIA_SP500; publicada en Gold
+GOLD.DIM_MEMBRESIA_SP500,FECHA_FIN,DATE,heredada_o_normalizada,SILVER.SLV_MEMBRESIA_SP500; publicada en Gold
+GOLD.DIM_MEMBRESIA_SP500,VIGENTE,BOOLEAN,heredada_o_normalizada,SILVER.SLV_MEMBRESIA_SP500; publicada en Gold
+GOLD.DIM_MEMBRESIA_SP500,HUECOS_UNIDOS,NUMBER,heredada_o_normalizada,SILVER.SLV_MEMBRESIA_SP500; publicada en Gold
+GOLD.FCT_MERCADO_DIARIO,FECHA_KEY,NUMBER,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,CIERRE_SP500,FLOAT,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,CIERRE_NYSE_COMPOSITE,FLOAT,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,RET_LOG_SP500,FLOAT,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,RET_LOG_NYSE_COMPOSITE,FLOAT,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,TASA_IRX_ANUAL_PCT,FLOAT,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,TASA_IRX_RELLENADA,BOOLEAN,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_MERCADO_DIARIO,RF_DIARIA,FLOAT,creada_dbt,dbt/models/gold/fct_mercado_diario.sql
+GOLD.FCT_PRECIOS_DIARIOS,ACCION_KEY,TEXT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,FECHA_KEY,NUMBER,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,PRECIO_APERTURA,FLOAT,origen_transformado,OPEN; ver SQL de la tabla
+GOLD.FCT_PRECIOS_DIARIOS,PRECIO_MAXIMO,FLOAT,origen_transformado,HIGH; ver SQL de la tabla
+GOLD.FCT_PRECIOS_DIARIOS,PRECIO_MINIMO,FLOAT,origen_transformado,LOW; ver SQL de la tabla
+GOLD.FCT_PRECIOS_DIARIOS,PRECIO_CIERRE,FLOAT,origen_transformado,CLOSE; ver SQL de la tabla
+GOLD.FCT_PRECIOS_DIARIOS,PRECIO_CIERRE_AJUSTADO,FLOAT,origen_transformado,ADJ_CLOSE; ver SQL de la tabla
+GOLD.FCT_PRECIOS_DIARIOS,PRECIO_APERTURA_AJUSTADO,FLOAT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,VOLUMEN,FLOAT,origen_transformado,VOLUME; ver SQL de la tabla
+GOLD.FCT_PRECIOS_DIARIOS,RET_LOG_DIARIO,FLOAT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,RET_LOG_APERTURA,FLOAT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,RET_LOG_INTRADIA,FLOAT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,RET_LOG_NOCTURNO,FLOAT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,EN_SP500,BOOLEAN,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,PERIODO_SP500_KEY,TEXT,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,IMPUTADO,BOOLEAN,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,LARGO_HUECO_IMPUTADO,NUMBER,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,DESPUES_DE_TRAMO_EXCLUIDO,BOOLEAN,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,ES_RETORNO_EXTREMO,BOOLEAN,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,CIERRE_FUERA_DE_RANGO,BOOLEAN,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+GOLD.FCT_PRECIOS_DIARIOS,VOLUMEN_CERO,BOOLEAN,creada_dbt,dbt/models/gold/fct_precios_diarios.sql
+OBT.OBT_ACCION_MES,ACCION_KEY,TEXT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+OBT.OBT_ACCION_MES,NOMBRE,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+OBT.OBT_ACCION_MES,BOLSA,TEXT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,ES_NYSE,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,BOLSA_DESCONOCIDA,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,ANIO_MES,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,ANIO,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,MES,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,CONJUNTO,TEXT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,OBJETIVO_CRUZA_CORTE,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,FECHA_ULTIMA_COTIZACION,DATE,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,COTIZO_AL_CIERRE_DE_MES,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,EN_SP500,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,SIGUE_EN_SP500,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,ELEGIBLE,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,PRECIO_CIERRE_AJUSTADO,FLOAT,origen_transformado,ADJ_CLOSE; ver SQL de la tabla
+OBT.OBT_ACCION_MES,RET_LOG_MES,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_252D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,MOMENTUM_12_1,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,VOL_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,VOL_63D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,VOL_APERTURA_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,INTRADIA_PROM_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,NOCTURNO_PROM_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,DRAWDOWN_252D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,VOLUMEN_PROM_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,DOLARES_NEGOCIADOS_PROM_21D,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,OBS_252D,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,DIAS_NEGOCIADOS_MES,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,DIAS_IMPUTADOS_MES,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,HUBO_TRAMO_EXCLUIDO_MES,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,HUBO_RETORNO_EXTREMO_MES,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_SP500_MES,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_NYSE_COMPOSITE_MES,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RF_MES,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,TASA_IRX_PROM_MES_PCT,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_MES_SIGUIENTE,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,EXCESO_RET_MES_SIGUIENTE,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_SP500_MES_SIGUIENTE,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RET_LOG_NYSE_COMPOSITE_MES_SIGUIENTE,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.OBT_ACCION_MES,RF_MES_SIGUIENTE,FLOAT,creada_spark,spark/jobs/construir_obt.py
+OBT.VALIDACION_OBT,CONTROL,TEXT,creada_spark,spark/jobs/construir_obt.py
+OBT.VALIDACION_OBT,ESPERADO,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.VALIDACION_OBT,OBTENIDO,NUMBER,creada_spark,spark/jobs/construir_obt.py
+OBT.VALIDACION_OBT,OK,BOOLEAN,creada_spark,spark/jobs/construir_obt.py
+OBT.VALIDACION_OBT,EJECUTADO_EN,TIMESTAMP_NTZ,creada_spark,spark/jobs/construir_obt.py
+RAW.COMPOSICION_SP500,FECHA,DATE,origen,chinobing
+RAW.COMPOSICION_SP500,TICKERS,TEXT,origen,chinobing
+RAW.COMPOSICION_SP500,FUENTE,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.COMPOSICION_SP500,LOTE_ID,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.COMPOSICION_SP500,INGESTA_TS,TIMESTAMP_NTZ,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,LOTE_ID,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,TICKER,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,FECHA_DESDE,DATE,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,FECHA_HASTA,DATE,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,FILAS,NUMBER,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,ESTADO,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,DETALLE,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.INGESTA_LOG,INGESTA_TS,TIMESTAMP_NTZ,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,SIMBOLO,TEXT,origen,rreichel3
+RAW.LISTADOS_BOLSA,NOMBRE,TEXT,origen,rreichel3
+RAW.LISTADOS_BOLSA,CODIGO_BOLSA,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,ES_ETF,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,ES_PRUEBA,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,ARCHIVO,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,FUENTE,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,LOTE_ID,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.LISTADOS_BOLSA,INGESTA_TS,TIMESTAMP_NTZ,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.PRECIOS_DIARIOS,TICKER,TEXT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,FECHA,DATE,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,OPEN,FLOAT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,HIGH,FLOAT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,LOW,FLOAT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,CLOSE,FLOAT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,ADJ_CLOSE,FLOAT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,VOLUME,FLOAT,origen,Yahoo/yfinance
+RAW.PRECIOS_DIARIOS,FUENTE,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.PRECIOS_DIARIOS,LOTE_ID,TEXT,creada_ingesta,kestra/scripts/extraer_cargar.py
+RAW.PRECIOS_DIARIOS,INGESTA_TS,TIMESTAMP_NTZ,creada_ingesta,kestra/scripts/extraer_cargar.py
+SILVER.SLV_ACCIONES,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_ACCIONES,NOMBRE,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_ACCIONES,CODIGO_BOLSA,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_ACCIONES,BOLSA,TEXT,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,ES_NYSE,BOOLEAN,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,EN_LISTADO_ACTUAL,BOOLEAN,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,PRIMERA_FECHA_SP500,DATE,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,ULTIMA_FECHA_SP500,DATE,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,SIGUE_EN_SP500,BOOLEAN,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,PERIODOS_EN_SP500,NUMBER,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,PRIMERA_FECHA_PRECIO,DATE,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,ULTIMA_FECHA_PRECIO,DATE,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_ACCIONES,DIAS_CON_PRECIO,NUMBER,creada_dbt,dbt/models/silver/slv_acciones.sql
+SILVER.SLV_CALENDARIO_NYSE,FECHA,DATE,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_CALENDARIO_NYSE,MEDIA_JORNADA,BOOLEAN,creada_dbt,dbt/models/silver/slv_calendario_nyse.sql
+SILVER.SLV_CALENDARIO_NYSE,ORDEN_BURSATIL,NUMBER,creada_dbt,dbt/models/silver/slv_calendario_nyse.sql
+SILVER.SLV_MEMBRESIA_SP500,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_MEMBRESIA_SP500,FECHA_INICIO,DATE,creada_dbt,dbt/models/silver/slv_membresia_sp500.sql
+SILVER.SLV_MEMBRESIA_SP500,FECHA_FIN,DATE,creada_dbt,dbt/models/silver/slv_membresia_sp500.sql
+SILVER.SLV_MEMBRESIA_SP500,VIGENTE,BOOLEAN,creada_dbt,dbt/models/silver/slv_membresia_sp500.sql
+SILVER.SLV_MEMBRESIA_SP500,HUECOS_UNIDOS,NUMBER,creada_dbt,dbt/models/silver/slv_membresia_sp500.sql
+SILVER.SLV_MEMBRESIA_SP500,PERIODO_KEY,TEXT,creada_dbt,dbt/models/silver/slv_membresia_sp500.sql
+SILVER.SLV_MERCADO_DIARIO,FECHA,DATE,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_MERCADO_DIARIO,CIERRE_SP500,FLOAT,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_MERCADO_DIARIO,CIERRE_NYSE_COMPOSITE,FLOAT,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_MERCADO_DIARIO,RET_LOG_SP500,FLOAT,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_MERCADO_DIARIO,RET_LOG_NYSE_COMPOSITE,FLOAT,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_MERCADO_DIARIO,TASA_IRX_ANUAL_PCT,FLOAT,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_MERCADO_DIARIO,TASA_IRX_RELLENADA,BOOLEAN,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_MERCADO_DIARIO,RF_DIARIA,FLOAT,creada_dbt,dbt/models/silver/slv_mercado_diario.sql
+SILVER.SLV_PRECIOS_ACCIONES,TICKER,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_PRECIOS_ACCIONES,FECHA,DATE,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_PRECIOS_ACCIONES,PRECIO_APERTURA,FLOAT,origen_transformado,OPEN; ver SQL de la tabla
+SILVER.SLV_PRECIOS_ACCIONES,PRECIO_MAXIMO,FLOAT,origen_transformado,HIGH; ver SQL de la tabla
+SILVER.SLV_PRECIOS_ACCIONES,PRECIO_MINIMO,FLOAT,origen_transformado,LOW; ver SQL de la tabla
+SILVER.SLV_PRECIOS_ACCIONES,PRECIO_CIERRE,FLOAT,origen_transformado,CLOSE; ver SQL de la tabla
+SILVER.SLV_PRECIOS_ACCIONES,PRECIO_CIERRE_AJUSTADO,FLOAT,origen_transformado,ADJ_CLOSE; ver SQL de la tabla
+SILVER.SLV_PRECIOS_ACCIONES,PRECIO_APERTURA_AJUSTADO,FLOAT,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,VOLUMEN,FLOAT,origen_transformado,VOLUME; ver SQL de la tabla
+SILVER.SLV_PRECIOS_ACCIONES,RET_LOG_DIARIO,FLOAT,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,RET_LOG_APERTURA,FLOAT,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,RET_LOG_INTRADIA,FLOAT,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,RET_LOG_NOCTURNO,FLOAT,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,IMPUTADO,BOOLEAN,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,LARGO_HUECO_IMPUTADO,NUMBER,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,DESPUES_DE_TRAMO_EXCLUIDO,BOOLEAN,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,ES_RETORNO_EXTREMO,BOOLEAN,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,CIERRE_FUERA_DE_RANGO,BOOLEAN,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,VOLUMEN_CERO,BOOLEAN,creada_dbt,dbt/models/silver/slv_precios_acciones.sql
+SILVER.SLV_PRECIOS_ACCIONES,LOTE_ID,TEXT,heredada_o_normalizada,RAW/tabla anterior; ver SQL
+SILVER.SLV_PRECIOS_ACCIONES,INGESTA_TS,TIMESTAMP_NTZ,heredada_o_normalizada,RAW/tabla anterior; ver SQL

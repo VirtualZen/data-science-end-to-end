@@ -1,0 +1,16 @@
+{
+  "estado": "OK",
+  "verificado_utc": "2026-11-18T05:21:02.818546+00:00",
+  "obt_filas": 87178,
+  "obt_claves_distintas": 87178,
+  "obt_elegibles": 58627,
+  "obt_columnas": 75,
+  "obt_dia_filas": 1832433,
+  "obt_dia_columnas": 33,
+  "controles_ok": 17,
+  "controles_fallidos": 0,
+  "controles_ejecutados_en": "2026-11-18 05:20:42.233881",
+  "raw_filas": 1864395,
+  "ultima_ingesta": "2026-11-17 23:30:05.422611",
+  "operacion": "SELECT; sin escrituras"
+}

@@ -1,0 +1,8 @@
+tabla,filas,que pasa
+RAW.PRECIOS_DIARIOS,1864395,"incluye 23276 filas en 4048 (ticker, fecha) cargadas mas de una vez y 12847 de indices"
+BRONZE.BRZ_PRECIOS_DIARIOS,1845167,"una fila por (ticker, fecha): quita 19228 cargas repetidas; 12733 de indices pasan a Silver.mercado"
+BRONZE (solo acciones),1832434,"sin ^GSPC, ^NYA, ^IRX"
+SILVER.SLV_PRECIOS_ACCIONES,1832433,1832433 observadas + 0 imputadas; 1 filas de Bronze no pasan (precio invalido o fuera de la vida de la accion)
+GOLD.FCT_PRECIOS_DIARIOS,1832433,mismas filas que Silver; 1787760 con la accion en el S&P 500 ese dia
+OBT.OBT_ACCION_DIA,1832433,una fila por fila de Gold (control de Spark)
+OBT.OBT_ACCION_MES,87178,"accion x mes cerrado; 58628 elegibles, 86558 con objetivo"

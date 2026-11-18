@@ -10,6 +10,6 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 uv export --frozen --format requirements-txt --no-hashes --no-emit-project \
-    --no-dev --output-file requirements.txt > /dev/null
+    --no-dev --group modelos --output-file requirements.txt > /dev/null
 
 echo "OK: requirements.txt regenerado desde uv.lock"

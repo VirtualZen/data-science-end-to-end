@@ -1,0 +1,57 @@
+# Entorno local del PSet 2 (pipeline de datos). Un proyecto uv independiente por carpeta:
+# aqui solo van las dependencias del pipeline; el modelado vive en psets/pset-03.
+#
+# Uso, desde psets/pset-03/pipeline/:
+#   uv sync --group dev             crea .venv con Python 3.11 y estas versiones exactas
+#   uv run python scripts/probar_conexion.py
+#
+# Los requirements.txt NO se editan a mano: se generan desde uv.lock con
+#   bash scripts/exportar_requirements.sh
+[project]
+name = "pset-03-pipeline"
+version = "0.1.0"
+description = "PSet 2: pipeline ELT Fuente -> Kestra -> Raw -> dbt -> Bronze/Silver/Gold -> Spark -> OBT en Snowflake"
+requires-python = "==3.11.*"
+dependencies = [
+    # Ingesta (lo mismo que corre la imagen de Kestra, grupo "ingesta" abajo)
+    "yfinance>=1.0,<2",
+    "pandas>=2.2,<3",
+    "pyarrow>=17",
+    "requests>=2.32",
+    "snowflake-connector-python[pandas]>=3.12,<5",
+    # Pruebas locales del pipeline con dbt contra DuckDB (pyspark va en el grupo pruebas-locales)
+    "dbt-duckdb>=1.8,<2",
+    "duckdb>=2,<3",   # mismo formato de archivo en todas las maquinas (v1.x no lee lo de v2)
+    "pandas-market-calendars>=4.4,<6",
+    # Generacion del memo en PDF
+    "reportlab>=4,<6",
+]
+
+[dependency-groups]
+# Dependencias de la imagen pset3-ingesta (kestra/Dockerfile). Se exportan a
+# kestra/requirements.txt con versiones exactas tomadas del mismo uv.lock.
+ingesta = [
+    "yfinance>=1.0,<2",
+    "pandas>=2.2,<3",
+    "pyarrow>=17",
+    "requests>=2.32",
+    "snowflake-connector-python[pandas]>=3.12,<5",
+]
+dev = [
+    "pytest>=8",
+]
+# Dependencias de la imagen pset3-dbt (dbt/Dockerfile). Se exportan a dbt/requirements.txt
+# con versiones exactas del mismo uv.lock; dbt-core igual al del entorno local.
+dbt-imagen = [
+    "dbt-core==1.12.7",
+    "dbt-snowflake>=1.10,<2",
+]
+# Spark en modo local para pruebas_locales/ (requiere Java 17). Opcional porque pyspark pesa
+# ~317 MB y la corrida real usa Spark dentro de su imagen (pset3-spark), no este entorno.
+#   uv sync --group dev --group pruebas-locales
+pruebas-locales = [
+    "pyspark==3.5.3",
+]
+
+[tool.uv]
+package = false

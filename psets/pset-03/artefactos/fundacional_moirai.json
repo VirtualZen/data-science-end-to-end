@@ -1,0 +1,13 @@
+{
+  "modelo": "moirai",
+  "id": "Salesforce/moirai-2.0-R-small",
+  "desde": null,
+  "hasta": null,
+  "contexto": 512,
+  "horizonte_dias": 21,
+  "filas": 58627,
+  "latencia_ms_por_serie": 4.047408641359698,
+  "segundos_carga": 11.295534583972767,
+  "segundos_total": 252.27355320891365,
+  "sha256": "a18e1a7a76e096335bba79eb2c5e5d359c0fb71a8a06d84405d5c972f3685305"
+}
