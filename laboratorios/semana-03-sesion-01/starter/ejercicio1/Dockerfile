@@ -5,19 +5,19 @@
 FROM python:3.11-slim
 WORKDIR /app
 
-# TODO 1: cambia una linea de procesar.py y vuelve a construir: pandas se
+# DONE 1: cambia una linea de procesar.py y vuelve a construir: pandas se
 # instala otra vez. Reordena estas lineas para que un cambio en el codigo
 # no repita la instalacion de dependencias.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# TODO 2: la imagen no dice que correr. Define el comando por defecto:
+# DONE 2: la imagen no dice que correr. Define el comando por defecto:
 # python procesar.py
 
 COPY . .
 
-# Carpeta de datos: se monta como volumen (datos/ local -> /app/data-contenedor).
-RUN mkdir -p /app/data-contenedor
-VOLUME /app/data-contenedor
+# Carpeta de datos: se monta como volumen (datos/ local -> /app/datos, donde la leen los scripts).
+RUN mkdir -p /app/datos
+VOLUME /app/datos
 
 CMD ["python", "procesar.py"]

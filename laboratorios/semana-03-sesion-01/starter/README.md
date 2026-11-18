@@ -13,8 +13,8 @@ escriben en `datos/` (dentro del contenedor, `/app/datos`), así que el `docker 
   contenedor (`WORKDIR /app` + la ruta relativa `datos/`).
 - Con el volumen, el script lee la entrada de tu carpeta y el resultado **queda en tu carpeta**, no se pierde al
   terminar el contenedor.
-- El `VOLUME /app/data-contenedor` de los Dockerfile y el `docker-compose.yml` del ejercicio 2 apuntan a otra ruta
-  (`/app/data-contenedor`), distinta de la que usan los scripts. Para correr los ejercicios usa el `-v` de arriba.
+- El `VOLUME /app/datos` de los Dockerfile y el `docker-compose.yml` del ejercicio 2 usan la misma ruta
+  (`/app/datos`), asi que el `docker run -v` de arriba y `docker compose up` montan la carpeta en el mismo lugar.
 
 ## Ejercicio 1: `procesar.py`
 

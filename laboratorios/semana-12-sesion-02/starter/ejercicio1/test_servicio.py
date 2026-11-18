@@ -46,13 +46,16 @@ def test_salud():
 
 def test_predecir_devuelve_tarifa():
     respuesta = cliente.post("/predecir", json=VIAJE)
-    # TODO 3: comprueba que la respuesta tiene codigo 200 y que su JSON es
+    # DONE 3: comprueba que la respuesta tiene codigo 200 y que su JSON es
     # exactamente la tarifa del modelo de prueba: {"tarifa_estimada": 20.0}.
+    assert respuesta.status_code == 200
+    assert respuesta.json() == {"tarifa_estimada": 20.0}
 
 
 def test_viaje_sin_zona_de_origen_se_rechaza():
     viaje = VIAJE.copy()
     viaje.pop("zona_origen")
     respuesta = cliente.post("/predecir", json=viaje)
-    # TODO 4: comprueba que el servicio rechaza el viaje con codigo 422, sin
+    # DONE 4: comprueba que el servicio rechaza el viaje con codigo 422, sin
     # llegar al modelo.
+    assert respuesta.status_code == 422

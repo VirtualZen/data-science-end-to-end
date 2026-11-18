@@ -27,20 +27,24 @@ def huella(ruta):
 
 
 def cargar_modelo(ruta):
-    # TODO 1: carga el pipeline entrenado que guardo entrenar.py, con joblib.load.
-    return None
+    # DONE 1: carga el pipeline entrenado que guardo entrenar.py, con joblib.load.
+    return joblib.load(ruta)
 
 
 def predecir_lote(modelo, viajes, version_modelo):
     """Una fila por viaje, con tres columnas: id_viaje, tarifa_estimada y
     version_modelo."""
-    # TODO 2: estima la tarifa de cada viaje con el modelo, sobre las mismas
+    # DONE 2: estima la tarifa de cada viaje con el modelo, sobre las mismas
     # columnas con que se entreno.
-    estimadas = None
+    estimadas = modelo.predict(viajes[NUMERICAS + YA_LISTAS + CATEGORICAS])
 
-    # TODO 3: arma la tabla de salida con las tres columnas del docstring, con
+    # DONE 3: arma la tabla de salida con las tres columnas del docstring, con
     # la tarifa redondeada a 2 decimales.
-    return pd.DataFrame({"id_viaje": viajes["id_viaje"]})
+    return pd.DataFrame({
+        "id_viaje": viajes["id_viaje"].to_numpy(),
+        "tarifa_estimada": estimadas.round(2),
+        "version_modelo": version_modelo,
+    })
 
 
 if __name__ == "__main__":

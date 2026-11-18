@@ -28,19 +28,23 @@ def huella(ruta):
 
 
 def cargar_modelo(ruta):
-    # TODO 1: carga el modelo que guardo entrenar_fraude.py.
-    return None
+    # DONE 1: carga el modelo que guardo entrenar_fraude.py.
+    return joblib.load(ruta)
 
 
 def puntuar_lote(modelo, pagos, version_modelo):
     """Una fila por pago, con tres columnas: id_pago, probabilidad_fraude y
     version_modelo."""
-    # TODO 2: la probabilidad de fraude de cada pago (la columna de la
+    # DONE 2: la probabilidad de fraude de cada pago (la columna de la
     # clase 1), sobre los pagos ya preparados.
-    probabilidades = None
+    probabilidades = modelo.predict_proba(columnas(agregar_features(pagos)))[:, 1]
 
-    # TODO 3: la tabla de salida, con la probabilidad redondeada a 4 decimales.
-    return pd.DataFrame({"id_pago": pagos["id_pago"]})
+    # DONE 3: la tabla de salida, con la probabilidad redondeada a 4 decimales.
+    return pd.DataFrame({
+        "id_pago": pagos["id_pago"].to_numpy(),
+        "probabilidad_fraude": probabilidades.round(4),
+        "version_modelo": version_modelo,
+    })
 
 
 def a_revisar(puntuados, umbral):
@@ -48,7 +52,8 @@ def a_revisar(puntuados, umbral):
     sospechoso al menos sospechoso."""
     # Deja en cola solo las filas de puntuados que alcanzan el umbral,
     # ordenadas de mayor a menor probabilidad_fraude.
-    cola = puntuados
+    cola = puntuados[puntuados["probabilidad_fraude"] >= umbral].sort_values(
+        "probabilidad_fraude", ascending=False)
     return cola
 
 
