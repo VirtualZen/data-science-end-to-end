@@ -1,0 +1,7 @@
+capa,tablas,columnas,con_faltantes,pct_faltantes_medio,con_regla,con_invalidos,invalidos,con_imputados
+RAW,4,33,3,8.779,22,4,563,0
+BRONZE,5,34,2,5.882,22,4,4,0
+SILVER,5,61,18,6.499,35,2,2,2
+GOLD,5,73,18,4.932,39,2,2,2
+CALIDAD,3,27,2,1.543,19,0,0,0
+OBT,3,113,46,0.128,60,0,0,0

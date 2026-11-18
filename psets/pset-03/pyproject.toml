@@ -33,7 +33,7 @@ dependencies = [
 dev = [
     "pytest>=8",
 ]
-# Scripts de analisis/ (traidos de draft:psets/pset-02/analisis): Yahoo con cache DuckDB,
+# Scripts de analisis/datos y analisis/modelos (traidos de draft:psets/pset-02/analisis): Yahoo con cache DuckDB,
 # imputacion, ARIMA por accion y comparacion de los modelos del PSet 1.
 #   uv sync --group analisis        (xgboost en macOS requiere: brew install libomp)
 # Opcionales, no incluidos: torch, chronos-forecasting, timesfm, uni2ts (Moirai).
@@ -44,6 +44,24 @@ analisis = [
     "xgboost>=2.0",
     "yfinance>=1.0,<2",
 ]
+# Modelos del PSet 3 (docs/diseno_experimental.md): uv sync --group modelos
+#   redes: uv sync --group redes (torch + lightning; mps en la Mac M4, cuda en Colab)
+#   fundacionales (chronos-forecasting, timesfm, uni2ts) quedan fuera del lock: chocan entre si.
+modelos = [
+    "arch>=7",
+    "lightgbm>=4",
+    "optuna>=4",
+    "statsmodels>=0.14",
+    "xgboost>=2.0",
+]
+redes = [
+    "lightning>=2.4",
+    "torch>=2.5",
+]
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+# Solo las pruebas de pset-03; las de pipeline/ se corren desde esa carpeta con su entorno.
+testpaths = ["tests"]

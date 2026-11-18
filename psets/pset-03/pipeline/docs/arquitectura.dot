@@ -1,0 +1,51 @@
+digraph arquitectura {
+  // PSet 3: copia del pipeline del PSet 2 en psets/pset-03/pipeline (base PORTAFOLIO_P3).
+  // Render: dot -Tpng arquitectura.dot -o arquitectura.png (ver docs/README.md).
+  rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#555555"]; edge [fontname="Helvetica", fontsize=9, color="#555555"];
+  compound=true; newrank=true;
+
+  subgraph cluster_fuentes { label="Fuentes públicas"; style="rounded,dashed"; color="#999999"; fontsize=12;
+    yahoo [label="Yahoo Finance\n(yfinance)\nOHLCV diario, ^GSPC, ^NYA, ^IRX"];
+    comp  [label="GitHub chinobing/\nhistorical_sp500_constituents\ncomposición histórica"];
+    nasdaq[label="GitHub rreichel3/\nUS-Stock-Symbols\nbolsa de cada símbolo"];
+    seeds [label="seeds de dbt\ncalendario NYSE\nequivalencias de tickers\n(analisis/datos/equivalencias_tickers.py)", fillcolor="#f4f4f4"];
+  }
+
+  subgraph cluster_local { label="pipeline/docker-compose.yml · proyecto pset3-pipeline (máquina local / USFQ)"; style="rounded"; color="#3b6ea5"; fontsize=12;
+    subgraph cluster_kestra { label="Kestra 2.0.7 (orquestación)"; style="rounded,filled"; fillcolor="#eef3fa"; color="#3b6ea5";
+      sched [label="Trigger Schedule\nL–V 18:30 NY\nrecoverMissedSchedules"];
+      f1 [label="ingesta_diaria\n(retry exponencial x4)\nRAW vacía → histórico 2010+"];
+      f3 [label="backfill_historico\n(recarga por año)"];
+      f2 [label="transformar\n(subflow)"];
+      fav [label="avisos (usfq.avisos)\nSuccess / Fail por correo", fillcolor="#fdf1e6"];
+    }
+    pg [label="Postgres\n(estado de Kestra)", fillcolor="#f4f4f4"];
+    ing [label="contenedor pset3-ingesta\nextraer_cargar.py\n(sin sesión en curso)", fillcolor="#fff7e6"];
+    dbt [label="contenedor pset3-dbt\ndbt build (modelos + tests)", fillcolor="#fff7e6"];
+    subgraph cluster_spark { label="Spark 3.5.3"; style="rounded,filled"; fillcolor="#f2f8ee"; color="#4f8a3c";
+      sm [label="spark-master"]; sw [label="spark-worker"]; job [label="construir_obt.py\n(driver, 17 controles)"];
+      sp [label="spark-pruebas\n(perfil pruebas, pytest)", fillcolor="#f4f4f4"];
+    }
+    rec [label="scripts/reconstruir_obt.sh\npruebas → transformar →\nevidencias → snapshot", fillcolor="#f4f4f4"];
+  }
+
+  gmail [label="Gmail SMTP\n(AVISO_CORREO)", fillcolor="#fdf1e6"];
+  nb [label="psets/pset-03\nsrc/datos.py → data/obt.parquet\nnotebooks + MLflow", fillcolor="#f4f4f4"];
+
+  subgraph cluster_sf { label="Snowflake · base PORTAFOLIO_P3 (PORTAFOLIO = entrega PSet 2, sin cambios)"; style="rounded,filled"; fillcolor="#eaf6fb"; color="#29b5e8"; fontsize=12;
+    raw [label="RAW\nappend-only + lote"]; brz [label="BRONZE\nstaging: tipos,\ndeduplicación"]; slv [label="SILVER\nlimpieza, calendario,\nOHLC ajustado, diferencias\n(arit., %, log), membresía"]; gold [label="GOLD\nstar schema"]; obt [label="OBT\nOBT_ACCION_MES (75 col.)\nOBT_ACCION_DIA (OHLCV y\ndiferencias diarias)\nVALIDACION_OBT"]; cal [label="CALIDAD\ndq_metricas\ndq_huecos_por_ticker\ndq_universo_por_fecha"];
+    raw -> brz [label="dbt / source()"]; brz -> slv [label="dbt / ref()"]; slv -> gold [label="dbt / ref()"]; raw -> cal [style=dashed]; brz -> cal [style=dashed]; slv -> cal [style=dashed]; gold -> cal [style=dashed]; gold -> obt [style=invis]; seeds -> brz [style=dashed];
+  }
+
+  sched -> f1; f1 -> f2 [label="al terminar"]; f3 -> f2;
+  f1 -> ing [label="diario / primera carga"]; f3 -> ing [label="histórico"];
+  yahoo -> ing; comp -> ing; nasdaq -> ing;
+  ing -> raw [label="write_pandas"];
+  f1 -> pg [label="estado", style=dashed];
+  f1 -> fav [style=dashed]; f3 -> fav [style=dashed]; f2 -> fav [label="manual\n(origen=manual)", style=dashed];
+  fav -> gmail; rec -> gmail [label="notificar.py", style=dashed]; rec -> f2 [label="API", style=dashed];
+  f2 -> dbt; dbt -> brz [label="SQL en Snowflake", lhead=cluster_sf];
+  dbt -> job [label="solo tras dbt exitoso", style=dashed]; f2 -> job [label="orquesta"]; job -> sm; sm -> sw;
+  gold -> job [label="lee Gold"]; job -> obt [label="escribe OBT"];
+  obt -> nb [label="SELECT (snapshot)"];
+}

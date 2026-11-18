@@ -1,0 +1,74 @@
+[
+  {
+    "prueba": "V2.4a ingesta manual",
+    "id": "482URcBmyMR6eY6IkmcLZZ",
+    "flow": "ingesta_diaria",
+    "estado": "SUCCESS",
+    "inicio": "2026-11-17T22:48:32.850291Z",
+    "duracion": "PT7M19.924904S",
+    "etiquetas": {
+      "proyecto": "portafolio-inversiones",
+      "pset": "3",
+      "system.from": "api",
+      "system.correlationId": "482URcBmyMR6eY6IkmcLZZ"
+    },
+    "tareas": {
+      "extraer_cargar_raw": {
+        "estado": "SUCCESS",
+        "intentos": 1
+      },
+      "transformar": {
+        "estado": "SUCCESS",
+        "intentos": 1
+      }
+    }
+  },
+  {
+    "prueba": "V2.5 falla simulada",
+    "id": "4lCj0sgIhG5OyAIkz1PoBr",
+    "flow": "ingesta_diaria",
+    "estado": "FAILED",
+    "inicio": "2026-11-17T22:56:04.174476Z",
+    "duracion": "PT14M4.017269S",
+    "etiquetas": {
+      "proyecto": "portafolio-inversiones",
+      "pset": "3",
+      "system.from": "api",
+      "system.correlationId": "4lCj0sgIhG5OyAIkz1PoBr"
+    },
+    "tareas": {
+      "extraer_cargar_raw": {
+        "estado": "FAILED",
+        "intentos": 4
+      },
+      "registrar_falla": {
+        "estado": "SUCCESS",
+        "intentos": 1
+      }
+    }
+  },
+  {
+    "prueba": "V2.4b ingesta del cron",
+    "id": "7VmVq3bzxGjGt1vMwAodMz",
+    "flow": "ingesta_diaria",
+    "estado": "SUCCESS",
+    "inicio": "2026-11-17T23:30:01.017003Z",
+    "duracion": "PT7M10.294272S",
+    "etiquetas": {
+      "proyecto": "portafolio-inversiones",
+      "pset": "3",
+      "system.from": "trigger",
+      "system.correlationId": "7VmVq3bzxGjGt1vMwAodMz"
+    },
+    "tareas": {
+      "extraer_cargar_raw": {
+        "estado": "SUCCESS",
+        "intentos": 1
+      },
+      "transformar": {
+        "estado": "SUCCESS",
+        "intentos": 1
+      }
+    }
+  }
+]

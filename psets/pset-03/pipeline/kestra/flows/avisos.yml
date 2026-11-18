@@ -1,0 +1,52 @@
+# Avisos por correo cuando termina una ejecucion del pipeline (exito o falla).
+# Subir a Kestra:  bash kestra/subir_flows.sh
+# Secretos (en .env -> scripts/preparar_env.sh -> .env_encoded, nunca en git):
+#   AVISO_CORREO      cuenta de Gmail que envia y recibe el aviso
+#   AVISO_CLAVE_APP   contrasena de aplicacion de Google (no la clave normal)
+id: avisos
+# Namespace propio: si estuviera en usfq.portafolio, sus propias ejecuciones lo
+# volverian a disparar.
+namespace: usfq.avisos
+description: |
+  Envia un correo con el resumen de cada ejecucion terminada de ingesta_diaria y
+  backfill_historico (enlace, duracion, estado y, si fallo, la tarea que fallo).
+  transformar no avisa cuando corre como subflow de esos dos (si falla, su flow padre
+  tambien termina en FAILED); si avisa cuando se lanza a mano con la etiqueta
+  origen=manual (scripts/reconstruir_obt.sh). El asunto empieza con "Success" o "Fail".
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "3"
+
+tasks:
+  - id: correo
+    type: io.kestra.plugin.email.MailExecution
+    host: smtp.gmail.com
+    port: 465
+    transportStrategy: SMTPS
+    username: "{{ secret('AVISO_CORREO') }}"
+    password: "{{ secret('AVISO_CLAVE_APP') }}"
+    from: "{{ secret('AVISO_CORREO') }}"
+    to: "{{ secret('AVISO_CORREO') }}"
+    subject: "{{ trigger.state == 'SUCCESS' ? 'Success' : 'Fail' }}: {{ trigger.namespace }}.{{ trigger.flowId }} ({{ trigger.state }})"
+    customMessage: "{{ trigger.state == 'SUCCESS' ? 'Success' : 'Fail' }}: la ejecucion {{ trigger.executionId }} de {{ trigger.flowId }} termino en {{ trigger.state }}."
+    executionId: "{{ trigger.executionId }}"
+
+triggers:
+  - id: al_terminar
+    type: io.kestra.plugin.core.trigger.Flow
+    dependsOn:
+      - namespace: usfq.portafolio
+        states: [SUCCESS, WARNING, FAILED, KILLED]
+        when: "{{ flow.id != 'transformar' }}"
+  # Segundo trigger (no un segundo dependsOn: con varias entradas, por defecto Kestra exige
+  # que se cumplan todas). Solo transformar lanzado a mano con la etiqueta origen=manual;
+  # sus ejecuciones como subflow no llevan esa etiqueta.
+  - id: transformar_manual
+    type: io.kestra.plugin.core.trigger.Flow
+    dependsOn:
+      - namespace: usfq.portafolio
+        flowId: transformar
+        states: [SUCCESS, WARNING, FAILED, KILLED]
+        labels:
+          origen: manual

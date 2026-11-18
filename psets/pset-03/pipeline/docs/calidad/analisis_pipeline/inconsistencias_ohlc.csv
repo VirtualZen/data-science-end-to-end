@@ -1,0 +1,6 @@
+tabla,filas,maximo_menor_que_minimo,cierre_fuera_de_rango,apertura_fuera_de_rango,pct_maximo_menor_que_minimo,pct_cierre_fuera_de_rango,pct_apertura_fuera_de_rango
+RAW.PRECIOS_DIARIOS,1851548,0,0,39,0.0,0.0,0.0021
+BRONZE.BRZ_PRECIOS_DIARIOS,1832434,0,0,6,0.0,0.0,0.0003
+SILVER.SLV_PRECIOS_ACCIONES,1832433,0,0,5,0.0,0.0,0.0003
+GOLD.FCT_PRECIOS_DIARIOS,1832433,0,0,5,0.0,0.0,0.0003
+OBT.OBT_ACCION_DIA,1832433,0,0,5,0.0,0.0,0.0003

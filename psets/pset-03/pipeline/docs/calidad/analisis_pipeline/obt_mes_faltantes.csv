@@ -1,0 +1,76 @@
+columna,pct_faltantes,pct_faltantes_elegibles,origen,uso,razon_del_nulo
+accion_key,0.0,0.0,PSet 2,informativa,
+ticker,0.0,0.0,PSet 2,informativa,
+nombre,0.167,0.196,PSet 2,informativa,atributo actual: accion que ya no cotiza
+bolsa,0.0,0.0,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+es_nyse,0.0,0.0,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+bolsa_desconocida,0.0,0.0,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+anio_mes,0.0,0.0,PSet 2,informativa,
+anio,0.0,0.0,PSet 2,informativa,
+mes,0.0,0.0,PSet 2,informativa,
+conjunto,0.0,0.0,PSet 2,informativa,
+objetivo_cruza_corte,0.0,0.0,PSet 2,informativa,
+fecha_ultima_cotizacion,0.0,0.0,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+cotizo_al_cierre_de_mes,0.0,0.0,PSet 2,informativa,
+en_sp500,0.0,0.0,PSet 2,informativa,
+sigue_en_sp500,0.0,0.0,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+elegible,0.0,0.0,PSet 2,informativa,
+precio_cierre_ajustado,0.0,0.0,PSet 2,informativa,
+ret_log_mes,0.005,0.0,PSet 2,predictor,
+ret_log_21d,0.005,0.0,PSet 2,predictor,
+ret_log_252d,0.005,0.0,PSet 2,predictor,ventana de 252 dias: historia corta
+momentum_12_1,0.005,0.0,PSet 2,predictor,ventana de 252 dias: historia corta
+vol_21d,0.006,0.0,PSet 2,predictor,
+vol_63d,0.006,0.0,PSet 2,predictor,ventana de 63 dias: historia corta
+vol_apertura_21d,0.006,0.0,PSet 2,predictor,
+intradia_prom_21d,0.0,0.0,PSet 2,predictor,
+nocturno_prom_21d,0.005,0.0,PSet 2,predictor,
+drawdown_252d,0.0,0.0,PSet 2,predictor,ventana de 252 dias: historia corta
+volumen_prom_21d,0.0,0.0,PSet 2,predictor,
+dolares_negociados_prom_21d,0.0,0.0,PSet 2,predictor,
+obs_252d,0.0,0.0,PSet 2,predictor,ventana de 252 dias: historia corta
+dias_negociados_mes,0.0,0.0,PSet 2,predictor,
+dias_imputados_mes,0.0,0.0,PSet 2,informativa,
+hubo_tramo_excluido_mes,0.0,0.0,PSet 2,informativa,
+hubo_retorno_extremo_mes,0.0,0.0,PSet 2,informativa,
+ret_log_sp500_mes,0.0,0.0,PSet 2,predictor,
+ret_log_nyse_composite_mes,0.0,0.0,PSet 2,predictor,
+rf_mes,0.0,0.0,PSet 2,predictor,mercado: depende de ^IRX
+tasa_irx_prom_mes_pct,0.0,0.0,PSet 2,informativa,mercado: depende de ^IRX
+ret_log_mes_siguiente,0.711,0.583,PSet 2,objetivo,futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+exceso_ret_mes_siguiente,0.711,0.583,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+ret_log_sp500_mes_siguiente,0.593,0.583,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+ret_log_nyse_composite_mes_siguiente,0.593,0.583,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+rf_mes_siguiente,0.593,0.583,PSet 2,nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo
+ret_pct_mes,0.005,0.0,F1 (PSet 3),informativa,
+ret_log_mes_lag1,0.711,0.0,F1 (PSet 3),predictor,rezago: requiere meses previos consecutivos
+ret_pct_mes_lag1,0.711,0.0,F1 (PSet 3),informativa,rezago: requiere meses previos consecutivos
+ret_log_mes_lag2,1.417,0.0,F1 (PSet 3),predictor,rezago: requiere meses previos consecutivos
+ret_pct_mes_lag2,1.417,0.0,F1 (PSet 3),informativa,rezago: requiere meses previos consecutivos
+ret_log_mes_lag3,2.121,0.0,F1 (PSet 3),predictor,rezago: requiere meses previos consecutivos
+ret_pct_mes_lag3,2.121,0.0,F1 (PSet 3),informativa,rezago: requiere meses previos consecutivos
+intradia_log_mes,0.005,0.0,F1 (PSet 3),predictor,
+intradia_pct_mes,0.005,0.0,F1 (PSet 3),informativa,
+nocturno_log_mes,0.005,0.0,F1 (PSet 3),predictor,
+nocturno_pct_mes,0.005,0.0,F1 (PSet 3),informativa,
+intradia_pct_prom_21d,0.0,0.0,F1 (PSet 3),informativa,
+nocturno_pct_prom_21d,0.005,0.0,F1 (PSet 3),informativa,
+vol_intradia_21d,0.005,0.0,F1 (PSet 3),predictor,
+rango_log_hl_mes,0.0,0.0,F1 (PSet 3),predictor,
+rango_pct_hl_mes,0.0,0.0,F1 (PSet 3),informativa,
+cambio_rango_log_hl_mes,0.711,0.0,F1 (PSet 3),predictor,requiere el mes anterior
+cambio_rango_pct_hl_mes,0.74,0.015,F1 (PSet 3),informativa,requiere el mes anterior
+rango_log_hl_prom_21d,0.0,0.0,F1 (PSet 3),predictor,
+rango_pct_hl_prom_21d,0.0,0.0,F1 (PSet 3),informativa,
+rango_log_hl_prom_63d,0.0,0.0,F1 (PSet 3),predictor,ventana de 63 dias: historia corta
+rango_pct_hl_prom_63d,0.0,0.0,F1 (PSet 3),informativa,ventana de 63 dias: historia corta
+cambio_rango_log_hl_21_63,0.031,0.017,F1 (PSet 3),predictor,ventana de 63 dias: historia corta
+cambio_rango_pct_hl_21_63,0.02,0.012,F1 (PSet 3),informativa,ventana de 63 dias: historia corta
+vol_parkinson_21d,0.0,0.0,F1 (PSet 3),predictor,
+vol_garman_klass_21d,0.0,0.0,F1 (PSet 3),predictor,
+beta_252d,0.006,0.0,F1 (PSet 3),predictor,ventana de 252 dias: historia corta
+exceso_sp500_log_mes,0.005,0.0,F1 (PSet 3),predictor,
+exceso_sp500_pct_mes,0.005,0.0,F1 (PSet 3),informativa,
+volumen_relativo_log_21_252,0.005,0.002,F1 (PSet 3),predictor,ventana de 252 dias: historia corta
+volumen_relativo_pct_21_252,0.001,0.0,F1 (PSet 3),informativa,ventana de 252 dias: historia corta
+ret_pct_mes_siguiente,0.711,0.583,F1 (PSet 3),nunca predictor (fuga),futuro: nulo en el ultimo mes cerrado y sin mes siguiente consecutivo

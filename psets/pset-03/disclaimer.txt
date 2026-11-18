@@ -1,0 +1,31 @@
+DISCLAIMER - PSet 3 (psets/pset-03, rama work)
+Allan Paul Gomez Ehmig (00351916)
+
+CONTRADICCIONES CON LO ENTREGADO EN EL PSET 2
+
+El PSet 2 ya se entrego (tag pset-02) y psets/pset-02/ no se modifica. Algunas
+afirmaciones de esa carpeta dejaron de describir lo que hace el PSet 3:
+
+1. psets/pset-02/docs/limite_pset02_pset03.md dice que el PSet 3 "lee la OBT mediante
+   SELECT" y "no reconstruye RAW, dbt ni Gold".
+   En el PSet 3, psets/pset-03/pipeline/ es una copia del pipeline del PSet 2 que si
+   reconstruye RAW, Bronze, Silver, Gold y la OBT, para poder volver a correrlo con los
+   cambios que pida el PSet 3 sin tocar lo entregado. Escribe solo en la base
+   PORTAFOLIO_P3; la base PORTAFOLIO del PSet 2 no se modifica. Los notebooks y src/
+   siguen leyendo la OBT solo con SELECT (src/datos.py, base PORTAFOLIO_P3).
+
+2. El mismo documento dice que "los analisis previos de Yahoo/DuckDB permanecen en draft
+   como antecedentes; no se duplican como ruta activa de la entrega".
+   La rama draft se elimino. Esos analisis estan en psets/pset-03/analisis/, separados en
+   datos/ y modelos/. Siguen siendo antecedentes, no la ruta activa: la ruta activa es
+   src/ + notebooks/ sobre la OBT (ver analisis/README.md). Solo
+   analisis/datos/equivalencias_tickers.py sigue en uso, como fuente de la semilla de
+   equivalencias de pipeline/.
+
+3. psets/pset-02/kestra/flows/ingesta_diaria.yml pasa trigger.date con hora y zona al
+   script de ingesta, y las ejecuciones programadas fallan. Se corrigio solo en la copia
+   (pipeline/kestra/flows/ingesta_diaria.yml); el backfill y las ejecuciones manuales con
+   el input fecha del PSet 2 no tienen el problema.
+
+El detalle de cada cambio, con antes y despues, esta en docs/migracion_pipeline.md y
+docs/migracion_analisis.md.
