@@ -9,4 +9,4 @@ services:
     depends_on:
       - base-datos
     volumes:
-      - ./datos:/app/data-contenedor
+      - ./datos:/app/datos
