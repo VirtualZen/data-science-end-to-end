@@ -39,11 +39,12 @@ with mlflow.start_run(run_name=f"red-{neuronas}"):
     mlflow.log_param("neuronas", neuronas)
     mlflow.log_metric("mae", mae)
 
-    # TODO 1: guarda el modelo en la corrida (mlflow.sklearn.log_model, con
+    # DONE 1: guarda el modelo en la corrida (mlflow.sklearn.log_model, con
     # el nombre de artefacto "modelo") y registralo a la vez, con
     # registered_model_name=NOMBRE. log_model devuelve informacion del
     # modelo: su atributo registered_model_version es el numero de la
     # version nueva.
-    version = None
+    info = mlflow.sklearn.log_model(modelo, "modelo", registered_model_name=NOMBRE)
+    version = info.registered_model_version
 
 print(f"Version {version} de {NOMBRE}: red de {neuronas} neuronas, MAE {mae:.4f}")
