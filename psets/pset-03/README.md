@@ -12,7 +12,7 @@ final en `psets/proyecto/` se hará al empaquetar el proyecto, sin duplicar data
 ## Preparación
 
 ```bash
-uv sync                      # .venv con Python 3.11 y las versiones exactas de uv.lock
+uv sync --group modelos      # .venv con Python 3.11, las versiones exactas de uv.lock y los modelos (lightgbm, xgboost, optuna)
 cp .env.example .env
 # Completar credenciales localmente: nunca agregarlas a git.
 uv run python -m src.datos
@@ -26,6 +26,53 @@ desde el lock y lo usan la imagen runner y el registro de MLflow.
 MLflow queda en http://localhost:5001, con SQLite como backend y artefactos en
 `mlflow/artifacts`; ambos persisten en `mlflow/`, excluido de Git. El snapshot
 `data/obt.parquet` tiene un manifiesto con tabla, fecha y SHA-256. No se publica.
+
+## Conexión a Snowflake
+
+Los notebooks no consultan Snowflake: leen el snapshot `data/obt.parquet`. Snowflake solo hace falta una vez, para
+crear ese snapshot con `uv run python -m src.datos` (y `--grano dia` para la tabla diaria que usa la métrica de
+negocio). La conexión usa el mismo usuario de servicio del PSet 2, que se autentica con un par de llaves y sin
+contraseña.
+
+1. **Usuario, rol, bodega y llaves.** Si ya existen del PSet 2 (`PSET2_SERVICIO`, `PSET2_ROL`, `PSET2_WH` y la llave
+   privada en `pipeline/secrets/snowflake_llave.p8`), se reutilizan. Si no, se crean con los pasos 2 y 3 del
+   [README del PSet 2](../pset-02/README.md#2-par-de-llaves-para-el-usuario-de-servicio). La base `PORTAFOLIO_P3`
+   y su OBT se construyen con [`pipeline/`](pipeline/README.md).
+2. **Archivo `.env`.** Copiar la plantilla y completar cada variable:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | Qué va |
+   |---|---|
+   | `SNOWFLAKE_ACCOUNT` | Identificador de la cuenta, formato `ORGANIZACION-CUENTA` (Snowsight → menú de la cuenta → *Account* → *Account identifier*) |
+   | `SNOWFLAKE_USER` | Usuario de servicio: `PSET2_SERVICIO` |
+   | `SNOWFLAKE_ROLE` | `PSET2_ROL` |
+   | `SNOWFLAKE_WAREHOUSE` | `PSET2_WH` |
+   | `SNOWFLAKE_DATABASE` | `PORTAFOLIO_P3` (la base `PORTAFOLIO` del PSet 2 no se toca) |
+   | `SNOWFLAKE_PRIVATE_KEY` | El cuerpo de la llave privada en una sola línea, sin las líneas `-----BEGIN/END-----` |
+   | `MLFLOW_TRACKING_URI` | `http://localhost:5001` |
+   | `MLFLOW_EXPERIMENT_NAME` | `portafolio-inversiones` |
+
+   El cuerpo de la llave es el texto en base64 que `src/datos.py` decodifica con `base64.b64decode`. Se obtiene así:
+
+   ```bash
+   grep -v -- '-----' pipeline/secrets/snowflake_llave.p8 | tr -d '\n'; echo
+   ```
+
+3. **Crear y verificar el snapshot.**
+
+   ```bash
+   uv run python -m src.datos
+   uv run python -m src.datos --grano dia
+   ```
+
+   Cada comando escribe el `.parquet` y un `.json` con la tabla de origen, la fecha y el sha256. Si el sha256 no
+   coincide con el de las corridas registradas (`c3568917…` para la OBT mensual), el pipeline cargó datos nuevos y las
+   métricas pueden cambiar (ver [docs/reproducibilidad.md](docs/reproducibilidad.md)).
+
+`.env` y `pipeline/secrets/` están en `.gitignore`: la llave privada se guarda solo en esa carpeta y nunca se sube.
 
 ## Orden de trabajo
 
