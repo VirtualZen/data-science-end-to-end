@@ -75,3 +75,15 @@ Código de modelado (semanas 9 a 11):
 - MLflow del PSet 3: experimento `portafolio-inversiones`; tags `fase`, `familia` y `modelo` por separado.
   Toda lista de modelos tiene al menos dos líneas base.
 - El correo de avisos solo en `.env` (`AVISO_CORREO`), nunca en archivos versionados.
+
+## Guía compartida para auditorías y refactorizaciones
+
+Antes de auditar o refactorizar, leer y aplicar [ESTANDARES_CODIGO.md](ESTANDARES_CODIGO.md).
+Es la guía común de Claude y Codex; [AGENTS.md](AGENTS.md) es la entrada para Codex.
+Las reglas específicas de este archivo se conservan. Consultar el PDF correspondiente ante
+una diferencia con las convenciones de carpetas o entregables descritas arriba.
+
+En modo auditoría no se modifican archivos, ni siquiera `plan.txt`, comentarios o documentación.
+La regla de mantener planes al día se aplica cuando esté autorizado editar en ese alcance.
+Conservar el texto y la numeración de los comentarios: cambiar solo TODO por DONE cuando la
+tarea esté implementada y verificada. La guía no autoriza cambios de código, commits ni push.
