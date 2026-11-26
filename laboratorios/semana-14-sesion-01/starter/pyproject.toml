@@ -1,0 +1,31 @@
+[project]
+name = "semana-14-sesion-01"
+version = "0.1.0"
+description = "Semana 14, sesion 1: deriva de datos y deriva conceptual (PSI y monitor del servicio)"
+authors = [
+    { name = "Paul Gomez Ehmig", email = "apgomez@estud.usfq.edu.ec" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.4",
+    "httpx==0.27.2",
+    "joblib==1.4.2",
+    "matplotlib==3.9.2",
+    "numpy==1.26.4",
+    "pandas==2.2.2",
+    "pydantic==2.9.2",
+    "scikit-learn==1.5.2",
+]
+
+[project.scripts]
+semana-14-sesion-01 = "semana_14_sesion_01:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel==6.29.5",
+    "nbconvert>=7.17.2",
+]

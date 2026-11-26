@@ -10,6 +10,19 @@
 
 Nada nuevo que instalar. El Ejercicio 1 es un notebook (simula la deriva y elige el umbral); el Ejercicio 2, un script del servicio (la alerta queda ahí, corriendo con cada predicción).
 
+### Cómo correrlo localmente con uv
+
+`starter/` es un proyecto uv (Python 3.11, versiones del `requirements.txt` del curso). Desde `laboratorios/semana-14-sesion-01/starter/`:
+
+```bash
+uv sync
+uv run python -m ipykernel install --user --name semana-14-sesion-01 --display-name "semana-14-sesion-01"
+cd ejercicio1 && uv run --project .. jupyter nbconvert --to notebook --execute --inplace --ExecutePreprocessor.kernel_name=semana-14-sesion-01 ejercicio1_deriva.ipynb && cd ..
+cd ejercicio2 && uv run --project .. python comprobar.py && uv run --project .. python entrenar.py && uv run --project .. python simular_semanas.py && cd ..
+```
+
+En VS Code, el notebook se abre con el kernel `semana-14-sesion-01` (o con el intérprete `starter/.venv`). El Ejercicio 2 deja `referencia_deriva.json`, `modelo_tarifa.joblib` y `predicciones.jsonl` en `ejercicio2/`; se regeneran con `entrenar.py`.
+
 ## Antes de empezar
 
 A partir de la lectura previa:
