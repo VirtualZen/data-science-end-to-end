@@ -126,11 +126,11 @@ Agrega la sección **Deriva**: la tabla de la simulación, el umbral elegido y p
 
 **En tu proyecto, ¿qué deriva de datos es la más probable, y empeoraría tu modelo? ¿Y qué deriva conceptual?**
 
-_(tu respuesta)_
+Cambios generales del mercado.
 
 **Si tu alerta de deriva se enciende y tu métrica de desempeño no cambia, ¿qué haces?**
 
-_(tu respuesta)_
+Es deriva de datos que el modelo tolera: registro la causa (por ejemplo, un mes de volatilidad alta) y no reentreno; sigo vigilando el MAE y el Sharpe del mes siguiente antes de decidir.
 
 ## Antes de la próxima sesión
 
@@ -138,4 +138,7 @@ _(tu respuesta)_
 
 En las últimas cuatro sesiones construiste un servicio, un registro, métricas y alertas, con PSI, MAE, p95 y recall. ¿Qué cambia entre explicarle tu proyecto a otro científico de datos y a quien paga la factura? Escribe la primera oración que le dirías a cada uno.
 
-_(tu respuesta)_
+En el primer caso debo usar prioritariamente términos técnicos, en el otro primero explicar el negocio y solo si hay un técnico en la reunión y pregunta algo, profundizar.
+
+- **A otro científico de datos:** "Predigo el retorno logarítmico a un mes de las acciones del S&P 500 en la NYSE, lo comparo en MAE con líneas base simples, y en producción vigilo el PSI de las features y el error de cada mes."
+- **A quien paga:** "Cada mes le propongo al asesor 10 acciones con el riesgo que acordó con su cliente, con la meta de rendir más que el índice; si no lo logramos, recomendamos el índice."
