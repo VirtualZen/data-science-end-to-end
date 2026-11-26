@@ -52,25 +52,31 @@ python graficos_tarifa.py
 
 **Respuesta 1 (TODO 1):** el MAE pasó de 1.18 a 4.29. Antes de calcularlo: ¿qué número de la tabla le dirías a la gerente de operaciones, que nunca oyó hablar del MAE?
 
-_(tu respuesta)_
+Los pasajeros que pagan más de 20% sobre lo estimado: de 3% a 47%.
 
 **Respuesta 2 (TODO 2 y 3):** los dos gráficos usan los mismos viajes. Haz una lista de todo lo que cambia entre uno y otro: la métrica, el título, la cantidad de series, los colores.
 
-_(tu respuesta)_
+Métrica: MAE en dólares → % de pasajeros. Título: la métrica → la conclusión. Series: dos más la referencia → una. Colores: azules por tipo → gris y rojo para resaltar. El ejecutivo muestra el valor en cada barra y no tiene leyenda.
 
 **Respuesta 3:** escribe las dos diapositivas. Cada una tiene un título que es una oración completa, el gráfico y como máximo cuatro líneas.
 
 **Diapositiva técnica** (para el equipo de datos):
 
-_(título)_
+**Desde el 16/11, el MAE con taxímetro se triplicó y el de tarifa fija no cambió.**
 
-_(hasta cuatro líneas: qué se midió, cómo, qué se concluye, qué limitación tiene)_
+- MAE semanal de la versión 1 contra la tarifa cobrada, 1156 viajes.
+- Taxímetro: 1.30 → 4.75; el modelo subestima 4.23 dólares por viaje.
+- Deriva conceptual: cambió la tarifa, no los viajes.
+- Limitación: la semana del 23 está incompleta.
 
 **Diapositiva ejecutiva** (para la gerente de operaciones):
 
-_(título)_
+**Desde el 16 de noviembre, casi la mitad de los pasajeros paga más de 20% sobre lo estimado.**
 
-_(hasta cuatro líneas: qué pasó, qué cuesta, qué recomiendan, qué necesitan de ella)_
+- Antes, 3 de cada 100; ahora, 47.
+- Cada viaje cuesta 4 dólares más de lo estimado.
+- Recomendamos reentrenar el modelo con las tarifas nuevas.
+- Necesitamos confirmar con la ciudad la fecha y el monto del aumento.
 
 ## Durante el ConcepTest
 

@@ -61,7 +61,7 @@ porcentaje = resumen["pagan_20_mas"] * 100
 colores = ["#9e9e9e"] * (len(porcentaje) - 2) + ["#d62728"] * 2
 barras = eje.bar(porcentaje.index, porcentaje.values, color=colores)
 eje.bar_label(barras, labels=[f"{v:.0f}%" for v in porcentaje.values], padding=3)
-eje.set_title("Desde el 16/11, casi la mitad de los pasajeros paga\n20% o mas de lo que le estimamos")
+eje.set_title("Desde el 16/11, casi la mitad de los pasajeros paga\nmas de 20% sobre lo que le estimamos")
 eje.set_xlabel("Semana de noviembre")
 eje.set_ylabel("Pasajeros (%)")
 eje.set_ylim(0, porcentaje.max() * 1.2)
