@@ -37,23 +37,23 @@ def con_dia_y_semana(predicciones):
 
 def latencia_p95(predicciones):
     """La latencia p95 de cada dia, en milisegundos: una Series indexada por dia."""
-    # TODO 1: agrupa por "dia" y calcula el cuantil 0.95 de "latencia_ms"
+    # DONE 1: agrupa por "dia" y calcula el cuantil 0.95 de "latencia_ms"
     # (.quantile(0.95)).
-    return pd.Series(dtype=float)
+    return predicciones.groupby("dia")["latencia_ms"].quantile(0.95)
 
 
 def tasa_de_alertas(predicciones):
     """La fraccion de pagos enviados a revision en cada semana: una Series
     indexada por semana."""
-    # TODO 2: agrupa por "semana" y promedia la columna "revisar" (vale 1 o 0).
-    return pd.Series(dtype=float)
+    # DONE 2: agrupa por "semana" y promedia la columna "revisar" (vale 1 o 0).
+    return predicciones.groupby("semana")["revisar"].mean()
 
 
 def fraudes_confirmados(contracargos, hoy):
     """Los id_pago de los fraudes confirmados hasta hoy (incluido), como set."""
-    # TODO 3: filtra los contracargos con fecha_confirmacion menor o igual a
+    # DONE 3: filtra los contracargos con fecha_confirmacion menor o igual a
     # hoy (las fechas son texto "AAAA-MM-DD", y se comparan bien como texto).
-    return set()
+    return set(contracargos.loc[contracargos["fecha_confirmacion"] <= hoy, "id_pago"])
 
 
 def recall_por_semana(predicciones, contracargos, hoy):
@@ -64,7 +64,14 @@ def recall_por_semana(predicciones, contracargos, hoy):
     # Marca como fraude los pagos que estan en fraudes_confirmados(...), deja
     # solo las semanas maduras, y por semana cuenta los fraudes, los fraudes
     # con revisar == 1, y su cociente.
-    return pd.DataFrame(columns=["fraudes", "detectados", "recall"])
+    pagos = predicciones.copy()
+    pagos["es_fraude"] = pagos["id_pago"].isin(fraudes_confirmados(contracargos, hoy))
+    domingo = pd.to_datetime(pagos["semana"]) + pd.Timedelta(days=6)
+    maduras = pagos[domingo + pd.Timedelta(days=DEMORA_MAXIMA) <= pd.Timestamp(hoy)]
+    fraudes = maduras[maduras["es_fraude"]]
+    tabla = fraudes.groupby("semana").agg(fraudes=("id_pago", "size"), detectados=("revisar", "sum"))
+    tabla["recall"] = (tabla["detectados"] / tabla["fraudes"]).round(3)
+    return tabla
 
 
 def alertas(predicciones, contracargos, hoy):
@@ -78,6 +85,15 @@ def alertas(predicciones, contracargos, hoy):
     # - "modelo: la semana del <semana> detecto <x> de los fraudes", por cada
     #   semana madura con recall menor que el 75% de RECALL_REFERENCIA.
     # Usa las funciones de arriba, y redondea x a 3 decimales (1 en la latencia).
+    for dia, valor in latencia_p95(predicciones).items():
+        if valor > LATENCIA_MAXIMA_MS:
+            mensajes.append(f"sistema: el {dia} la latencia p95 fue {round(valor, 1)} ms")
+    for semana, tasa in tasa_de_alertas(predicciones).items():
+        if tasa < 0.75 * TASA_REFERENCIA:
+            mensajes.append(f"modelo (indirecta): la semana del {semana} mando a revision {round(tasa, 3)} de los pagos")
+    for semana, fila in recall_por_semana(predicciones, contracargos, hoy).iterrows():
+        if fila["recall"] < 0.75 * RECALL_REFERENCIA:
+            mensajes.append(f"modelo: la semana del {semana} detecto {round(fila['recall'], 3)} de los fraudes")
     return mensajes
 
 
