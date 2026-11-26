@@ -1,0 +1,31 @@
+# Credenciales: nunca se suben
+.env
+.env_encoded
+secrets/
+*.p8
+*.pem
+
+# Artefactos de dbt
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+dbt/.user.yml
+
+# Pruebas locales (DuckDB y Parquet regenerables)
+pruebas_locales/datos/
+pruebas_locales/*.duckdb
+pruebas_locales/salida/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Carpeta de trabajo que genera la UI de Structurizr al correr (miniaturas, indice)
+docs/structurizr/.structurizr/
+
+# Entorno virtual local
+.venv/
+
+__pycache__/
+*.pyc
+.DS_Store
+entregables/

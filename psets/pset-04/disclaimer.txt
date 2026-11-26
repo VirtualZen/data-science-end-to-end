@@ -1,0 +1,27 @@
+DISCLAIMER - PSet 4 (psets/pset-04, rama work)
+Allan Paul Gomez Ehmig (00351916)
+
+GUIA RECIBIDA (CD-PSet-4.pdf) FRENTE A LA GUIA DEL REPOSITORIO (README_curso.md, rubrica.md)
+
+Se entrega con la guia recibida. Diferencias anotadas hasta ahora:
+
+1. Carpeta del proyecto final. El PDF (seccion 10 y "Repositorio") pide reunir todo en
+   proyecto_final/, con kestra/, dbt/, spark/, src/, notebooks/, api/, monitoreo/, tests/ y docs/.
+   README_curso.md pide psets/proyecto/, con servicio/, modelado/ y monitoreo/. Se trabaja primero en
+   psets/pset-04/ y, al terminar, se arma todo en psets/proyecto/ (carpeta que ya existe en el repo y que
+   usa la CI del curso), con la estructura interna del PDF. Cada pieza del PDF se mapea a su archivo en
+   el README del proyecto.
+
+2. Rubrica. El PDF trae su propia rubrica con 8 criterios y pesos (15/10/10/10/10/10/15/20); rubrica.md
+   trae 5 criterios de 0 a 4. Se cubren los dos; ante diferencias, manda el PDF.
+
+3. Entregables de rubrica.md que el PDF nombra distinto: docs/resultados_tecnico.pdf y
+   docs/resultados_ejecutivo.pdf (rubrica.md) frente al documento tecnico PSet4_memo_Gomez_Ehmig.pdf y la
+   presentacion PSet4_presentacion_Gomez_Ehmig.pdf (PDF). Se entregan los del PDF; las dos diapositivas de
+   resultados de rubrica.md quedan dentro de ellos.
+
+LO ENTREGADO EN LOS PSETS 2 Y 3
+
+psets/pset-02/ y psets/pset-03/ no se modifican (tags pset-02 y pset-03, ambos 100/100 sin feedback).
+pipeline/ y modelos/ son copias para poder cambiarlas; la base de Snowflake del PSet 4 es PORTAFOLIO_P4
+(PORTAFOLIO y PORTAFOLIO_P3 no se tocan). Detalle en docs/migracion.md.

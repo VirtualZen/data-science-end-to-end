@@ -1,0 +1,11 @@
+{
+  "modelo": "chronos",
+  "id": "amazon/chronos-bolt-small",
+  "contexto": 512,
+  "horizonte_dias": 21,
+  "filas": 58627,
+  "latencia_ms_por_serie": 0.2543179934176006,
+  "segundos_carga": 6.431452166987583,
+  "segundos_total": 22.757985333912075,
+  "sha256": "9e6281bdd4f793db872e1ff1bd5e1da4d88600b228840b6030bfa0bdc4617376"
+}

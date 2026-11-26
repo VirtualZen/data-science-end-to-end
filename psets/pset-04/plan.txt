@@ -1,0 +1,147 @@
+PLAN DEL PSET 4 (Allan Paul Gomez Ehmig, 00351916) - rama work, psets/pset-04/
+Fecha: 2026-11-26
+Guia que manda: CD-PSet-4.pdf (12 paginas; es el proyecto final). README_curso.md y rubrica.md son la
+guia del repo; si contradicen el PDF, gana el PDF y se anota en disclaimer.txt.
+PSet 2 y PSet 3: 100/100, sin feedback. Solo hay observaciones del PSet 1 (feedback v2) para docs/cambios.md.
+
+Estado: [x] hecho   [~] hecho en codigo, falta probar o completar   [ ] pendiente   [!] hallazgo
+Quien:  (C) Claude en este entorno   (P) Paul, necesita su cuenta, su computador o una decision
+
+Decisiones tomadas (Paul, 2026-11-26):
+  - Se trabaja en psets/pset-04/; pset-02/ y pset-03/ no se tocan.
+  - pipeline/ = copia de pset-03/pipeline/; modelos/ = copia del modelado del PSet 3 (docs/migracion.md).
+  - Snowflake: base nueva PORTAFOLIO_P4 (PORTAFOLIO_P3 queda intacta).
+  - MLflow: copia local en modelos/mlflow/ (mismos run_id, versiones y alias del PSet 3).
+  - Al terminar, todo se arma en psets/proyecto/ para la corrida global (el PDF dice proyecto_final/;
+    la diferencia va en disclaimer.txt).
+
+Datos del PSet 3 que se reutilizan:
+  - Target: retorno log del mes siguiente por accion (OBT_ACCION_MES, 87.178 filas). Horizonte 1 mes =
+    periodo de rebalanceo. Corte: objetivos hasta 2023-12 en entrenamiento; 2024-01 a 2026-10 hold-out.
+  - Registro portafolio-inversiones-modelo: v1 @champion LightGBM (run f7596a565f8a458492057238f245cf89),
+    v2 @challenger Ridge (run 75f75a7030154008a54e502bf2e4d18b). Experimento portafolio-inversiones.
+  - Lineas base: B1 media (tecnica, MAE CV 0,0641), B5 universo S&P500 ∩ NYSE igual peso con 15 pb
+    (negocio, Sharpe neto). Ningun modelo supera a B1 en MAE.
+
+======================================================================================
+0. PREPARACION
+======================================================================================
+[x] 0.1 (C) Copias pipeline/ y modelos/, renombres P3 -> P4, uv.lock, pruebas (28 + 11) (docs/migracion.md).
+[ ] 0.2 (P) Crear PORTAFOLIO_P4 en Snowflake: pipeline/kestra/sql/snowflake_setup.sql (ACCOUNTADMIN).
+[ ] 0.3 (P+C) Llenar PORTAFOLIO_P4: backfill historico + transformar (pipeline/README.md) y snapshot nuevo
+        de la OBT en modelos/data/. Comparar sha256 con el del PSet 3 (c3568917...).
+[ ] 0.4 (C) Comprobar que modelos/notebooks/06_champion.ipynb recarga @champion desde modelos/mlflow
+        y reproduce MAE 0,0673399888.
+
+======================================================================================
+1. PATRON DE DESPLIEGUE (PDF 1; rubrica: patron)
+======================================================================================
+[ ] 1.1 (C) docs/despliegue.md: batch mensual. La decision (propuesta del asesor) se toma al cierre de
+        cada mes; la prediccion debe estar lista antes del primer dia habil del mes siguiente (< 1 dia),
+        llegan datos nuevos una vez al mes, ~200-500 predicciones por mes (una por accion elegible), y
+        una prediccion desactualizada cuesta un mes de portafolio mal armado. Con numeros.
+[ ] 1.2 (C) Que se pierde con online y que tendria que cambiar en el caso de uso para preferirlo
+        (p. ej. rebalanceo intradia o alertas por noticia).
+[ ] 1.3 (P) Confirmar: la "decision" de cada prediccion. Propuesta: la API devuelve el retorno
+        predicho y la decision por accion ("incluir" si queda entre las 10 mejores elegibles del mes
+        bajo el tope de volatilidad, "no incluir" si no); en batch se arma el portafolio completo.
+
+======================================================================================
+2. SERVICIO DE PREDICCION (PDF 2)
+======================================================================================
+[ ] 2.1 (C) api/ con FastAPI: GET /salud, GET /modelo (nombre, version, alias, run_id), POST /predecir
+        (prediccion, decision, version_modelo, id_prediccion). Imagen propia; agregado al docker-compose
+        junto a Kestra, Spark y MLflow.
+[ ] 2.2 (C) Carga desde models:/portafolio-inversiones-modelo@champion; cambiar de version sin reconstruir
+        la imagen (el alias se resuelve al arrancar o con un endpoint de recarga).
+[ ] 2.3 (C) Esquema Pydantic igual a la firma registrada en MLflow (tipos, rangos, categorias); entrada
+        invalida -> 422 con el campo que fallo.
+[ ] 2.4 (C) Features con las funciones de src/pipeline.py importadas, no copiadas. Versiones fijadas.
+[ ] 2.5 (C) Cada prediccion en la tabla PREDICCIONES de Snowflake (id, timestamp, entradas, salida,
+        version del modelo, run_id, latencia ms), directa o por carga periodica con Kestra.
+
+======================================================================================
+3. PRUEBAS Y CI (PDF 3; rubrica: pruebas)
+======================================================================================
+[ ] 3.1 (C) tests/test_contrato.py: 200 con el esquema; campo faltante, tipo incorrecto y categoria
+        desconocida -> 422.
+[ ] 3.2 (C) tests/test_modelo.py: el modelo de tests/fixtures/ (mlflow.sklearn.save_model) reproduce la
+        metrica registrada en una muestra fija guardada en el repo, con tolerancia justificada.
+[ ] 3.3 (C) tests/test_comportamiento.py: >= 2 pruebas de dominio (p. ej. mas volatilidad no debe subir
+        el puntaje de riesgo; la decision respeta el tope de volatilidad).
+[ ] 3.4 (C) Respaldo: si el modelo no carga, responde con la linea base del PSet 3 (B1 media) e indica
+        que uso el respaldo.
+[ ] 3.5 (C) .github/workflows/ci.yml: en cada push y PR instala dependencias, construye la imagen y corre
+        pytest. Al menos 3 pruebas por archivo; sin leer archivos fuera del repo.
+
+======================================================================================
+4. VERSIONADO Y REGISTRO (PDF 4; rubrica: registro)
+======================================================================================
+[ ] 4.1 (C) Regla de promocion con metrica de negocio y variacion entre pliegues (challenger supera al
+        champion en Sharpe neto por mas de una desviacion de la CV, en la misma ventana).
+[ ] 4.2 (C+P) Rollback moviendo el alias sin reconstruir la imagen; /modelo refleja el cambio (evidencia).
+[ ] 4.3 (C) Cada fila de PREDICCIONES con la version que la genero.
+
+======================================================================================
+5. SIMULACION DE PRODUCCION (PDF 5)
+======================================================================================
+[ ] 5.1 (C) Lotes mensuales del hold-out (2024-01 a 2026-10 = 34 meses >= 8 lotes), en Snowflake.
+[ ] 5.2 (C) kestra/produccion_lotes.yml: por lote lee de Snowflake, predice, guarda, y une el target
+        cuando llega (un mes despues: respeta el horizonte).
+[ ] 5.3 (C+P) Un lote con deriva inducida (p. ej. desplazar la volatilidad o alterar la relacion
+        momentum-retorno); documentar exactamente que se altero.
+
+======================================================================================
+6. MONITOREO (PDF 6; rubrica: monitoreo y deriva)
+======================================================================================
+[ ] 6.1 (C) Metricas: sistema (latencia p50/p95, errores 4xx/5xx, volumen), modelo (distribucion de
+        predicciones, tasa de cada decision, MAE y Sharpe neto por lote) y datos (faltantes, fuera de
+        rango, categorias no vistas).
+[ ] 6.2 (C) monitoreo/deriva.py: PSI por feature (umbral justificado) + KS (numericas) y chi-cuadrado
+        (categoricas) como respaldo; deriva conceptual = MAE del lote vs media y desviacion de la CV.
+        Tabla entradas/desempeno/diagnostico/accion.
+[ ] 6.3 (C) monitoreo/alertas.py y kestra/monitoreo.yml: tabla MONITOREO en Snowflake y alertas (log de
+        Kestra y correo con el AVISO_* que ya existe). El lote con deriva dispara; los normales no.
+[ ] 6.4 (C) Tablero (Streamlit) lote por lote con metricas, alertas y reentrenamientos marcados.
+
+======================================================================================
+7. REENTRENAMIENTO Y DESPLIEGUE CONTINUO (PDF 7; rubrica: reentrenamiento)
+======================================================================================
+[ ] 7.1 (C) Disparador por desempeno (N lotes bajo umbral) y por calendario; la deriva sin caida no dispara.
+[ ] 7.2 (C) kestra/reentrenamiento.yml + src/reentrenar.py: ventana justificada, misma preparacion de
+        src/pipeline.py e hiperparametros del champion, tag fase=reentrenamiento, version nueva @challenger,
+        evaluacion en el lote etiquetado mas reciente, regla de promocion, pausa de aprobacion humana.
+[ ] 7.3 (C) .github/workflows/cd.yml: en cada merge a main con pruebas en verde, imagen de la API en
+        GitHub Container Registry con el hash del commit; el compose usa esa imagen. Por que el modelo no
+        se despliega solo.
+[ ] 7.4 (C+P) Evidencia del ciclo completo en el lote con deriva.
+
+======================================================================================
+8. ETICA Y RETIRADA (PDF 8; rubrica: comunicacion y retirada)
+======================================================================================
+[ ] 8.1 (C) Desempeno por subgrupo (sector o tamano de la empresa).
+[ ] 8.2 (C) Costo de cada error (sobreestimar: compra una accion que cae; subestimar: deja fuera una que
+        sube) y quien lo asume (inversionista, asesor).
+[ ] 8.3 (C) docs/criterio_retirada.md: >= 3 condiciones medibles con metrica, umbral y respuesta.
+[ ] 8.4 (C) Interruptor de respaldo (variable de entorno o endpoint protegido) y su demostracion.
+[ ] 8.5 (P) Revisar el juicio humano del PSet 1 (el inversionista aprueba) segun el comportamiento.
+
+======================================================================================
+9. RESULTADO DE NEGOCIO (PDF 9)
+======================================================================================
+[ ] 9.1 (C) Sharpe neto lote por lote vs B5 y vs no hacer nada; reentrenamientos marcados. Responder si
+        valio la pena actuar segun la prediccion (si no supera a la linea base, decirlo).
+
+======================================================================================
+10-11. PROYECTO END TO END Y COMUNICACION
+======================================================================================
+[ ] 10.1 (C) Armar todo en psets/proyecto/ (decision de Paul) con la estructura del PDF; disclaimer.
+[ ] 10.2 (C) docs/cambios.md: observaciones del PSet 1 (v2) y decisiones actualizadas.
+[ ] 10.3 (C) Trazabilidad PREDICCIONES -> version, run_id, snapshot de la OBT, tablas Gold.
+[ ] 10.4 (C) Cifras del pitch del PSet 1 reemplazadas por las de la seccion 9.
+[ ] 11.1 (C) docs/PSet4_memo_Gomez_Ehmig.pdf (<= 12 paginas + anexos: memos de los PSets 1-3 y cambios.md).
+[ ] 11.2 (C) docs/PSet4_presentacion_Gomez_Ehmig.pdf (10-12 diapositivas, sin jerga).
+[ ] 11.3 (P) Video de demostracion (<= 7 min) y su enlace en el documento tecnico.
+[ ] 11.4 (C) Exportar a docs/: predicciones.csv, monitoreo.csv, alertas.csv, corridas.csv,
+        reentrenamientos.csv. Notebooks con Restart + Run All.
+[ ] 11.5 (P) Commit, PR y tag pset-04.

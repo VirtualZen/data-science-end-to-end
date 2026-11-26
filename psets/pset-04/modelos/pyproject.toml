@@ -1,0 +1,67 @@
+# Entorno local del PSet 3 (EDA, features, modelos y MLflow). Proyecto uv independiente:
+# solo lee la OBT del PSet 2 por SELECT; no instala dbt, Spark ni Kestra.
+#
+# Uso, desde psets/pset-04/modelos:
+#   uv sync                          crea .venv con Python 3.11 y estas versiones exactas
+#   uv sync --group analisis         agrega lo que usan los scripts de analisis/
+#   uv run python -m pytest tests
+#
+# requirements.txt (imagen runner y artefacto que se registra en MLflow) NO se edita a mano:
+#   bash exportar_requirements.sh
+[project]
+name = "pset-04-modelos"
+version = "0.1.0"
+description = "PSet 3: exploracion, features, modelos entrenados y trackeados con MLflow sobre la OBT"
+requires-python = "==3.11.*"
+dependencies = [
+    "pandas>=2.2,<4",
+    "numpy>=1.26,<3",
+    "pyarrow>=17",
+    "scikit-learn>=1.5,<2",
+    "matplotlib>=3.9,<4",
+    "snowflake-connector-python>=3.12,<6",
+    "python-dotenv>=1,<2",
+    "mlflow==3.18.0",
+    "nbformat>=5,<6",
+    "nbclient>=0.10,<1",
+    "ipykernel>=6,<8",
+    "scipy>=1.11,<2",
+    "requests>=2.32,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+# Scripts de analisis/datos y analisis/modelos (traidos de draft:psets/pset-02/analisis): Yahoo con cache DuckDB,
+# imputacion, ARIMA por accion y comparacion de los modelos del PSet 1.
+#   uv sync --group analisis        (xgboost en macOS requiere: brew install libomp)
+# Opcionales, no incluidos: torch, chronos-forecasting, timesfm, uni2ts (Moirai).
+analisis = [
+    "duckdb>=2,<3",              # mismo formato de archivo .duckdb en todas las maquinas
+    "pandas-market-calendars>=4.4",
+    "statsmodels>=0.14",
+    "xgboost>=2.0",
+    "yfinance>=1.0,<2",
+]
+# Modelos del PSet 3 (docs/diseno_experimental.md): uv sync --group modelos
+#   redes: uv sync --group redes (torch + lightning; mps en la Mac M4, cuda en Colab)
+#   fundacionales (chronos-forecasting, timesfm, uni2ts) quedan fuera del lock: chocan entre si.
+modelos = [
+    "arch>=7",
+    "lightgbm>=4",
+    "optuna>=4",
+    "statsmodels>=0.14",
+    "xgboost>=2.0",
+]
+redes = [
+    "lightning>=2.4",
+    "torch>=2.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+# Solo las pruebas de modelos/; las de pipeline/ se corren desde esa carpeta con su entorno.
+testpaths = ["tests"]
