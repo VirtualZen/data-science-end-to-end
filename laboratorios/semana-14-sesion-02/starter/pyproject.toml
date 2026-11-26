@@ -1,0 +1,20 @@
+[project]
+name = "semana-14-sesion-02"
+version = "0.1.0"
+description = "Semana 14, sesion 2: comunicar resultados (graficos de la tarifa y costos del fraude)"
+authors = [
+    { name = "Paul Gomez Ehmig", email = "apgomez@estud.usfq.edu.ec" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "matplotlib==3.9.2",
+    "numpy==1.26.4",
+    "pandas==2.2.2",
+]
+
+[project.scripts]
+semana-14-sesion-02 = "semana_14_sesion_02:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
