@@ -47,26 +47,34 @@ def evaluar(modelo, X_prueba, y_prueba):
 def registrar(modelo, nombre_corrida, metricas):
     """Guarda el modelo y sus metricas en una corrida nueva, lo registra
     como version nueva de NOMBRE, y devuelve el numero de version."""
-    # TODO 1: abre una corrida con run_name=nombre_corrida, guarda las
+    # DONE 1: abre una corrida con run_name=nombre_corrida, guarda las
     # metricas (mlflow.log_metrics) y el modelo con
     # mlflow.sklearn.log_model(modelo, "modelo", registered_model_name=NOMBRE).
     # Devuelve el numero de version, como int.
-    return None
+    with mlflow.start_run(run_name=nombre_corrida):
+        mlflow.log_metrics(metricas)
+        info = mlflow.sklearn.log_model(modelo, "modelo", registered_model_name=NOMBRE)
+    return int(info.registered_model_version)
 
 
 def metrica_de(version, metrica):
     """La metrica guardada en la corrida que produjo esa version."""
-    # TODO 2: la version sabe de que corrida salio
+    # DONE 2: la version sabe de que corrida salio
     # (MlflowClient().get_model_version(NOMBRE, version).run_id), y la
     # corrida guarda sus metricas (get_run(run_id).data.metrics).
-    return None
+    cliente = MlflowClient()
+    run_id = cliente.get_model_version(NOMBRE, str(version)).run_id
+    return cliente.get_run(run_id).data.metrics[metrica]
 
 
 def version_en_produccion():
     """El numero de la version con el alias ALIAS, o None si ninguna lo tiene."""
-    # TODO 3: get_model_version_by_alias lanza MlflowException si el alias
+    # DONE 3: get_model_version_by_alias lanza MlflowException si el alias
     # no existe todavia (o si el modelo no existe).
-    return None
+    try:
+        return int(MlflowClient().get_model_version_by_alias(NOMBRE, ALIAS).version)
+    except MlflowException:
+        return None
 
 
 def promover_si_mejora(version):
@@ -79,12 +87,16 @@ def promover_si_mejora(version):
     # Decide si la version mejora a la de produccion: mejora si no hay
     # ninguna, o si su recall es estrictamente mayor. Si mejora, mueve el
     # alias con set_registered_model_alias.
-    mejora = False
+    mejora = actual is None or metrica_de(version, "recall") > metrica_de(actual, "recall")
+    if mejora:
+        cliente.set_registered_model_alias(NOMBRE, ALIAS, str(version))
 
     # Etiqueta la version (set_model_version_tag) con la clave "validacion"
     # y el valor "aprobada" o "rechazada", y con la clave "comparada_con"
     # y el numero de la version de produccion contra la que se comparo, o
     # "ninguna".
+    cliente.set_model_version_tag(NOMBRE, str(version), "validacion", "aprobada" if mejora else "rechazada")
+    cliente.set_model_version_tag(NOMBRE, str(version), "comparada_con", "ninguna" if actual is None else str(actual))
     return mejora
 
 
