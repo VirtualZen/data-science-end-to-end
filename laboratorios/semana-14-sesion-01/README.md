@@ -16,17 +16,17 @@ A partir de la lectura previa:
 
 **Según el artículo, ¿qué es la deriva de datos y qué es la deriva conceptual? Da un ejemplo de cada una.**
 
-_(tu respuesta)_
+Deriva de datos: cambian las entradas, pero no su relación con el objetivo. Ejemplo: un modelo de ventas entrenado en temporada navideña y usado el resto del año. Deriva conceptual: cambia la relación entre las entradas y el objetivo, aunque las entradas sigan iguales. Ejemplo: una campaña de marketing nueva cambia cómo se comportan los clientes ante el churn.
 
 **¿Por qué el artículo dice que hay que monitorear las dos, y no solo el desempeño del modelo?**
 
-_(tu respuesta)_
+Porque el modelo debe seguir siendo preciso y confiable para decidir con él: detectar la deriva a tiempo permite corregirlo, evita sesgos contra ciertos grupos y es un requisito en industrias reguladas (salud, finanzas). Además, la deriva conceptual no se ve en las entradas, solo en el desempeño.
 
 ## Pregunta de apertura
 
 Desde el 16 de noviembre, el modelo de la tarifa se equivoca casi cuatro veces más que en prueba. Los viajes que recibe son del mismo tipo que los de octubre: las mismas zonas, las mismas distancias, las mismas horas. ¿Qué cambió, entonces? ¿Lo hubieras detectado mirando solo los viajes que llegan?
 
-_(tu respuesta)_
+Cambió la relación entre el viaje y su tarifa (por ejemplo, un aumento de la tarifa por taxímetro): es deriva conceptual. No se detecta mirando los viajes, porque son iguales a los de octubre; solo aparece al comparar la tarifa estimada con la cobrada.
 
 ## Ejercicio 1: ¿deriva de datos o deriva conceptual?
 
@@ -36,27 +36,27 @@ Corre todas las celdas antes de tocar nada (**Run All**).
 
 **Respuesta 1 (TODO 1 y 2):** antes de medir las semanas normales, ¿qué PSI esperas para una semana en la que nada cambió? Después de medirlas: ¿cuál fue el máximo en 200 semanas?
 
-_(tu respuesta)_
+Cercano a 0, pero no 0: 300 viajes al azar nunca se reparten igual que los de entrenamiento. El máximo en 200 semanas fue **0.121** en distancia y **0.109** en zona.
 
 **Respuesta 2 (TODO 3 y 4):** antes de correr, ¿qué esperas que pase con el PSI y con el MAE en la semana de feriado? ¿Y en la semana del aumento?
 
-_(tu respuesta)_
+Feriado: PSI alto y MAE casi igual; aumento: PSI normal y MAE mucho peor. Así fue: el feriado dio un PSI de 0.19 y un MAE de 0.97, y el aumento un PSI de 0.08 y un MAE de 4.16 (3.6 veces el de prueba).
 
 **Respuesta 3 (Paso 4):** en la semana de feriado con peso 8, el PSI es más de diez veces el de una semana normal. ¿Empeoró el modelo? ¿Por qué?
 
-_(tu respuesta)_
+No: el MAE bajó de 1.19 a 0.94. Los viajes al aeropuerto son los más fáciles de predecir (78% con tarifa fija, MAE de 0.62), así que más de ellos baja el error. Un PSI alto dice que cambiaron los datos, no que empeoró el modelo.
 
 **Respuesta 4 (Paso 5):** ¿qué umbral de PSI elegirías para la alerta, y con qué dos números de la tabla lo justificas?
 
-_(tu respuesta)_
+**0.15**: 0% de falsas alarmas y 97.5% de detección del feriado. Con 0.10 las falsas alarmas suben a 4%, y con 0.20 la detección baja a 71.5%.
 
 **Lo que mostró la simulación:**
 
 | Escenario | PSI de distancia | PSI de zona | MAE |
 |---|---|---|---|
-| Semanas normales (máximo de 200) | _(…)_ | _(…)_ | _(…)_ |
-| Feriado, aeropuerto ×4 | _(…)_ | _(…)_ | _(…)_ |
-| Aumento de 20% | _(…)_ | _(…)_ | _(…)_ |
+| Semanas normales (máximo de 200) | 0.1214 | 0.1091 | 1.3164 |
+| Feriado, aeropuerto ×4 | 0.1887 | 0.1964 | 0.9694 |
+| Aumento de 20% | 0.0767 | 0.0615 | 4.1638 |
 
 ## Durante el ConcepTest
 
@@ -85,19 +85,24 @@ python simular_semanas.py
 
 **Respuesta 1:** ¿qué dijo `/deriva` después de cada semana? ¿Alguna alerta te sorprendió, o te faltó?
 
-_(tu respuesta)_
+Normal: sin alerta (PSI 0.05). Feriado: **alerta** (PSI 0.26 y 0.22). Aumento: sin alerta (PSI 0.06). No me sorprendió; faltó la alerta del aumento, que es la semana en que más se equivoca el modelo.
 
 **Respuesta 2:** la alerta del monitor no dijo nada en la semana del aumento, que es la que más empeora el modelo. ¿Qué alerta de la sesión pasada sí la habría visto, y por qué tarda más?
 
-_(tu respuesta)_
+La del MAE semanal de `desempeno.py` (3.67 veces la referencia desde el 16 de noviembre). Tarda porque necesita la tarifa cobrada, que llega después del viaje; el PSI solo usa lo que llega en la petición.
 
 **Respuesta 3:** escribe la regla que usaría el equipo para decidir, con las dos alertas (la de deriva de este ejercicio y la del MAE de la sesión pasada), si lo que pasa es deriva de datos, deriva conceptual o nada. ¿Qué haría en cada caso?
 
-_(tu respuesta)_
+| PSI > 0.15 | MAE > 1.3 × referencia | Diagnóstico | Qué hacer |
+|---|---|---|---|
+| No | No | Nada | Seguir monitoreando |
+| Sí | No | Deriva de datos inofensiva | Registrar la causa; no reentrenar |
+| Sí | Sí | Deriva de datos que daña | Reentrenar con viajes recientes |
+| No | Sí | Deriva conceptual | Confirmar qué cambió y reentrenar con las tarifas nuevas |
 
 **Si terminas antes:** el monitor mira solo dos features. Inventa una semana con deriva de datos que este monitor no vería. ¿Empeoraría el modelo?
 
-_(tu respuesta)_
+Una semana con 6 veces más viajes en hora pico (una huelga de metro): el PSI de `es_hora_pico` sube a 0.97, pero el de distancia y zona queda bajo 0.15, así que no hay alerta. El modelo no empeora (MAE 1.18), porque ya vio muchos viajes en hora pico.
 
 ## Ejercicio 3: la deriva de tu proyecto
 
