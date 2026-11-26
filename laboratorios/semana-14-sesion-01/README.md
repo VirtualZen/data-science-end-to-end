@@ -126,7 +126,7 @@ Agrega la sección **Deriva**: la tabla de la simulación, el umbral elegido y p
 
 **En tu proyecto, ¿qué deriva de datos es la más probable, y empeoraría tu modelo? ¿Y qué deriva conceptual?**
 
-Cambios generales del mercado.
+**Deriva de datos:** un periodo de volatilidad mucho más alta que la del entrenamiento (como marzo de 2020): la volatilidad y los retornos rezagados salen del rango que vio el modelo. Probablemente sí lo empeoraría, porque el entrenamiento tiene pocos meses de crisis. **Deriva conceptual:** que cambie la relación entre el momentum o la volatilidad y el retorno del mes siguiente, por ejemplo cuando la Fed sube las tasas y las acciones que venían subiendo dejan de hacerlo.
 
 **Si tu alerta de deriva se enciende y tu métrica de desempeño no cambia, ¿qué haces?**
 
