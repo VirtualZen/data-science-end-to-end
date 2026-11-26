@@ -1,0 +1,5 @@
+esquema,mae_cv_media,mae_cv_std,filas_val_con_su_mes_en_ent,pliegues_que_entrenan_con_futuro
+Temporal: TimeSeriesSplit sobre meses (oficial),0.06514249110461957,0.017700441228289003,0.0,0.0
+TimeSeriesSplit sobre filas (sin agrupar el mes),0.06697694122064103,0.013864538453685064,0.03310733119226042,0.0
+"Aleatorio: KFold(5, shuffle, 42)",0.04758137015206093,0.00044230686365758344,1.0,1.0
+Por grupo: GroupKFold(5) por accion,0.04752022964945155,0.0022320522843689693,1.0,1.0

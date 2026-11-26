@@ -1,13 +1,18 @@
 # PSet 3 — Experimentación desde la OBT
 
 La guía vigente es `CD_PSet_3.pdf`. Esta carpeta desarrolla incrementalmente el
-PSet 2; el README original del curso queda en `README_curso.md`. La integración
+PSet 2; el README original del curso queda en `README_curso.md`.
+
+El pipeline del PSet 2 está copiado en [`pipeline/`](pipeline/README.md) para volver a
+correrlo sin modificar `psets/pset-02/`, que ya se entregó. Escribe en la base
+`PORTAFOLIO_P3`; `src/datos.py` lee de ahí (`SNOWFLAKE_DATABASE`). La base
+`PORTAFOLIO` queda tal como se entregó en el PSet 2. La integración
 final en `psets/proyecto/` se hará al empaquetar el proyecto, sin duplicar datasets.
 
 ## Preparación
 
 ```bash
-uv sync                      # .venv con Python 3.11 y las versiones exactas de uv.lock
+uv sync --group modelos      # .venv con Python 3.11, las versiones exactas de uv.lock y los modelos (lightgbm, xgboost, optuna)
 cp .env.example .env
 # Completar credenciales localmente: nunca agregarlas a git.
 uv run python -m src.datos
@@ -22,25 +27,127 @@ MLflow queda en http://localhost:5001, con SQLite como backend y artefactos en
 `mlflow/artifacts`; ambos persisten en `mlflow/`, excluido de Git. El snapshot
 `data/obt.parquet` tiene un manifiesto con tabla, fecha y SHA-256. No se publica.
 
+## Conexión a Snowflake
+
+Los notebooks no consultan Snowflake: leen el snapshot `data/obt.parquet`. Snowflake solo hace falta una vez, para
+crear ese snapshot con `uv run python -m src.datos` (y `--grano dia` para la tabla diaria que usa la métrica de
+negocio). La conexión usa el mismo usuario de servicio del PSet 2, que se autentica con un par de llaves y sin
+contraseña.
+
+1. **Usuario, rol, bodega y llaves.** Si ya existen del PSet 2 (`PSET2_SERVICIO`, `PSET2_ROL`, `PSET2_WH` y la llave
+   privada en `pipeline/secrets/snowflake_llave.p8`), se reutilizan. Si no, se crean con los pasos 2 y 3 del
+   [README del PSet 2](../pset-02/README.md#2-par-de-llaves-para-el-usuario-de-servicio). La base `PORTAFOLIO_P3`
+   y su OBT se construyen con [`pipeline/`](pipeline/README.md).
+2. **Archivo `.env`.** Copiar la plantilla y completar cada variable:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | Qué va |
+   |---|---|
+   | `SNOWFLAKE_ACCOUNT` | Identificador de la cuenta, formato `ORGANIZACION-CUENTA` (Snowsight → menú de la cuenta → *Account* → *Account identifier*) |
+   | `SNOWFLAKE_USER` | Usuario de servicio: `PSET2_SERVICIO` |
+   | `SNOWFLAKE_ROLE` | `PSET2_ROL` |
+   | `SNOWFLAKE_WAREHOUSE` | `PSET2_WH` |
+   | `SNOWFLAKE_DATABASE` | `PORTAFOLIO_P3` (la base `PORTAFOLIO` del PSet 2 no se toca) |
+   | `SNOWFLAKE_PRIVATE_KEY` | El cuerpo de la llave privada en una sola línea, sin las líneas `-----BEGIN/END-----` |
+   | `MLFLOW_TRACKING_URI` | `http://localhost:5001` |
+   | `MLFLOW_EXPERIMENT_NAME` | `portafolio-inversiones` |
+
+   El cuerpo de la llave es el texto en base64 que `src/datos.py` decodifica con `base64.b64decode`. Se obtiene así:
+
+   ```bash
+   grep -v -- '-----' pipeline/secrets/snowflake_llave.p8 | tr -d '\n'; echo
+   ```
+
+3. **Crear y verificar el snapshot.**
+
+   ```bash
+   uv run python -m src.datos
+   uv run python -m src.datos --grano dia
+   ```
+
+   Cada comando escribe el `.parquet` y un `.json` con la tabla de origen, la fecha y el sha256. Si el sha256 no
+   coincide con el de las corridas registradas (`c3568917…` para la OBT mensual), el pipeline cargó datos nuevos y las
+   métricas pueden cambiar (ver [docs/reproducibilidad.md](docs/reproducibilidad.md)).
+
+`.env` y `pipeline/secrets/` están en `.gitignore`: la llave privada se guarda solo en esa carpeta y nunca se sube.
+
 ## Orden de trabajo
 
 1. `notebooks/01_eda.ipynb`: distribución, faltantes, IQR, Z-score, Spearman y tres hallazgos.
-2. `02_features.ipynb`: volatilidad relativa y momentum normalizado por riesgo;
-   comprobar disponibilidad y posteriormente aporte por ablación en CV.
-3. `03_baseline_candidatos.ipynb`: código preparado en `src/experimentos.py` para
-   dos bases y cuatro familias. Falta integrar la quinta familia fundacional y
-   probar el LLM por prompting o justificar su inaplicabilidad.
-4. `04_tuning.ipynb`: preparar los tres mejores usando solo CV; al menos 30
-   configuraciones por modelo y corridas hijas. Aún no ejecutado.
-5. `05_seleccion.ipynb`: guía pendiente de implementación final; comparar dos
-   finalistas una sola vez en hold-out, calcular métrica de negocio, registrar
-   champion/challenger y recargar el ganador en una sesión limpia.
+2. `02_features.ipynb`: `dispersion_mes` y mes calendario del objetivo (one-hot), con pruebas de
+   disponibilidad y ablación en los pliegues temporales.
+3. `03_preparacion_validacion.ipynb`: división única, Pipeline/ColumnTransformer de `src/pipeline.py`,
+   TimeSeriesSplit sobre meses (7 × 12 meses, gap 1) con tabla de fechas de corte, comparación de
+   esquemas de CV, todas las métricas de regresión (decide el MAE) y la métrica de negocio con ejemplo.
+4. `03_baseline_candidatos.ipynb`: líneas base B1–B3, referencias de negocio (B4, B5, índices) y los
+   8 candidatos de las 5 familias (Ridge, random forest, LightGBM/XGBoost, MLP y los fundacionales Chronos,
+   TimesFM y Moirai en zero-shot), registrados en MLflow (`src/experimentos.py`). El LLM por prompting se
+   justifica como no aplicable (fuga por su fecha de corte).
+5. `04_tuning.ipynb`: Optuna (TPE, semilla 42) con 30 configuraciones por modelo para Ridge, LightGBM y
+   XGBoost, como corridas hijas (`src/tuning.py`).
+6. `05_seleccion.ipynb`: champion y challenger por MAE de CV, hold-out evaluado una sola vez, métrica de
+   negocio, costo y explicabilidad, Model Registry (`portafolio-inversiones-modelo`) y `docs/corridas.csv`
+   (`src/seleccion.py`).
+7. `06_champion.ipynb`: recarga limpia de `@champion` que reproduce su MAE del hold-out.
+
+Documento técnico: `docs/PSet3_memo_Gomez_Ehmig.pdf`, con glosario en el anexo A
+(`uv run --with reportlab python scripts/generar_memo.py`). Presentación ejecutiva:
+`docs/PSet3_presentacion_Gomez_Ehmig.pptx` y su PDF (`node scripts/generar_presentacion.js`, requiere pptxgenjs,
+react, react-dom, react-icons y sharp). Reproducibilidad verificada en otra máquina: `docs/reproducibilidad.md`
+(`uv run --group modelos python -m src.verificar_reproducibilidad`).
 
 El target es el retorno log del mes siguiente. El corte usa el mes del objetivo:
 objetivos hasta diciembre de 2023 en entrenamiento; posteriores en hold-out.
 La CV separa meses completos y purga un mes. Imputación y escalado se ajustan
 adentro de cada Pipeline/ColumnTransformer. Se excluyen columnas del futuro y
 atributos actuales como `sigue_en_sp500` de los predictores.
+
+Los notebooks 02 en adelante necesitan el grupo `modelos` (lightgbm, xgboost):
+
+```bash
+uv run --group modelos jupyter execute --inplace notebooks/03_preparacion_validacion.ipynb
+```
+
+## Modelos fundacionales (M8–M10): pronósticos zero-shot
+
+Cada uno corre una vez, en un entorno temporal propio (`--no-project`), porque sus paquetes chocan entre sí y con
+el lock. Descargan el modelo de Hugging Face la primera vez y dejan `artefactos/fundacional_<modelo>.parquet` y
+`.json` (con SHA-256 y latencia). Después, `notebooks/03_baseline_candidatos.ipynb` (sección 6.3) los evalúa con
+los mismos pliegues y métricas y los registra en MLflow (`familia = fundacional`).
+
+```bash
+uv run --no-project --python 3.11 --with chronos-forecasting --with pandas --with pyarrow python -m src.modelos.fundacionales --modelo chronos
+uv run --no-project --python 3.11 --with "timesfm[torch]" --with pandas --with pyarrow python -m src.modelos.fundacionales --modelo timesfm
+uv run --no-project --python 3.11 --with "uni2ts @ git+https://github.com/SalesforceAIResearch/uni2ts.git" --with pandas --with "pyarrow>=14,<18" --with fastparquet python -m src.modelos.fundacionales --modelo moirai
+```
+
+Para probar antes de la corrida completa, agregar `--limite 500`.
+`uni2ts` fija NumPy 1.26, por eso Moirai necesita `pyarrow<18` (las versiones nuevas exigen NumPy 2). TimesFM en
+CPU tarda ~110 ms por serie: se corre solo para los meses de validación con `--desde 201612 --hasta 202311`.
+
+## Permisos de los archivos copiados por Claude (`chmod 644`)
+
+Los archivos que Claude escribe en esta carpeta desde su entorno (`device_commit_files`) llegan a la Mac
+con permisos `-rw-------` (solo el dueño los lee). Eso basta para `uv run` en la Mac, pero los
+contenedores de Docker (Spark, Kestra, dbt) corren con otro usuario y fallan con `PermissionError` al
+leerlos: así falló la prueba de `reconstruir_obt.sh` el 18-nov. Después de cada copia hay que darles
+lectura para todos:
+
+```bash
+chmod 644 ruta/al/archivo1 ruta/al/archivo2
+```
+
+Para corregir de una vez todo lo que haya quedado en 600 sin tocar los secretos, que deben seguir en 600:
+
+```bash
+find . -type f -perm 600 ! -name '*.p8' ! -name '.env' ! -name '.env_encoded' ! -name '*.duckdb' ! -path '*/.venv/*' ! -path '*/secrets/*' -exec chmod 644 {} +
+```
+
+Git no guarda la diferencia entre 600 y 644 (solo el bit de ejecución), así que este paso no aparece en
+`git status`.
 
 ## Estado y límites
 
@@ -52,7 +159,9 @@ Antes de entrenar, revisar ajustes retrospectivos de precios, bolsa actual,
 interpolación y cobertura del universo documentados en el memo del PSet 2.
 
 El trabajo previo de análisis (antes en la rama `draft`, `psets/pset-02/analisis/`)
-está en `analisis/`, con su grupo de dependencias (`uv sync --group analisis`).
+está en `analisis/`, separado en `analisis/datos/` (etapa de datos, la que cubre el
+PSet 2) y `analisis/modelos/` (etapa de modelado), con su grupo de dependencias
+(`uv sync --group analisis`). Ver [`analisis/README.md`](analisis/README.md).
 Es exploratorio: parte de Yahoo con cachés DuckDB locales (no versionadas) y no
 satisface el protocolo experimental de la OBT que exige el PDF; sirve como
 referencia para elegir familias y técnicas. El plan de trabajo está en `plan.txt`.
@@ -60,11 +169,9 @@ Los notebooks finales se entregan con Restart y Run All y salidas guardadas.
 
 ### Comprobaciones realizadas
 
-Los notebooks 01 y 02 se ejecutaron completos con el snapshot de 87.178 filas,
-con salidas y gráficos guardados. El entrenamiento elegible contiene 46.926
-filas y 158 meses. Tres pruebas verifican corte por objetivo, separación de
-meses e imputación ajustada solo con entrenamiento. Los notebooks 03-05
-son guías de ejecución; no contienen resultados de experimentación.
+Los notebooks 01 a 06 se ejecutaron completos con el snapshot de 87.178 filas (sha256 `c3568917…`), con
+salidas y gráficos guardados. Entrenamiento: 46.851 filas (objetivos hasta 2023-12); hold-out: 11.326 filas
+(2024-01 a 2026-10). `pytest tests` corre 28 pruebas de fuga, cortes, pipeline y regla de negocio.
 
 MLflow se construyó en Docker. Se configura con un solo worker y límite de 1 GB para reducir
 consumo. No ejecutar a la vez que Spark en el entorno de 8 GB: durante la
@@ -72,9 +179,10 @@ verificación la coexistencia de ambos provocó un OOM de Kestra.
 
 ## Verificación funcional aislada
 
-Primero ejecuta `docker compose down` desde `../pset-02/`, sin `-v`; Snowflake
-conserva las tablas. No se necesita Kestra ni Spark para ejecutar PSet 3:
-la única dependencia compartida es la OBT ya materializada en Snowflake.
+Primero ejecuta `docker compose down` desde `pipeline/`, sin `-v`; Snowflake
+conserva las tablas. Los notebooks no necesitan Kestra ni Spark: solo leen la OBT
+ya materializada en `PORTAFOLIO_P3` (snapshot de `src/datos.py`). `pipeline/` solo
+hace falta para reconstruirla.
 
 ```bash
 docker compose down
@@ -92,10 +200,6 @@ Ridge con alias `verificacion` en `portafolio-verificacion-modelo`, y comprueba
 que reproduce su RMSE de entrenamiento. No asigna champion, no elige ganador,
 no utiliza el hold-out y no sustituye las 98 corridas mínimas del PDF.
 La evidencia de esa prueba queda en `docs/verificacion/`.
-
-Los notebooks 03-05 y el programa de tuning siguen siendo la preparación para
-el trabajo experimental completo. Sus pendientes están en
-[docs/pendientes_entrega.md](docs/pendientes_entrega.md).
 
 ## Cadencia de negocio y futura inferencia
 

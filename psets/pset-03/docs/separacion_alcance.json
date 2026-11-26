@@ -1,4 +1,8 @@
 {
-  "fuente": "Snowflake OBT.OBT_ACCION_MES",
-  "escrituras_snowflake": "Ninguna: exportaci\u00f3n SELECT a snapshot local"
+  "fuente": "Snowflake PORTAFOLIO_P3.OBT.OBT_ACCION_MES (src/datos.py, SNOWFLAKE_DATABASE)",
+  "escrituras_snowflake": "Notebooks y src/: ninguna (exportación SELECT a snapshot local). pipeline/: escribe solo en PORTAFOLIO_P3; PORTAFOLIO (PSet 2 entregado) no se modifica.",
+  "antes": {
+    "fuente": "Snowflake OBT.OBT_ACCION_MES",
+    "escrituras_snowflake": "Ninguna: exportación SELECT a snapshot local"
+  }
 }

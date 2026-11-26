@@ -1,0 +1,234 @@
+{
+  "verificado_utc": "2026-11-18T05:21:07.907997+00:00",
+  "operacion": "SELECT",
+  "resultados": {
+    "almacenamiento": [
+      {
+        "table_schema": "GOLD",
+        "table_name": "DIM_ACCION",
+        "row_count": 1130,
+        "bytes": 74752
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "DIM_FECHA",
+        "row_count": 4245,
+        "bytes": 57344
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "DIM_MEMBRESIA_SP500",
+        "row_count": 1179,
+        "bytes": 48128
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "FCT_MERCADO_DIARIO",
+        "row_count": 4245,
+        "bytes": 139264
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "FCT_PRECIOS_DIARIOS",
+        "row_count": 1832433,
+        "bytes": 261716992
+      },
+      {
+        "table_schema": "OBT",
+        "table_name": "OBT_ACCION_DIA",
+        "row_count": 1832433,
+        "bytes": 280308224
+      },
+      {
+        "table_schema": "OBT",
+        "table_name": "OBT_ACCION_MES",
+        "row_count": 87178,
+        "bytes": 34709504
+      },
+      {
+        "table_schema": "OBT",
+        "table_name": "VALIDACION_OBT",
+        "row_count": 17,
+        "bytes": 1536
+      }
+    ],
+    "grano": [
+      {
+        "filas": 87178,
+        "claves": 87178,
+        "claves_nulas": 0,
+        "elegibles": 58627
+      }
+    ],
+    "meses": [
+      {
+        "desde": 201001,
+        "hasta": 202610,
+        "objetivos_nulos": 620
+      }
+    ],
+    "base_gold": [
+      {
+        "filas": 87178
+      }
+    ],
+    "claves_faltantes_o_extra": [
+      {
+        "diferencias": 0
+      }
+    ],
+    "controles": [
+      {
+        "control": "OBT (grano accion x mes): filas = combinaciones distintas de ['accion_key', 'anio_mes']",
+        "esperado": 87178,
+        "obtenido": 87178,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "OBT sin meses huerfanos de mercado",
+        "esperado": 0,
+        "obtenido": 0,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "OBT tiene una fila por accion y mes cerrado",
+        "esperado": 87178,
+        "obtenido": 87178,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "OBT_ACCION_DIA (grano accion x dia): filas = combinaciones distintas de ['accion_key', 'fecha']",
+        "esperado": 1832433,
+        "obtenido": 1832433,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "OBT_ACCION_DIA conserva las filas de fct_precios_diarios",
+        "esperado": 1832433,
+        "obtenido": 1832433,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "dim_accion: filas = combinaciones distintas de ['accion_key']",
+        "esperado": 1130,
+        "obtenido": 1130,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "dim_fecha: filas = combinaciones distintas de ['fecha_key']",
+        "esperado": 4245,
+        "obtenido": 4245,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "fct_mercado_diario: filas = combinaciones distintas de ['fecha_key']",
+        "esperado": 4245,
+        "obtenido": 4245,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "fct_precios_diarios: filas = combinaciones distintas de ['accion_key', 'fecha_key']",
+        "esperado": 1832433,
+        "obtenido": 1832433,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "join OBT x dim_accion conserva filas",
+        "esperado": 87178,
+        "obtenido": 87178,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "join OBT x mercado mensual conserva filas",
+        "esperado": 87178,
+        "obtenido": 87178,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "join cierre x resumen del mes (uno a uno) conserva filas",
+        "esperado": 87178,
+        "obtenido": 87178,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "join diario x fct_mercado_diario conserva filas",
+        "esperado": 1832433,
+        "obtenido": 1832433,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "join fct_mercado_diario x dim_fecha conserva filas",
+        "esperado": 4245,
+        "obtenido": 4245,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "join fct_precios_diarios x dim_fecha conserva filas",
+        "esperado": 1832433,
+        "obtenido": 1832433,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "mercado del mes siguiente solo con meses cerrados",
+        "esperado": 0,
+        "obtenido": 0,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      },
+      {
+        "control": "mercado mensual: filas = combinaciones distintas de ['anio_mes']",
+        "esperado": 203,
+        "obtenido": 203,
+        "ok": true,
+        "ejecutado_en": "2026-11-18 05:20:42.233881"
+      }
+    ]
+  },
+  "consultas": [
+    {
+      "nombre": "almacenamiento",
+      "sql": "SELECT table_schema, table_name, row_count, bytes FROM information_schema.tables WHERE table_schema IN ('GOLD','OBT') AND table_type='BASE TABLE' ORDER BY 1,2",
+      "query_id": "01c87ca1-0004-ea10-0000-7b7d001c6bda"
+    },
+    {
+      "nombre": "grano",
+      "sql": "SELECT COUNT(*) filas, COUNT(DISTINCT accion_key,anio_mes) claves, COUNT_IF(accion_key IS NULL OR anio_mes IS NULL) claves_nulas, COUNT_IF(elegible) elegibles FROM OBT.OBT_ACCION_MES",
+      "query_id": "01c87ca1-0004-ea83-0000-7b7d001cc5b6"
+    },
+    {
+      "nombre": "meses",
+      "sql": "SELECT MIN(anio_mes) desde, MAX(anio_mes) hasta, COUNT_IF(ret_log_mes_siguiente IS NULL) objetivos_nulos FROM OBT.OBT_ACCION_MES",
+      "query_id": "01c87ca1-0004-ea3e-0000-7b7d001d231a"
+    },
+    {
+      "nombre": "base_gold",
+      "sql": "SELECT COUNT(*) filas FROM (SELECT p.accion_key,d.anio_mes FROM GOLD.FCT_PRECIOS_DIARIOS p JOIN GOLD.DIM_FECHA d ON p.fecha_key=d.fecha_key WHERE d.mes_cerrado GROUP BY 1,2)",
+      "query_id": "01c87ca1-0004-ea10-0000-7b7d001c6bde"
+    },
+    {
+      "nombre": "claves_faltantes_o_extra",
+      "sql": "WITH base AS (SELECT DISTINCT p.accion_key,d.anio_mes FROM GOLD.FCT_PRECIOS_DIARIOS p JOIN GOLD.DIM_FECHA d ON p.fecha_key=d.fecha_key WHERE d.mes_cerrado) SELECT COUNT(*) diferencias FROM base b FULL OUTER JOIN OBT.OBT_ACCION_MES o ON b.accion_key=o.accion_key AND b.anio_mes=o.anio_mes WHERE b.accion_key IS NULL OR o.accion_key IS NULL",
+      "query_id": "01c87ca1-0004-ea3e-0000-7b7d001d231e"
+    },
+    {
+      "nombre": "controles",
+      "sql": "SELECT * FROM OBT.VALIDACION_OBT ORDER BY control",
+      "query_id": "01c87ca1-0004-ea87-0000-7b7d001ce5a2"
+    }
+  ]
+}

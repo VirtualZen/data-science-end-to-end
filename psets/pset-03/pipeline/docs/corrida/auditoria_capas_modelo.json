@@ -1,0 +1,350 @@
+{
+  "verificado_utc": "2026-11-17T18:33:11.642436+00:00",
+  "modo": "SELECT y revisi\u00f3n est\u00e1tica del SQL actual; sin escrituras Snowflake",
+  "dependencias": [
+    {
+      "desde": "RAW.precios_diarios",
+      "hacia": "BRONZE.brz_precios_diarios"
+    },
+    {
+      "desde": "BRONZE.equivalencias_tickers",
+      "hacia": "BRONZE.brz_composicion_sp500"
+    },
+    {
+      "desde": "RAW.composicion_sp500",
+      "hacia": "BRONZE.brz_composicion_sp500"
+    },
+    {
+      "desde": "RAW.listados_bolsa",
+      "hacia": "BRONZE.brz_listados_bolsa"
+    },
+    {
+      "desde": "BRONZE.brz_precios_diarios",
+      "hacia": "SILVER.slv_calendario_nyse"
+    },
+    {
+      "desde": "BRONZE.calendario_nyse",
+      "hacia": "SILVER.slv_calendario_nyse"
+    },
+    {
+      "desde": "BRONZE.brz_precios_diarios",
+      "hacia": "SILVER.slv_mercado_diario"
+    },
+    {
+      "desde": "SILVER.slv_calendario_nyse",
+      "hacia": "SILVER.slv_mercado_diario"
+    },
+    {
+      "desde": "BRONZE.brz_precios_diarios",
+      "hacia": "SILVER.slv_precios_acciones"
+    },
+    {
+      "desde": "SILVER.slv_calendario_nyse",
+      "hacia": "SILVER.slv_precios_acciones"
+    },
+    {
+      "desde": "SILVER.slv_membresia_sp500",
+      "hacia": "SILVER.slv_acciones"
+    },
+    {
+      "desde": "SILVER.slv_precios_acciones",
+      "hacia": "SILVER.slv_acciones"
+    },
+    {
+      "desde": "SILVER.slv_membresia_sp500",
+      "hacia": "SILVER.slv_acciones"
+    },
+    {
+      "desde": "SILVER.slv_precios_acciones",
+      "hacia": "SILVER.slv_acciones"
+    },
+    {
+      "desde": "BRONZE.brz_listados_bolsa",
+      "hacia": "SILVER.slv_acciones"
+    },
+    {
+      "desde": "BRONZE.brz_composicion_sp500",
+      "hacia": "SILVER.slv_membresia_sp500"
+    },
+    {
+      "desde": "BRONZE.brz_composicion_sp500",
+      "hacia": "SILVER.slv_membresia_sp500"
+    },
+    {
+      "desde": "BRONZE.brz_precios_diarios",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "SILVER.slv_calendario_nyse",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "SILVER.slv_membresia_sp500",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "BRONZE.brz_composicion_sp500",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "GOLD.fct_precios_diarios",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "GOLD.dim_accion",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "GOLD.dim_fecha",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "SILVER.slv_precios_acciones",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "SILVER.slv_mercado_diario",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "BRONZE.brz_composicion_sp500",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "BRONZE.brz_composicion_sp500",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "BRONZE.brz_composicion_sp500",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "GOLD.dim_accion",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "RAW.precios_diarios",
+      "hacia": "CALIDAD.dq_metricas"
+    },
+    {
+      "desde": "SILVER.slv_precios_acciones",
+      "hacia": "GOLD.fct_precios_diarios"
+    },
+    {
+      "desde": "GOLD.dim_accion",
+      "hacia": "GOLD.fct_precios_diarios"
+    },
+    {
+      "desde": "GOLD.dim_fecha",
+      "hacia": "GOLD.fct_precios_diarios"
+    },
+    {
+      "desde": "GOLD.dim_membresia_sp500",
+      "hacia": "GOLD.fct_precios_diarios"
+    },
+    {
+      "desde": "SILVER.slv_calendario_nyse",
+      "hacia": "GOLD.dim_fecha"
+    },
+    {
+      "desde": "SILVER.slv_acciones",
+      "hacia": "GOLD.dim_accion"
+    },
+    {
+      "desde": "SILVER.slv_mercado_diario",
+      "hacia": "GOLD.fct_mercado_diario"
+    },
+    {
+      "desde": "GOLD.dim_fecha",
+      "hacia": "GOLD.fct_mercado_diario"
+    },
+    {
+      "desde": "SILVER.slv_membresia_sp500",
+      "hacia": "GOLD.dim_membresia_sp500"
+    }
+  ],
+  "violaciones_direccion_capas": [],
+  "dag_sin_ciclos": true,
+  "controles_grano_integridad": "OK",
+  "gold": "dos hechos y tres dimensiones Gold; todas las relaciones de consumo del hecho resueltas dentro de Gold",
+  "excepcion": null,
+  "resultados": {
+    "objetos": [
+      {
+        "table_schema": "BRONZE",
+        "table_name": "BRZ_COMPOSICION_SP500",
+        "table_type": "VIEW"
+      },
+      {
+        "table_schema": "BRONZE",
+        "table_name": "BRZ_LISTADOS_BOLSA",
+        "table_type": "VIEW"
+      },
+      {
+        "table_schema": "BRONZE",
+        "table_name": "BRZ_PRECIOS_DIARIOS",
+        "table_type": "VIEW"
+      },
+      {
+        "table_schema": "BRONZE",
+        "table_name": "CALENDARIO_NYSE",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "BRONZE",
+        "table_name": "EQUIVALENCIAS_TICKERS",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "DIM_ACCION",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "DIM_FECHA",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "DIM_MEMBRESIA_SP500",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "FCT_MERCADO_DIARIO",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "GOLD",
+        "table_name": "FCT_PRECIOS_DIARIOS",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "RAW",
+        "table_name": "COMPOSICION_SP500",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "RAW",
+        "table_name": "INGESTA_LOG",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "RAW",
+        "table_name": "LISTADOS_BOLSA",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "RAW",
+        "table_name": "PRECIOS_DIARIOS",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "SILVER",
+        "table_name": "SLV_ACCIONES",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "SILVER",
+        "table_name": "SLV_CALENDARIO_NYSE",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "SILVER",
+        "table_name": "SLV_MEMBRESIA_SP500",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "SILVER",
+        "table_name": "SLV_MERCADO_DIARIO",
+        "table_type": "BASE TABLE"
+      },
+      {
+        "table_schema": "SILVER",
+        "table_name": "SLV_PRECIOS_ACCIONES",
+        "table_type": "BASE TABLE"
+      }
+    ],
+    "DIM_ACCION": [
+      {
+        "filas": 1130,
+        "claves_unicas": 1130,
+        "claves_nulas": 0
+      }
+    ],
+    "DIM_FECHA": [
+      {
+        "filas": 4245,
+        "claves_unicas": 4245,
+        "claves_nulas": 0
+      }
+    ],
+    "DIM_MEMBRESIA_SP500": [
+      {
+        "filas": 1179,
+        "claves_unicas": 1179,
+        "claves_nulas": 0
+      }
+    ],
+    "FCT_PRECIOS_DIARIOS": [
+      {
+        "filas": 1832433,
+        "claves_unicas": 1832433,
+        "claves_nulas": 0
+      }
+    ],
+    "FCT_MERCADO_DIARIO": [
+      {
+        "filas": 4245,
+        "claves_unicas": 4245,
+        "claves_nulas": 0
+      }
+    ],
+    "joins_precios": [
+      {
+        "filas_join": 1832433,
+        "accion_huerfana": 0,
+        "fecha_huerfana": 0,
+        "periodo_huerfano": 0,
+        "membresia_inconsistente": 0,
+        "periodo_fuera_intervalo": 0,
+        "filas_fuera_sp500": 44673,
+        "filas_imputadas": 0,
+        "desde": "2010-01-04",
+        "hasta": "2026-11-17"
+      }
+    ],
+    "join_mercado": [
+      {
+        "filas_join": 4245,
+        "fecha_huerfana": 0
+      }
+    ],
+    "conservacion_silver": [
+      {
+        "precios_silver": 1832433,
+        "precios_gold": 1832433,
+        "mercado_silver": 4245,
+        "mercado_gold": 4245
+      }
+    ],
+    "solapes_membresia": [
+      {
+        "pares_solapados": 0
+      }
+    ],
+    "restricciones_gold": [],
+    "atributos_temporales": [
+      {
+        "bolsa_desconocida": 439,
+        "acciones": 1130
+      }
+    ],
+    "join_hechos_por_fecha": [
+      {
+        "filas_join": 1832433
+      }
+    ]
+  }
+}
