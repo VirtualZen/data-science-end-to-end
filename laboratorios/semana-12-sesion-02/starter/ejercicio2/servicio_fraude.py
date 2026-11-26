@@ -27,10 +27,15 @@ app = FastAPI(title="Evaluacion de pagos")
 
 class Pago(BaseModel):
     """Lo que la app sabe de un pago en el momento de cobrarlo."""
-    # TODO 1: declara cada dato del pago con su tipo (la fecha, como
+    # DONE 1: declara cada dato del pago con su tipo (la fecha, como
     # datetime); todos son obligatorios.
+    fecha_hora: datetime
     metodo: str
     monto: float
+    distancia_km: float
+    tarjeta_nueva: int
+    intentos_fallidos: int
+    viajes_previos: int
 
 
 @app.get("/salud")
@@ -40,12 +45,13 @@ def salud():
 
 @app.post("/evaluar_pago")
 def evaluar_pago(pago: Pago):
-    # TODO 2: la probabilidad de fraude del pago (la columna de la clase 1),
+    # DONE 2: la probabilidad de fraude del pago (la columna de la clase 1),
     # sobre el pago ya preparado, como numero de Python (float).
-    probabilidad = 0.0
+    pagos = agregar_features(pd.DataFrame([pago.model_dump()]))
+    probabilidad = float(modelo.predict_proba(columnas(pagos))[0, 1])
 
     # Decide si el pago va a revision: revisar vale True cuando la
     # probabilidad alcanza UMBRAL.
-    revisar = False
+    revisar = probabilidad >= UMBRAL
 
     return {"probabilidad_fraude": round(probabilidad, 4), "revisar": revisar}
