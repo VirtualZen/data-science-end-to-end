@@ -92,15 +92,15 @@ Solo o en pareja. Carpeta: [`starter/ejercicio2/`](./starter/ejercicio2/). El re
 
 **Respuesta 1:** ¿qué oración te dio el paso 4? ¿Qué le falta para que la gerente pueda decidir algo?
 
-_(tu respuesta)_
+"La semana del 2026-11-16, el fraude que no detectamos y las revisiones costaron 2359 dolares, 2.7 veces una semana normal." Le falta la causa y qué hacer.
 
 **Respuesta 2:** escribe el mensaje ejecutivo completo, en cinco oraciones como máximo: qué pasó, cuánto cuesta, qué recomiendan, qué necesitan y qué riesgo queda.
 
-_(tu mensaje)_
+Desde el 16 de noviembre el modelo detecta 28 de cada 100 fraudes, antes 74. Esa semana costó 2359 dólares, 2.7 veces lo normal; un mes así, 6000 más. Recomendamos reentrenarlo con los fraudes de noviembre y, mientras tanto, revisar más pagos. Necesitamos los contracargos de noviembre y una semana del equipo. El riesgo: la semana del 23 muestra la misma señal.
 
 **Respuesta 3:** el costo de 40 dólares por fraude no detectado es una suposición de la Semana 11. ¿Dónde lo dirías, en el mensaje ejecutivo o en el técnico? ¿Qué pasa con tu recomendación si el costo real fuera la mitad?
 
-_(tu respuesta)_
+En el técnico. Con la mitad, la semana costaría 1259 dólares (2.5 veces lo normal) y la recomendación no cambia.
 
 ## Ejercicio 3: los resultados de tu proyecto, dos veces
 
