@@ -10,6 +10,18 @@
 
 Nada nuevo que instalar. Hoy se escribe más de lo que se programa: los dos scripts preparan los números y los gráficos, y el trabajo es decidir qué se dice a quién.
 
+### Cómo correrlo localmente con uv
+
+`starter/` es un proyecto uv (Python 3.11, versiones del `requirements.txt` del curso). Desde `laboratorios/semana-14-sesion-02/starter/`:
+
+```bash
+uv sync
+cd ejercicio1 && uv run --project .. python graficos_tarifa.py && cd ..
+cd ejercicio2 && uv run --project .. python comprobar.py && uv run --project .. python costos_fraude.py && cd ..
+```
+
+El Ejercicio 1 deja `grafico_tecnico.png` y `grafico_ejecutivo.png` en `ejercicio1/`; el Ejercicio 2 imprime los cinco pasos de `comprobar.py` y el costo del fraude.
+
 ## Antes de empezar
 
 A partir de la lectura previa:
