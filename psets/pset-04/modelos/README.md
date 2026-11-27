@@ -9,7 +9,7 @@ experimento está en [`../../pset-03/README.md`](../../pset-03/README.md); los c
 |---|---|---|
 | Base de Snowflake (`SNOWFLAKE_DATABASE`) | `PORTAFOLIO_P3` | `PORTAFOLIO_P4` |
 | Proyecto uv | `pset-03-modelado` | `pset-04-modelos` (mismas versiones) |
-| Compose de MLflow | `pset3`, puerto 5001 | `pset4`, puerto 5001 (no levantar los dos a la vez) |
+| Compose de MLflow | `pset3`, puerto 5001 | `pset4-modelos`, puerto 5001 (no levantar los dos a la vez) |
 | MLflow | `pset-03/mlflow/` | `modelos/mlflow/`: copia local, mismos run_id, versiones y alias |
 
 El registro trae `portafolio-inversiones-modelo` v1 `@champion` (LightGBM, run

@@ -1,0 +1,118 @@
+# PSet 4 - Reentrenamiento con aprobacion humana.
+# 1. entrena el challenger (ventana expansiva de lotes etiquetados, misma preparacion de src/pipeline.py,
+#    hiperparametros del champion), lo registra en MLflow con tag fase=reentrenamiento y motivo, y le pone
+#    @challenger; 2. lo compara con el champion en el lote etiquetado mas reciente (regla de src/reentrenar.py);
+# 3. se PAUSA hasta que una persona apruebe o rechace en la UI de Kestra (Resume); 4. si se aprueba, mueve
+#    @champion (la anterior queda en @anterior) y la API recarga el alias sin reconstruir la imagen.
+# El modelo nunca se despliega solo: ver docs/reentrenamiento.md.
+id: reentrenamiento
+namespace: usfq.produccion
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "4"
+
+inputs:
+  - id: anio_mes_llegada
+    type: INT
+    description: Lote que esta por llegar; se entrena con las etiquetas de los lotes anteriores.
+  - id: motivo
+    type: STRING
+    defaults: rendimiento (A7)
+
+tasks:
+  - id: entrenar
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset4-produccion:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+      networkMode: pset4_red
+    timeout: PT30M
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    commands:
+      - >
+        cd /app && python -m monitoreo.produccion reentrenar
+        --anio-mes-llegada {{ inputs.anio_mes_llegada }} --motivo "{{ inputs.motivo }}"
+
+  - id: resumen
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      Challenger v{{ outputs.entrenar.vars.version_challenger }} frente a champion v{{ outputs.entrenar.vars.version_champion }}
+      en el lote etiquetado mas reciente ({{ outputs.entrenar.vars.lotes_evaluacion }}): MAE {{ outputs.entrenar.vars.mae_challenger }} vs {{ outputs.entrenar.vars.mae_champion }};
+      retorno top 10 {{ outputs.entrenar.vars.retorno_challenger }} vs {{ outputs.entrenar.vars.retorno_champion }}
+      (debe superarlo por mas de 0,0134, una desviacion de la CV).
+      Regla de promocion: {{ outputs.entrenar.vars.promueve ? 'PROMOVER' : 'NO promover' }} ({{ outputs.entrenar.vars.motivo_regla }}).
+      Revise en MLflow (http://localhost:5001) y apruebe o rechace con Resume.
+
+  - id: aprobacion
+    type: io.kestra.plugin.core.flow.Pause
+    description: Aprobacion humana del challenger. Sin respuesta en 7 dias, se rechaza.
+    pauseDuration: P7D
+    behavior: CANCEL
+    onResume:
+      - id: aprobado
+        type: BOOL
+        description: "true para mover @champion al challenger"
+        defaults: false
+      - id: revisor
+        type: STRING
+        defaults: Paul Gomez Ehmig
+      - id: motivo
+        type: STRING
+        description: Por que se aprueba o se rechaza (queda en REENTRENAMIENTOS.MOTIVO_DECISION)
+        defaults: sigue la regla de promocion
+
+  - id: registrar_decision
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset4-produccion:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+      networkMode: pset4_red
+    env:
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+    commands:
+      - >
+        cd /app && python -m monitoreo.produccion decision --version {{ outputs.entrenar.vars.version_challenger }}
+        --aprobado {{ outputs.aprobacion.onResume.aprobado }} --por "{{ outputs.aprobacion.onResume.revisor }}"
+        --motivo "{{ outputs.aprobacion.onResume.motivo }}"
+
+  - id: si_aprobado
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.aprobacion.onResume.aprobado }}"
+    then:
+      - id: promover
+        type: io.kestra.plugin.scripts.shell.Commands
+        containerImage: pset4-produccion:latest
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          pullPolicy: NEVER
+          networkMode: pset4_red
+        env:
+          MLFLOW_TRACKING_URI: http://mlflow:5000
+          API_URL: http://api:8000
+          API_TOKEN: "{{ secret('API_TOKEN') }}"
+        commands:
+          - cd /app && python -m monitoreo.produccion promover --version {{ outputs.entrenar.vars.version_challenger }}
+    else:
+      - id: se_queda_el_champion
+        type: io.kestra.plugin.core.log.Log
+        message: "Rechazado ({{ outputs.aprobacion.onResume.motivo }}): @champion sigue en v{{ outputs.entrenar.vars.version_champion }}; v{{ outputs.entrenar.vars.version_challenger }} queda como @challenger."
+
+outputs:
+  - id: aprobado
+    type: BOOL
+    value: "{{ outputs.aprobacion.onResume.aprobado }}"

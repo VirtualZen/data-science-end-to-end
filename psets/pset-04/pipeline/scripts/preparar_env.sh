@@ -31,7 +31,7 @@ chmod 600 .env
 
 : > .env_encoded
 while IFS='=' read -r nombre valor; do
-    [[ "$nombre" =~ ^(SNOWFLAKE_|FECHA_|AVISO_) ]] || continue
+    [[ "$nombre" =~ ^(SNOWFLAKE_|FECHA_|AVISO_|API_TOKEN) ]] || continue
     [[ "$nombre" == "SNOWFLAKE_PRIVATE_KEY_PATH" ]] && continue
     echo "SECRET_${nombre}=$(printf '%s' "$valor" | base64 | tr -d '\n')" >> .env_encoded
 done < <(grep -E '^[A-Z_]+=' .env)

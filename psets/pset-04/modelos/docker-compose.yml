@@ -1,4 +1,4 @@
-name: pset4
+name: pset4-modelos
 services:
   mlflow:
     build: .

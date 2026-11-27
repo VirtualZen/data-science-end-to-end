@@ -1,0 +1,25 @@
+digraph arquitectura {
+  rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", fontsize=10, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#555555"]; edge [fontname="Helvetica", fontsize=8, color="#555555"];
+  compound=true; newrank=true; nodesep=0.25; ranksep=0.45;
+  subgraph cluster_f { label="Fuentes públicas"; style="rounded,dashed"; color="#999999";
+    yahoo [label="Yahoo Finance\nprecios diarios"]; comp [label="composición S&P 500\n+ bolsa (GitHub)"]; }
+  subgraph cluster_dc { label="docker-compose.yml (máquina local)"; style="rounded"; color="#0E3B43"; fontsize=11;
+    subgraph cluster_k { label="Kestra"; style="rounded,filled"; fillcolor="#EEF3F2"; color="#0F7B6C";
+      ing [label="ingesta_diaria /\nbackfill_historico"]; tr [label="transformar\n(dbt build + Spark)"];
+      pl [label="produccion_lotes\n(un lote por mes)"]; mo [label="monitoreo"]; re [label="reentrenamiento\npausa: aprobación humana", fillcolor="#FBEBD3"]; }
+    spark [label="Spark\nmaster + worker", fillcolor="#f2f8ee"];
+    api [label="API FastAPI\n/salud /modelo /predecir\n/metricas /recargar /respaldo", fillcolor="#DDEFEA", color="#0F7B6C", penwidth=1.6];
+    mlf [label="MLflow\ntracking + Model Registry\n@champion @challenger @anterior", fillcolor="#DDEFEA"];
+    tab [label="tablero Streamlit", fillcolor="#f4f4f4"];
+  }
+  subgraph cluster_sf { label="Snowflake · PORTAFOLIO_P4"; style="rounded,filled"; fillcolor="#eaf6fb"; color="#29b5e8"; fontsize=11;
+    raw [label="RAW"]; bsg [label="BRONZE → SILVER\n→ GOLD (estrella)"]; obt [label="OBT\nOBT_ACCION_MES"];
+    prod [label="PRODUCCION\nPREDICCIONES · MONITOREO\nALERTAS · REENTRENAMIENTOS"]; }
+  gh [label="GitHub Actions\nCI: pruebas + imagen\nCD: GHCR pset4-api:<hash>", fillcolor="#f4f4f4"];
+  asesor [label="Asesor\n(propuesta mensual)", shape=ellipse, fillcolor="#FBEBD3"];
+  yahoo -> ing; comp -> ing; ing -> raw; ing -> tr [label="subflow"]; tr -> bsg [label="dbt"]; tr -> spark; spark -> obt [label="OBT"]; bsg -> spark [style=dashed];
+  obt -> pl [label="lote del mes"]; pl -> api [label="POST /predecir"]; api -> mlf [label="carga @champion", dir=back, style=dashed];
+  pl -> prod [label="PREDICCIONES"]; pl -> mo; mo -> prod [label="MONITOREO, ALERTAS"]; mo -> re [label="A7 o calendario"];
+  re -> mlf [label="registra\n@challenger"]; re -> api [label="/recargar si se aprueba"]; prod -> tab; gh -> api [label="imagen", style=dashed];
+  api -> asesor [label="10 acciones + pesos"];
+}

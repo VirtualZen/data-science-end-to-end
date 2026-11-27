@@ -58,6 +58,9 @@ redes = [
     "lightning>=2.4",
     "torch>=2.5",
 ]
+tablero = [
+    "streamlit==1.67.0",
+]
 
 [tool.uv]
 package = false

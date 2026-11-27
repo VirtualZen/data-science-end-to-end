@@ -1,5 +1,6 @@
--- Configuracion de Snowflake para el pipeline copiado al PSet 3 (base PORTAFOLIO_P4). Se corre una vez, en una
--- hoja de trabajo de Snowsight, con el rol ACCOUNTADMIN.
+-- Configuracion de Snowflake para el pipeline copiado al PSet 4 (base PORTAFOLIO_P4). Se corre una vez, en una
+-- hoja de trabajo de Snowsight, con el rol ACCOUNTADMIN y "Run All" (Cmd+Shift+Enter), no sentencia por sentencia.
+-- Si el usuario PSET2_SERVICIO ya existe (PSet 2), CREATE USER no hace nada y no hace falta pegar la llave.
 -- Antes: genera el par de llaves (ver README, paso 2) y pega la llave PUBLICA en
 -- <LLAVE_PUBLICA>, sin las lineas BEGIN/END y sin saltos de linea.
 
@@ -46,9 +47,10 @@ GRANT ROLE PSET2_ROL TO ROLE ACCOUNTADMIN;
 -- resuelven en Bronze, que conserva la carga mas reciente de cada clave.
 USE ROLE PSET2_ROL;
 USE WAREHOUSE PSET2_WH;
+USE DATABASE PORTAFOLIO_P4;
 USE SCHEMA PORTAFOLIO_P4.RAW;
 
-CREATE TABLE IF NOT EXISTS PRECIOS_DIARIOS (
+CREATE TABLE IF NOT EXISTS PORTAFOLIO_P4.RAW.PRECIOS_DIARIOS (
     TICKER       VARCHAR,          -- simbolo tal como se pidio a Yahoo (BRK-B, ^GSPC)
     FECHA        DATE,
     OPEN         FLOAT,
@@ -62,7 +64,7 @@ CREATE TABLE IF NOT EXISTS PRECIOS_DIARIOS (
     INGESTA_TS   TIMESTAMP_NTZ
 );
 
-CREATE TABLE IF NOT EXISTS COMPOSICION_SP500 (
+CREATE TABLE IF NOT EXISTS PORTAFOLIO_P4.RAW.COMPOSICION_SP500 (
     FECHA        DATE,             -- fecha de la foto de la composicion
     TICKERS      VARCHAR,          -- lista separada por comas, tal como viene
     FUENTE       VARCHAR,
@@ -70,7 +72,7 @@ CREATE TABLE IF NOT EXISTS COMPOSICION_SP500 (
     INGESTA_TS   TIMESTAMP_NTZ
 );
 
-CREATE TABLE IF NOT EXISTS LISTADOS_BOLSA (
+CREATE TABLE IF NOT EXISTS PORTAFOLIO_P4.RAW.LISTADOS_BOLSA (
     SIMBOLO        VARCHAR,
     NOMBRE         VARCHAR,
     CODIGO_BOLSA   VARCHAR,        -- N=NYSE, A=NYSE American, Q=Nasdaq (codigos de Nasdaq Trader)
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS LISTADOS_BOLSA (
 );
 
 -- Bitacora de cada carga: cuantas filas trajo cada simbolo y si fallo.
-CREATE TABLE IF NOT EXISTS INGESTA_LOG (
+CREATE TABLE IF NOT EXISTS PORTAFOLIO_P4.RAW.INGESTA_LOG (
     LOTE_ID      VARCHAR,
     TICKER       VARCHAR,
     FECHA_DESDE  DATE,

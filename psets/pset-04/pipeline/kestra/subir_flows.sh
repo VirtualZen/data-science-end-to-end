@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Crea o actualiza en Kestra los cuatro flows de kestra/flows/ (misma API que el
+# Crea o actualiza en Kestra los siete flows de kestra/flows/ (misma API que el
 # script subir_a_kestra.sh de la Semana 4). Kestra debe estar corriendo.
 #
 # Uso, desde psets/pset-04/pipeline/:   bash kestra/subir_flows.sh
@@ -26,9 +26,11 @@ enviar() {  # metodo url archivo
     fi
 }
 
-# transformar primero: los otros dos lo llaman como subflow. avisos al final.
+# transformar primero: los otros dos lo llaman como subflow. avisos al final. Los de produccion (PSet 4):
+# monitoreo y reentrenamiento antes de produccion_lotes, que los llama como subflows.
 for flow in kestra/flows/transformar.yml kestra/flows/ingesta_diaria.yml \
-            kestra/flows/backfill_historico.yml kestra/flows/avisos.yml; do
+            kestra/flows/backfill_historico.yml kestra/flows/avisos.yml \
+            kestra/flows/monitoreo.yml kestra/flows/reentrenamiento.yml kestra/flows/produccion_lotes.yml; do
     id=$(grep -E '^id:' "$flow" | awk '{print $2}')
     namespace=$(grep -E '^namespace:' "$flow" | awk '{print $2}')
     if curl -sf -u "$USUARIO" "$KESTRA/flows/$namespace/$id" > /dev/null; then
