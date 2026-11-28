@@ -259,7 +259,16 @@ Pendiente: H7 (huella con objetivo y manifiesto), opcion B; Paul: volver a subir
         corridas fase=reentrenamiento + decision; notebook 07 re-ejecutado con los CSV de Kestra, sin errores; 06 y 08 con
         salida de la VM) Exportar a docs/: predicciones.csv, monitoreo.csv, alertas.csv, corridas.csv,
         reentrenamientos.csv. Notebooks con Restart + Run All.
-[ ] 11.5 (P) Commit, PR y tag pset-04.
+[~] 11.5 (P) Commit, PR y tag pset-04. (27-nov 23:45: PR #16, merge b926fc9, tag pset-04. 28-nov: segunda revision de
+        Codex -> PR #17 y tag movido al nuevo merge)
+[!] 11.7 (C) (28-nov, segunda revision de Codex) Julio de 2025: empate en el puesto 10 (TFC guardado, FITB en el backtest
+        de la simulacion); declarado en docs/reconciliacion.md 3, disclaimer 17 y memo. obs_252d y dias_negociados_mes no son
+        constantes en el mes (5,9 % y 86,6 %): disclaimer 16; PSI por accion como mejora futura. H8: prueba de los 4 casos
+        (53 pruebas). Video 6:36 en la portada del memo.
+[x] 11.8 (C) (28-nov 00:55) 6.2 justificado (memo 7, docs/monitoreo.md, disclaimer 16); 10.6 demostrado con
+        scripts/trazabilidad.py y docs/trazabilidad.md (v1, v3, v8: prediccion -> version -> run_id -> snapshot -> Gold);
+        notebooks 01-08 validados: celdas 1..n sin saltos y sin errores. Flow H8 en Kestra no se volvio a correr (declarado).
+        Universo sin NASDAQ por la dificultad de comprarlas: disclaimer 18, memo, pie de la presentacion, README.
 [x] 11.6 (C) (27-nov 22h) psets/proyecto/ armado con los archivos versionados de pset-04 (sin enunciado, rubrica ni plan),
         README con mapa a las carpetas de la plantilla, .dockerignore combinado. Versiones: conftest.py no recoge pruebas si
         las librerias no son las de api/requirements.txt (pruebas.yml del curso sale con codigo 5); pset4-ci.yml prueba

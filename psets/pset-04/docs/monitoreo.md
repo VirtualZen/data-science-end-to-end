@@ -13,7 +13,7 @@ en `PRODUCCION.MONITOREO` (exportado a `docs/monitoreo.csv`) y alertas en `PRODU
 | Sistema / datos | % de filas del lote no enviadas (nulos) o rechazadas (422) | `monitorear`: elegibles del mes frente a predicciones guardadas |
 | Datos | % de nulos y % fuera del rango de entrenamiento, **por feature** (máximo y feature en `MONITOREO`; detalle en `DERIVA`) | `deriva.Referencia.evaluar` |
 | Datos | categorías no vistas en entrenamiento (`mes_calendario_obj`) | idem |
-| Datos | PSI por feature por acción (28) + KS; z mensual de las 6 de mercado; χ² de `hubo_retorno_extremo_mes` (lote) y de `mes_calendario_obj` (12 lotes) | idem, contra el entrenamiento 2013-2023 |
+| Datos | PSI por feature por acción (28) + KS; z mensual de las 4 de mercado constantes en el mes y z sobre la mediana de los 2 conteos de días (disclaimer 16); χ² de `hubo_retorno_extremo_mes` (lote) y de `mes_calendario_obj` (12 lotes) | idem, contra el entrenamiento 2013-2023 |
 | Modelo | distribución de las predicciones (media, desviación, z frente a los meses de entrenamiento) y tasa de cada decisión (incluir / no incluir) | `metricas_lote` |
 | Modelo | MAE y acierto direccional de cada lote **cuando llega su objetivo** (un lote después) | idem |
 | Negocio | retorno del portafolio, de B5 y de la operación manual (B7) en el último lote etiquetado; Sharpe de 12 lotes de los tres; acciones que el modelo y la operación manual eligen en común | idem; la decisión de B7 la devuelve la API en paralelo (`decision_operacion_manual`) y queda en `PREDICCIONES` |
@@ -27,7 +27,13 @@ en `PRODUCCION.MONITOREO` (exportado a `docs/monitoreo.csv`) y alertas en `PRODU
   volatilidad tienen p99 de 4–6). Tabla completa en el notebook 07, sección 2.
 - **KS** (respaldo): se reporta el estadístico y el p-valor (< 0,01), pero no decide: con 330 filas contra una muestra de
   5.000, casi cualquier diferencia es "significativa"; la magnitud la da el PSI.
-- **z de mercado**: alerta > 2, crítico > 3 desviaciones de la historia mensual. **χ²**: alerta p < 0,01, crítico p < 0,001.
+- **z de mercado** (desviación justificada del PSI por feature, disclaimer 16): `ret_log_sp500_mes`,
+  `ret_log_nyse_composite_mes`, `rf_mes` y `dispersion_mes` tienen un solo valor por mes en los 202 meses de la OBT; un
+  PSI sobre ~330 copias del mismo número compara un punto con una distribución y alertaría siempre, así que se compara
+  el valor del mes con la historia mensual de entrenamiento. `dias_negociados_mes` y `obs_252d` son conteos de días por
+  acción (un solo valor en el 86,6 % y el 5,9 % de los meses) y usan z sobre la mediana del mes; pasarlos al PSI por
+  acción queda como mejora futura porque cambiaría el monitoreo ya registrado. Umbrales: alerta > 2, crítico > 3
+  desviaciones de la historia mensual. **χ²**: alerta p < 0,01, crítico p < 0,001.
 - **A4 (≥ 5 features críticas)**: con 3 se disparaba en meses normales (2024-12, 2026-04: 3 críticas); con 5, en el choque
   real de abril de 2025 (8) y en los tres lotes inducidos (5–7).
 - **A7**: MAE > media de la CV + 1 desviación = 0,0641 + 0,016 = **0,0801** en **2 lotes etiquetados seguidos**. Un

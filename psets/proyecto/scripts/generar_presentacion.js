@@ -20,7 +20,7 @@ const THEME = {
             accent3: "B5473A", accent4: "5B8C85", accent5: "9DB8B3", accent6: "2E4A55", hlink: "0F7B6C", folHlink: "5B8C85" },
 };
 const H = THEME.colors;
-const PIE = "Allan Paul Gómez Ehmig · 00351916 · 2026-11-27 · Presentación ejecutiva: PSet 4, proyecto final";
+const PIE = "Allan Paul Gómez Ehmig · 00351916 · PSet 4 · Universo: S&P 500 ∩ NYSE; se excluyen las acciones del NASDAQ por la dificultad de comprarlas";
 
 // --- datos lote a lote -----------------------------------------------------------------------
 const filas = fs.readFileSync(path.join(RAIZ, "docs", "simulacion", "resultado_lotes.csv"), "utf8").trim().split("\n");
@@ -238,7 +238,7 @@ async function icono(Comp, color, size = 256) {
     ["Hold-out real sin crisis (PSet 3)", "Sharpe 0,87 modelo · 1,20 operación manual · 0,68 todo por igual", "La regla simple le gana al modelo"],
     ["Validación cruzada 2017-2023", "0,30 modelo · 0,50 operación manual · 0,58 media por acción · 0,54 todo por igual", "Ninguna regla gana en todos los periodos"],
     ["Tiempo de la propuesta", "42 ms por mes en producción (333 acciones)", "La propuesta está lista mucho antes de la apertura"],
-    ["Pruebas automáticas", "49 pruebas en cada cambio; imagen publicada al integrar", "Un cambio que rompe la propuesta no llega a producción"],
+    ["Pruebas automáticas", "53 pruebas en cada cambio; imagen publicada al integrar", "Un cambio que rompe la propuesta no llega a producción"],
     ["Cambios de modelo", "5 propuestos, 2 aprobados, 3 rechazados; reversión en un paso", "Ningún modelo cambia sin que una persona lo apruebe"],
   ], { x: 0.5, y: 1.15, w: 9.0, colW: [2.1, 3.7, 3.2], fontSize: 8.5, color: H.dk1, border: { type: "solid", pt: 0.5, color: "D5DEE3" },
        fill: { color: H.lt1 }, rowH: 0.4, valign: "middle", margin: [0.03, 0.06, 0.03, 0.06] });

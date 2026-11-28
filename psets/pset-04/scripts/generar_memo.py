@@ -89,10 +89,10 @@ def figura(ruta, ancho, texto):
 # ------------------------------------------------------------------ portada
 p("PSet 4 | Proyecto final: del dato a la operación", "TitleX")
 p("Allan Paul Gómez Ehmig · 00351916<br/>MSDS 6003 · USFQ · 27 de noviembre de 2026 · "
-  f"Video de demostración: {escape(VIDEO)}", "SmallX")
+  f"Video de demostración (6 min 36 s): {escape(VIDEO)}", "SmallX")
 story.append(Spacer(1, 6))
 p("<b>Qué se construyó.</b> Un sistema que cada fin de mes propone al asesor las 10 acciones del S&P 500 que cotizan en "
-  "la NYSE y su peso, con un modelo servido por una API, alimentado por el pipeline del PSet 2 y vigilado lote a lote. "
+  "la NYSE y su peso (las del NASDAQ se excluyen por la dificultad de comprarlas), con un modelo servido por una API, alimentado por el pipeline del PSet 2 y vigilado lote a lote. "
   "Los 35 meses posteriores al corte se pasaron por el sistema como si fueran producción, con tres meses de crisis inducida. "
   "<b>Resultado:</b> el monitoreo detectó la crisis en el primer lote y el ciclo de reentrenamiento con aprobación humana "
   "funcionó, pero reentrenar con la regla del PDF empeoró el negocio (Sharpe neto −0,23 frente a 0,05 del modelo fijo y "
@@ -105,7 +105,7 @@ p("<b>Qué se construyó.</b> Un sistema que cada fin de mes propone al asesor l
 h("1. Problema y formulación (versión final)")
 table(["Elemento", "Definición final"], [
     ["Problema", "El inversionista minorista arma su portafolio por intuición, sin controlar la volatilidad. El asesor necesita una propuesta mensual disciplinada."],
-    ["Unidad / universo", "Acción por cierre de mes; S&P 500 histórico ∩ NYSE (327–337 acciones elegibles por mes)."],
+    ["Unidad / universo", "Acción por cierre de mes; S&P 500 histórico ∩ NYSE (327–337 acciones elegibles por mes). Las del NASDAQ se excluyen por la dificultad de comprarlas."],
     ["Target y horizonte", "Retorno logarítmico del mes siguiente (ret_log_mes_siguiente); horizonte = rebalanceo = 1 mes (decisión H del feedback del PSet 1)."],
     ["Métrica técnica", "MAE (colas gruesas: curtosis en exceso 9,6), con acierto direccional como apoyo."],
     ["Métrica de negocio", "Sharpe neto anualizado del portafolio, con 15 pb por US$ negociado; drawdown máximo."],
@@ -183,7 +183,7 @@ code('POST /predecir  {"anio_mes": 202312, "acciones": [{"accion_key": "...", "t
 b("<b>Contrato.</b> El esquema Pydantic es la firma registrada en MLflow (33 features float, anio_mes entero); rangos del "
   "entrenamiento ± 50 % (rechaza errores de unidad como un retorno en %), campos extra prohibidos, mes 1–12. Las dos "
   "derivadas se calculan con src.pipeline.derivar, importada.")
-b("<b>Pruebas (49, pytest, en pset-04 y en proyecto).</b> Contrato: 200; 422 con el campo por faltante, tipo, mes inexistente, fuera de rango, campo "
+b("<b>Pruebas (53, pytest, en pset-04 y en proyecto).</b> Contrato: 200; 422 con el campo por faltante, tipo, mes inexistente, fuera de rango, campo "
   "extra y acción repetida; 401 sin token. Modelo: la copia del champion en tests/fixtures (mlflow.sklearn.save_model) "
   "reproduce MAE 0,0673399888 con tolerancia 1e-6 (diferencias de plataforma; 10.000 veces menor que la desviación de CV), y la "
   "API predice igual que el modelo directo. Comportamiento: 10 incluidas y pesos que suman 1; ninguna sobre el percentil "
@@ -238,8 +238,10 @@ b("<b>Deriva inducida (2025-05 a 07):</b> 9 features de volatilidad y rango ×2,
 b("<b>Métricas:</b> sistema (latencia p50 y p95, solicitudes, 4xx y 5xx en la ventana del lote, vía /metricas?desde=); datos "
   "(% de nulos y fuera del rango de entrenamiento por feature, categorías no vistas, PSI con umbral = max(0,10; p95) y "
   "max(0,25; p99) del PSI de los 132 meses de entrenamiento, KS como respaldo; PSI con chi-cuadrado de respaldo en la categórica; z mensual en las "
-  "6 de mercado, que valen lo mismo para todas las acciones del mes y no tienen distribución transversal para un PSI: "
-  "desviación equivalente, disclaimer 16); modelo (distribución de predicciones, tasa de incluir, MAE con un lote de retraso); negocio (Sharpe de 12 "
+  "4 de mercado (S&amp;P 500, NYSE Composite, tasa libre de riesgo y dispersión), que tienen un solo valor por mes: un PSI sobre "
+  "330 copias del mismo número compara un punto con una distribución y alertaría siempre, así que se compara el valor del mes "
+  "con la historia mensual (A5 en 2024-04, 05, 07 y 08 por la tasa); los conteos de días (dias_negociados_mes, obs_252d) no son "
+  "constantes y usan z sobre la mediana del mes, a pasar a PSI como mejora: desviación justificada, disclaimer 16); modelo (distribución de predicciones, tasa de incluir, MAE con un lote de retraso); negocio (Sharpe de 12 "
   "lotes frente a B5).")
 table(["Id", "Métrica", "Umbral", "Ventana", "Sev.", "Quién la recibe", "Acción"], [
     ["A1", "errores 5xx", "> 0", "desde el envío", "crít.", "ing. ML", "Respaldo ya responde; recargar o revertir"],
@@ -329,7 +331,9 @@ p("<b>Reconciliación (auditoría).</b> La API decide la composición y los peso
   "portafolio (1,35 veces la volatilidad del S&amp;P 500, con covarianzas diarias) y los 15 pb se aplican fuera de la API, y "
   "A8/A9 y la promoción usan retorno bruto. Medida sobre la trayectoria realmente servida (34 lotes etiquetados, "
   "scripts/reconciliacion.py): monitoreo bruto Sharpe 0,15 (US$ 116.291); estrategia completa con tope y costos −0,06 "
-  "(US$ 103.925); simulación −0,23 (US$ 94.825). El tope invirtió menos de 100 % en 9 meses (64,7 % en 2026-02). Ninguna "
+  "(US$ 103.925); simulación −0,23 (US$ 94.825). El tope invirtió menos de 100 % en 9 meses (64,7 % en 2026-02). En "
+  "2025-07 siete acciones empatan en la predicción del puesto 10: la API guardó TFC y el backtest de la simulación, que "
+  "recalcula los pesos, tomó FITB (−0,090 frente a −0,092; único mes con empate, declarado). Ninguna "
   "política de retirada se ejecutó en la corrida (el interruptor solo se demostró): los resultados son sin intervención.")
 
 # ------------------------------------------------------------------ 10
@@ -352,7 +356,8 @@ b("<b>Mejora futura a evaluar (opción B de la auditoría):</b> una sola definic
 b("<b>Fuentes nuevas a evaluar:</b> un modelo de noticias y sentimiento del mercado con EDGAR Online (reportes 10-K, 10-Q y "
   "8-K de la SEC), Reddit (foros de inversión) y sitios web de finanzas, como features adicionales o como señal de régimen; "
   "habría que medir su aporte con la misma validación temporal y cuidar la fuga de información por la fecha de publicación.")
-b("<b>Trazabilidad del reentrenamiento (auditoría H7):</b> la huella de la OBT no incluye el objetivo y no se guarda un "
+b("<b>Trazabilidad del reentrenamiento (auditoría H7):</b> la cadena predicción → versión → run_id → snapshot → Gold se "
+  "demuestra con scripts/trazabilidad.py (docs/trazabilidad.md: v1, v3 y v8); la huella de la OBT no incluye el objetivo y no se guarda un "
   "manifiesto del conjunto de entrenamiento; una versión no se reconstruye exacta si cambia la OBT. Pendiente: huella con "
   "objetivo y manifiesto como artefacto de MLflow.")
 CUERPO_FIN = len(story)

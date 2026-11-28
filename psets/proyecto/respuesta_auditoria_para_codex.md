@@ -163,3 +163,26 @@ Segunda revisión que te pido, solo lectura, sobre el tag pset-04 (o, si aún no
 4. Revisa las pruebas nuevas de H3, H5, H6 y H8: ¿fallarían con el código anterior?
 5. Señala cualquier cifra del memo o la presentación que no cuadre con docs/*.csv.
 ```
+
+---
+
+## Segunda revisión de Codex (`prompt_segunda_revision_para_claude.md`, 28-nov, 00:00–00:40)
+
+Revisión en solo lectura sobre el tag `pset-04` (`b926fc9`, mismo contenido que `work` `89cef4a`): comparaciones de
+CSV en memoria, `scripts/reconciliacion.py` en el Mac (mismas cifras; el CSV reescrito difiere en ≤ 6,9e-18 y se
+restauró) y constancia de las variables de mercado sobre `obt.parquet` (202 meses).
+
+| Punto | Hallazgo verificado | Decisión de Paul | Qué se cambió |
+|---|---|---|---|
+| H2, julio de 2025 | Siete acciones empatan en la predicción del puesto 10 (0,051744485993390314) y entran seis; la API guardó TFC y no FITB. `backtest` recalcula los pesos con `nlargest` y desempata por el orden de filas: reconciliación con TFC (−0,0916), notebook 06 con FITB (−0,0898). Único mes con empate; en los otros 34 `backtest` replica los pesos guardados | Declararlo basta | `docs/reconciliacion.md` §3 (con la comprobación), disclaimer 17, memo §9 |
+| Deriva de mercado | Un solo valor por mes en 100 % de los meses para `ret_log_sp500_mes`, `ret_log_nyse_composite_mes`, `rf_mes` y `dispersion_mes`; 86,6 % para `dias_negociados_mes` (máx. 3) y 5,9 % para `obs_252d` (máx. 8) | Se acepta la desviación para las 4 constantes | Disclaimer 16 corregido; `obs_252d` y `dias_negociados_mes` al PSI por acción quedan como mejora futura (cambiarlo alteraría el monitoreo registrado en Snowflake y el video) |
+| H8 | La prueba anterior solo buscaba textos en el YAML | Basta una prueba | `test_promocion_en_los_cuatro_casos` (4 casos): evalúa la condición del flow y verifica que solo sí/sí entra a la rama que mueve `@champion`; falla con la condición anterior (solo aprobación) |
+| Cifras | Ninguna cifra del memo o la presentación descuadra con `docs/*.csv` | — | Pruebas 49 → 53 (README, disclaimer 15, memo, presentación) |
+| Video | Duración 6:36 (≤ 7 min), confirmada por Paul | — | Portada del memo y `docs/guion_video.md` |
+
+H3, H4/H7, H5, H6 y H9: se aceptan las salvedades de Codex (JSONL ≠ Snowflake fuera del batch; huella del lote de
+inferencia, no del entrenamiento; prueba de H5 secuencial; `DELETE` de Snowflake sin prueba; CD solo con cambios en
+`psets/pset-04/**`). Quedan declaradas, sin cambios de código.
+
+Pasos (Paul): commit en `work` con las dos carpetas iguales, PR #17 `work` → `master` en
+`VirtualZen/data-science-end-to-end`, CI en verde, merge y tag `pset-04` movido al merge del PR #17.

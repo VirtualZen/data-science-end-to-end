@@ -1,6 +1,7 @@
 # PSet 4 — Proyecto final: portafolio de inversiones en producción
 
-Sistema completo del proyecto (S&P 500 ∩ NYSE, retorno log del mes siguiente, top 10 con pesos 1/vol): datos →
+Sistema completo del proyecto (S&P 500 ∩ NYSE, retorno log del mes siguiente, top 10 con pesos 1/vol; las acciones del
+S&P 500 que cotizan en el NASDAQ se excluyen por la dificultad de comprarlas, disclaimer 18): datos →
 modelo → registro → API → simulación de producción → monitoreo → reentrenamiento con aprobación humana.
 
 La guía vigente es `CD-PSet-4.pdf`. El README original del curso queda en `README_curso.md` y su rúbrica en
@@ -26,7 +27,7 @@ La guía vigente es `CD-PSet-4.pdf`. El README original del curso queda en `READ
 
 | Modo | Qué necesita | Qué se obtiene |
 |---|---|---|
-| **1. Demostración con fixtures** | Solo el clon, `uv` y Docker. Sin cuentas | 49 pruebas (`uv run --project api --frozen pytest tests -v`) y la API con la copia del champion: `docker build -f api/Dockerfile -t pset4-api . && docker run -p 8000:8000 -e MODELO_URI=/fijas/modelo_champion -e API_TOKEN=demo -v "$PWD/tests/fixtures:/fijas:ro" pset4-api` y luego `/salud`, `/modelo` y `/predecir` con `tests/fixtures/lote_2024_01.json` |
+| **1. Demostración con fixtures** | Solo el clon, `uv` y Docker. Sin cuentas | 53 pruebas (`uv run --project api --frozen pytest tests -v`) y la API con la copia del champion: `docker build -f api/Dockerfile -t pset4-api . && docker run -p 8000:8000 -e MODELO_URI=/fijas/modelo_champion -e API_TOKEN=demo -v "$PWD/tests/fixtures:/fijas:ro" pset4-api` y luego `/salud`, `/modelo` y `/predecir` con `tests/fixtures/lote_2024_01.json` |
 | **2. Reconstrucción con datos nuevos** | Cuenta de Snowflake (usuario de servicio), `pipeline/.env`, Docker con ~11 GB | Todo el sistema desde cero, con los pasos de abajo: ingesta, dbt y Spark → snapshot de la OBT → notebooks 01–05 (registran el champion en un MLflow vacío y crean los alias) → `produccion_lotes`. Las cifras cambian, porque Yahoo devuelve datos corregidos y el entrenamiento se repite |
 | **3. Evidencia histórica** | No es reproducible de forma exacta sin el registro de MLflow (`modelos/mlflow/`) y los snapshots (`modelos/data/`), que no se versionan | Se entrega como evidencia: `docs/*.csv` (predicciones, monitoreo, alertas, corridas, reentrenamientos), `docs/simulacion/`, los notebooks con salida, las huellas sha256 de los snapshots (`docs/datos_p4.md`) y `docs/reconciliacion.md` |
 
@@ -76,7 +77,7 @@ basta `up -d postgres kestra mlflow api tablero` (`disclaimer.txt`, punto 6).
 
 ```bash
 uv sync --project api --frozen
-uv run --project api --frozen pytest tests -v        # 49 pruebas, sin MLflow ni Snowflake
+uv run --project api --frozen pytest tests -v        # 53 pruebas, sin MLflow ni Snowflake
 ```
 
 `tests/fixtures/` tiene la copia del champion (`mlflow.sklearn.save_model`, generada por `generar_fixtures.py` desde el

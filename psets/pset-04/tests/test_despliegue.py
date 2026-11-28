@@ -122,3 +122,22 @@ def test_promover_exige_regla_y_aprobacion():
     flujo = yaml.safe_load((RAIZ / "pipeline" / "kestra" / "flows" / "reentrenamiento.yml").read_text())
     condicion = next(t for t in flujo["tasks"] if t["id"] == "si_aprobado")["condition"]
     assert "onResume.aprobado" in condicion and "outputs.entrenar.vars.promueve" in condicion and " and " in condicion
+
+
+@pytest.mark.parametrize("aprobado,promueve", [(True, True), (True, False), (False, True), (False, False)])
+def test_promocion_en_los_cuatro_casos(aprobado, promueve):
+    """Segunda revision de Codex (H8): evalua la condicion del flow en los cuatro casos (aprobacion humana x regla).
+    Solo el caso si/si entra a la rama que mueve @champion (monitoreo.produccion promover); los otros tres van a la rama
+    que solo registra la decision y deja el champion como estaba."""
+    flujo = yaml.safe_load((RAIZ / "pipeline" / "kestra" / "flows" / "reentrenamiento.yml").read_text())
+    tarea = next(t for t in flujo["tasks"] if t["id"] == "si_aprobado")
+    expresion = tarea["condition"].strip().removeprefix("{{").removesuffix("}}").strip()
+    variables = {"outputs.aprobacion.onResume.aprobado": aprobado, "outputs.entrenar.vars.promueve": promueve}
+    assert set(re.findall(r"[A-Za-z_][\w.]*", expresion)) == set(variables) | {"and"}
+    for nombre, valor in variables.items():
+        expresion = expresion.replace(nombre, str(valor))
+    entra = eval(expresion, {"__builtins__": {}}, {})
+    rama = tarea["then"] if entra else tarea["else"]
+    mueve_champion = any("monitoreo.produccion promover" in " ".join(t.get("commands", [])) for t in rama)
+    assert entra is (aprobado and promueve)
+    assert mueve_champion is (aprobado and promueve)

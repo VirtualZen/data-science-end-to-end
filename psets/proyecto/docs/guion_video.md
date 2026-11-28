@@ -1,4 +1,4 @@
-# Guion del video de demostración (≤ 7 min)
+# Guion del video de demostración (≤ 7 min; duración final 6:36)
 
 Antes de grabar: Docker abierto, `pipeline/.env` con `API_TOKEN`, flows subidos, una terminal en `psets/pset-04` con
 `V=$PWD`, pestañas abiertas: Kestra (localhost:8090), MLflow (localhost:5001), API (localhost:8000/docs), Snowsight.
