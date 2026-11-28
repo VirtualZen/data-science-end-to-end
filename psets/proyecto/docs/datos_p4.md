@@ -48,7 +48,7 @@ todos los meses de GM.
 | Filas de entrenamiento del modelo (`preparar` + `dividir`) | 46.851 (122 de GM) | 46.729 |
 | Filas de prueba del modelo (hold-out 2024-01 a 2026-10) | 11.326 (34 de GM) | 11.292 |
 
-**Por qué no se corrige.** La regla del PSet 1 es el universo S&P 500 ∩ NYSE. Una acción que deja de cotizar en NYSE
+**Por qué no se corrige.** La regla del PSet 1 es el universo S&P 500 ∩ NYSE. Las acciones del S&P 500 que cotizan en el NASDAQ se excluyen por la dificultad de comprarlas (disclaimer 18). Una acción que deja de cotizar en NYSE
 deja de ser candidata, y eso es lo que haría el sistema en producción. Reasignar la bolsa a mano cambiaría la regla
 del PSet 1, que está cerrado.
 

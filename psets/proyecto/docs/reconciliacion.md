@@ -41,3 +41,31 @@ las cifras de negocio del documento son las de la estrategia completa.
 adoptarla hay que recalcular las 5 decisiones de reentrenamiento con la métrica nueva, porque alguna podría cambiar.
 Ninguna política de retirada (R1–R6) se ejecutó en la corrida: el interruptor se demostró, pero los resultados son sin
 intervención.
+
+## 3. Julio de 2025: empate en el puesto 10 (segunda revisión de Codex)
+
+Además de 2026-04, la estrategia neta difiere de la simulación en **2025-07** (−0,0916 frente a −0,0898). La causa no es
+el lote sintético sino un **empate exacto**: siete acciones tienen la misma predicción (0,051744485993390314) en el
+límite del top 10 y solo seis entran (el choque inducido lleva muchas acciones a la misma hoja de los árboles). La API,
+en producción y en la simulación, guardó **TFC** (peso 0,0994) y dejó fuera a **FITB**.
+
+`src.negocio.backtest` no lee el peso guardado: lo vuelve a calcular con `pesos_mes` (`nlargest`), que desempata por el
+orden de las filas. La reconciliación queda con TFC (bruto −0,0886 = monitoreo; neto −0,0916 con rotación 2,0); el
+notebook 06, que calcula la serie `sistema` de `resultado_lotes.csv`, queda con FITB (−0,0898). Es el único de los 35
+meses con empate en el límite: en los otros 34 el `backtest` reproduce los pesos guardados (diferencia < 1e-6). El efecto
+es de 0,18 puntos en un mes y no cambia las conclusiones. Se declara; la corrección (usar el peso guardado o desempatar
+de forma estable por `accion_key`) queda como mejora futura.
+
+Comprobación, sin escribir archivos (desde la raíz del repositorio):
+
+```
+uv run --no-project --with pandas python - <<'EOF2'
+import json,pandas as pd
+p=pd.read_csv('psets/pset-04/docs/predicciones.csv',low_memory=False)
+p['vol_63d']=[json.loads(e)['vol_63d'] for e in p.entradas]
+g=p[p.anio_mes==202507]; c=g[g.vol_63d<=g.vol_63d.quantile(.8)]
+top=c.retorno_predicho.nlargest(10); dec=top.iloc[-1]
+print('empatados:',(c.retorno_predicho==dec).sum(),'| dentro del top:',(top==dec).sum())
+print(g[g.ticker.isin(['TFC','FITB'])][['ticker','retorno_predicho','peso']].to_string())
+EOF2
+```
