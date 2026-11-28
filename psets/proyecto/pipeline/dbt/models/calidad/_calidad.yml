@@ -1,0 +1,49 @@
+version: 2
+models:
+- name: dq_metricas
+  description: Metricas de completitud, precision, consistencia y validez por capa.
+  columns:
+  - name: metrica
+    data_tests:
+    - not_null
+    - unique
+  - name: dimension
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - completitud
+          - precision
+          - consistencia
+          - validez
+- name: dq_huecos_por_ticker
+  description: >
+    Huecos por accion (PSet 1, etapa Datos): dias como miembro del S&P 500 con y sin precio,
+    huecos dentro de la vida observada y si la fuente no devolvio ningun precio.
+  columns:
+  - name: ticker
+    data_tests:
+    - not_null
+    - unique
+  - name: dias_miembro
+    data_tests:
+    - not_null
+  - name: pct_huecos_miembro
+    data_tests:
+    - not_null
+- name: dq_universo_por_fecha
+  description: >
+    Universo de cada dia bursatil frente a la composicion historica (PSet 1, etapa Datos):
+    miembros segun la composicion, cuantos tienen precio, cuantos estan hoy en la NYSE.
+  columns:
+  - name: fecha
+    data_tests:
+    - not_null
+    - unique
+    - relationships:
+        arguments:
+          to: ref('dim_fecha')
+          field: fecha
+  - name: miembros_composicion
+    data_tests:
+    - not_null

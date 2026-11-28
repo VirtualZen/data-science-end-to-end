@@ -1,0 +1,275 @@
+PLAN DEL PSET 4 (Allan Paul Gomez Ehmig, 00351916) - rama work, psets/pset-04/
+Fecha: 2026-11-26
+Guia que manda: CD-PSet-4.pdf (12 paginas; es el proyecto final). README_curso.md y rubrica.md son la
+guia del repo; si contradicen el PDF, gana el PDF y se anota en disclaimer.txt.
+PSet 2 y PSet 3: 100/100, sin feedback. Solo hay observaciones del PSet 1 (feedback v2) para docs/cambios.md.
+
+Estado: [x] hecho   [~] hecho en codigo, falta probar o completar   [ ] pendiente   [!] hallazgo
+Quien:  (C) Claude en este entorno   (P) Paul, necesita su cuenta, su computador o una decision
+
+Decisiones tomadas (Paul, 2026-11-26):
+  - Se trabaja en psets/pset-04/; pset-02/ y pset-03/ no se tocan.
+  - pipeline/ = copia de pset-03/pipeline/; modelos/ = copia del modelado del PSet 3 (docs/migracion.md).
+  - Snowflake: base nueva PORTAFOLIO_P4 (PORTAFOLIO_P3 queda intacta).
+  - MLflow: copia local en modelos/mlflow/ (mismos run_id, versiones y alias del PSet 3).
+  - Al terminar, todo se arma en psets/proyecto/ para la corrida global (el PDF dice proyecto_final/;
+    la diferencia va en disclaimer.txt).
+
+Datos del PSet 3 que se reutilizan:
+  - Target: retorno log del mes siguiente por accion (OBT_ACCION_MES, 87.178 filas). Horizonte 1 mes =
+    periodo de rebalanceo. Corte: objetivos hasta 2023-12 en entrenamiento; 2024-01 a 2026-10 hold-out.
+  - Registro portafolio-inversiones-modelo: v1 @champion LightGBM (run f7596a565f8a458492057238f245cf89),
+    v2 @challenger Ridge (run 75f75a7030154008a54e502bf2e4d18b). Experimento portafolio-inversiones.
+  - Lineas base: B1 media (tecnica, MAE CV 0,0641), B5 universo S&P500 ∩ NYSE igual peso con 15 pb
+    (negocio, Sharpe neto). Ningun modelo supera a B1 en MAE.
+
+(27-nov, C) Avance del dia, verificado en la VM (sin Docker): 21 pruebas de tests/ pasan; el champion de
+tests/fixtures/ reproduce MAE 0,0673399888; los 34 lotes pasaron por la API (uvicorn + copia del registro en
+MLflow) con monitoreo/produccion.py y dieron los mismos reentrenamientos que la simulacion del notebook 06.
+Archivos nuevos: tests/, docker-compose.yml, .github/workflows/pset4-{ci,cd}.yml (raiz), monitoreo/,
+modelos/src/reentrenar.py, pipeline/kestra/flows/{produccion_lotes,monitoreo,reentrenamiento}.yml,
+pipeline/kestra/sql/produccion_setup.sql, notebooks 06_simulacion_produccion y 07_analisis_monitoreo,
+docs/{despliegue,simulacion,monitoreo,reentrenamiento,criterio_retirada,cambios}.md, docs/simulacion/, docs/figuras/.
+Pendiente de Paul: [~] 2.5, 4.2, 5.3, 7.4 necesitan la corrida en Kestra + Snowflake (produccion_lotes) y la
+demo de rollback e interruptor; [~] 10.1: propongo entregar en psets/pset-04/ y no copiar a psets/proyecto/
+(motivo en disclaimer.txt punto 1); falta tu confirmacion.
+
+(27-nov tarde, C) Auditoria contra el PDF y correcciones autorizadas por Paul (Kestra y MLflow juntos; entrega en
+pset-04). Corregido y verificado en la VM: P1 los lotes se sirven con preparar_inferencia (sin objetivo ni meses
+posteriores; 2026-10 se sirve sin objetivo; 35 lotes); P2 metricas de sistema por ventana del lote (/metricas?desde=),
+nulos y fuera de rango por feature, categorias no vistas; regla de promocion del PDF (ultimo lote etiquetado, margen
+= 1 de CV de la metrica de negocio 0,0134); A7 = 2 lotes seguidos; plantilla con ventana y quien la recibe; tabla 6.2
+y falsas alarmas; tablero en el compose con alertas y reentrenamientos marcados; quien asume cada error; motivo del
+rechazo humano; respuesta a "valio la pena". 27 pruebas pasan; 35 lotes por la API = simulacion. Resultado nuevo:
+sistema con la regla del PDF Sharpe -0,23; champion fijo 0,05; B5 -0,13; sensibilidad 6 lotes 0,12.
+
+(27-nov, C) Competidor "operacion manual" (pedido de Paul): modelos/src/operacion_manual.py, 4 pruebas,
+notebook 08_competidores (CV, hold-out real y simulacion). Sharpe neto: CV 0,50 (modelo 0,30; B3 0,585; B5 0,544);
+hold-out 1,20 (modelo 0,87; B5 0,68); simulacion 0,35 (modelo fijo 0,05). Cambia la recomendacion: operar con la
+operacion manual y el modelo en paralelo. 31 pruebas pasan. Documento y presentacion regenerados.
+
+(27-nov, C) Operacion manual como competidor en todo el flujo (linea base B7, pedido de Paul): MLflow
+(python -m src.operacion_manual --registrar: fase=linea_base, familia=regla_negocio), API (decision y peso en paralelo,
+sin cambiar la del modelo; el respaldo sigue siendo B1+B5), PREDICCIONES (DECISION_MANUAL, PESO_MANUAL), MONITOREO
+(SHARPE_MANUAL_12, RETORNO_MANUAL_ULTIMO, COINCIDEN_MANUAL), alerta A9 (Sharpe 12 lotes 0,5 bajo B7) y criterio R6,
+tablero, notebooks 06-08, documento y presentacion. 33 pruebas; 35 lotes por la API = simulacion. Pendiente de
+Paul: registrar B7 en MLflow del Mac y volver a correr produccion_setup.sql (columnas nuevas).
+
+(27-nov noche, P+C) Corrida completa en el Mac: compose arriba (postgres, kestra, mlflow, api, tablero), esquema
+PORTAFOLIO_P4.PRODUCCION creado, B7 registrado en MLflow (run 445a1679...), 7 flows subidos (Kestra 2.0: BOOL en vez de
+BOOLEAN, Loop en vez de ForEach). produccion_lotes 2023-12 a 2026-10: 35 lotes en PREDICCIONES y MONITOREO, sin duplicados.
+Reentrenamientos: v3 aprobado (202412, calendario), v4 rechazado (202503, MAE peor), v5 rechazado (202508, A7 tras la deriva
+inducida, no gana dinero), v6 rechazado (202511), v7 rechazado por error de captura y v8 identico aprobado (202604); lotes
+2026-05 a 2026-10 reprocesados con v8. Mismas decisiones y cifras que la simulacion offline. ALERTAS: A4 en 2025-05 a 07
+(deriva inducida) y en 2025-04 (aranceles, ya documentado); A5 en 4 lotes de 2024 (falsa alarma documentada); A7 en 202412,
+202507, 202508 y 202603. Auditoria contra el PDF; requirements.txt y .env.example en la raiz; 11 pruebas nuevas (45 pasan).
+
+(27-nov 22h, C) Verificacion contra el PDF antes de cerrar. Hecho en el Mac: rollback (v8->v3->v8), interruptor (401 sin token),
+422 por campo faltante y por tipo, ingesta_diaria 2026-11-25 en verde hasta transformar, video de 6:36 en Drive (enlace en la
+portada del memo), CI pset4-ci #2 en verde. exportar ahora escribe corridas.csv (mlflow.search_runs del experimento) y
+reentrenamientos.csv = corridas fase=reentrenamiento unidas por run_id a la decision humana (PDF, seccion Repositorio).
+Falta: 11.4 exportar en el Mac y volver a ejecutar el notebook 07 con esos CSV; 8.5 decision de Paul sobre el juicio humano;
+11.5 PR a master (dispara pset4-cd: imagen en GHCR y captura cd_ghcr.png) y tag pset-04.
+
+(27-nov 23h-00h, C) Auditoria de Codex (prompt_auditoria_para_claude.md; respuesta en respuesta_auditoria_para_codex.md).
+Opcion A autorizada por Paul + H5 + tablero. Hecho: H2 reconciliado sin reescribir produccion (34 de 35 lotes iguales;
+2026-04 servido con v3 por error de operacion en el reproceso; docs/reconciliacion.md); H1 medido sobre la trayectoria
+servida con la estrategia completa (scripts/reconciliacion.py: bruto 0,15, completa -0,06, simulacion -0,23) y declarado
+como limitacion (disclaimer 17; opcion B como mejora futura junto con noticias y sentimiento: EDGAR, Reddit, sitios de
+finanzas); H3 registrado:bool + registro_fallido en /metricas; H4 README con tres modos y comando corregido; H5 par
+(modelo, info) atomico y alias resuelto una vez; H6 borrado antes del retorno vacio; H8 promocion = regla Y aprobacion;
+PSI+chi2 en la categorica (disclaimer 16); tablero con solicitudes y errores 4xx/5xx; cifras (49 pruebas, A9 13/14,
+latencia 41,9 ms). 49 pruebas; las 4 nuevas fallan con el codigo anterior. Memo y presentacion regenerados.
+Pendiente: H7 (huella con objetivo y manifiesto), opcion B; Paul: volver a subir reentrenamiento.yml a Kestra, PR/merge
+(H9, CD y cd_ghcr.png), tag pset-04.
+
+======================================================================================
+0. PREPARACION
+======================================================================================
+[x] 0.1 (C) Copias pipeline/ y modelos/, renombres P3 -> P4, uv.lock, pruebas (28 + 11) (docs/migracion.md).
+[x] 0.2 (P) (26-nov: verificado con scripts/probar_conexion.py: PSET2_SERVICIO ve los 6 esquemas y las 4
+        tablas RAW) Crear PORTAFOLIO_P4 en Snowflake: pipeline/kestra/sql/snowflake_setup.sql (ACCOUNTADMIN).
+        El script ahora califica las tablas con PORTAFOLIO_P4.RAW (fallaba al correr sentencia por sentencia).
+[!] H1 (26-nov) Perdida silenciosa en la ingesta: la primera ingesta_diaria (6jjPtb3CVyU7bkovVCANmk) termino
+        RAW con "0 grupos fallidos", pero Yahoo limito las peticiones (rate limit: "possibly delisted; no
+        timezone found" tambien en acciones vigentes) y faltan datos: ^GSPC 0 dias en 2019, 2020, 2023 y 2024
+        (INGESTA_LOG: SIN_DATOS "Yahoo no devolvio filas"); 25 a 429 acciones por anio en 2019-2026 frente a
+        ~460-524 en PORTAFOLIO_P3. dbt lo detuvo en Silver (not_null_slv_mercado_diario_cierre_sp500: 1007
+        dias; assert_cobertura_sp500_por_dia: 3350). Correccion: backfill_historico 2019-2026
+        (1mRmYBvXu6skg9Da2mffYh): 2019-2024 y 2026 quedan iguales a P3, pero 2025 sigue con 480 de 508
+        acciones: 28 consecutivas (COIN a FITB, un grupo de descarga) SIN_DATOS en las dos corridas, con
+        250 dias en P3. Segundo backfill solo 2025 despues de transformar. Para el PSet 4: el monitoreo de datos debe comparar la cobertura contra lo
+        esperado (SIN_DATOS en tickers con historia = alerta), y extraer_cargar.py podria reintentar los
+        SIN_DATOS de tickers vigentes en vez de aceptarlos.
+[x] 0.3 (P+C) (26-nov) Llenar PORTAFOLIO_P4: backfill historico + transformar (pipeline/README.md) y snapshot nuevo
+        de la OBT en modelos/data/. Comparar sha256 con el del PSet 3 (c3568917...).
+        Backfill 2019-2026 y luego solo 2025: cobertura igual a P3 (2025: 508 acciones, 2026: 524;
+        OBT_ACCION_MES 87.178 = P3). Snapshot P4 en modelos/data/obt_p4.parquet (sha256 e008d6f4...); obt.parquet
+        (c3568917) se queda como referencia del entrenamiento del champion. Detalle en docs/datos_p4.md.
+[!] H2 (26-nov) GM cambia de NYSE a Nasdaq en los listados de Nasdaq Trader (RAW.LISTADOS_BOLSA). Como la bolsa
+        actual se aplica a toda la historia, GM sale del universo en todos sus meses: 157 filas elegibles menos
+        (123 en entrenamiento, 34 en prueba); filas de entrenamiento del modelo 46.851 -> 46.729. No se corrige
+        (regla S&P 500 ∩ NYSE del PSet 1). El champion no se reentrena; el resto es ruido de Yahoo (<= 1,5e-6 en
+        retornos) y precios reescalados por dividendos y splits (SNDK x0,125). Para el PSet 4: el monitoreo de
+        datos (6.x) debe alertar cuando una accion cambia de bolsa o de elegibilidad entre dos cargas.
+[x] 0.4 (C) Comprobar que modelos/notebooks/06_champion.ipynb recarga @champion desde modelos/mlflow
+        y reproduce MAE 0,0673399888.
+        (26-nov) Copia del notebook ejecutada con el .venv de modelos/ y MLflow de pset4-modelos (5001): v1, run
+        f7596a56..., snapshot c3568917, MAE hold-out 0,0673399888 = registrado ("Reproducido exactamente").
+        Con obt_p4.parquet: MAE 0,0678309356 (11.292 filas). La diferencia es solo GM: P3 sin GM desde el
+        inicio da 0,0678309511. Detalle en docs/datos_p4.md.
+
+======================================================================================
+1. PATRON DE DESPLIEGUE (PDF 1; rubrica: patron)
+======================================================================================
+[x] 1.1 (C) docs/despliegue.md: batch mensual. La decision (propuesta del asesor) se toma al cierre de
+        cada mes; la prediccion debe estar lista antes del primer dia habil del mes siguiente (< 1 dia),
+        llegan datos nuevos una vez al mes, ~200-500 predicciones por mes (una por accion elegible), y
+        una prediccion desactualizada cuesta un mes de portafolio mal armado. Con numeros.
+[x] 1.2 (C) Que se pierde con online y que tendria que cambiar en el caso de uso para preferirlo
+        (p. ej. rebalanceo intradia o alertas por noticia).
+[x] 1.3 (P) (26-nov, decision de Paul: opcion A) La "decision" de cada prediccion. POST /predecir recibe
+        el lote del mes (una o varias acciones candidatas, filas de la OBT) y devuelve por accion
+        retorno_predicho, decision ("incluir" si queda entre las 10 mejores elegibles del mes bajo el
+        tope de volatilidad, "no incluir" si no) y peso (inverso de la volatilidad), mas version_modelo,
+        run_id e id_prediccion. El tope de volatilidad es un parametro con valor por defecto. Con una
+        sola accion la regla se reduce a cumplir el tope. Es la regla del PSet 1 y encaja con batch.
+
+======================================================================================
+2. SERVICIO DE PREDICCION (PDF 2)
+======================================================================================
+[x] 2.0 (C) (26-nov) api/: esquemas.py (Pydantic desde contrato.json, generado con generar_contrato.py),
+        main.py, pyproject.toml (mismas versiones que modelos/uv.lock). Prueba de humo con TestClient y el
+        champion local: lote 2023-12 (332 acciones) -> 10 incluidas, pesos suman 1, predicciones iguales al
+        modelo directo (diferencia 0,0); 422 por campo faltante, tipo, mes 13, fuera de rango y campo extra;
+        respaldo B1+B5 cuando el modelo no carga o con el interruptor (token); registro JSONL por accion.
+        Falta: Dockerfile, compose, carga a Snowflake y las pruebas de tests/.
+[x] 2.1 (C) api/ con FastAPI: GET /salud, GET /modelo (nombre, version, alias, run_id), POST /predecir
+        (prediccion, decision, version_modelo, id_prediccion). Imagen propia; agregado al docker-compose
+        junto a Kestra, Spark y MLflow.
+[x] 2.2 (C) Carga desde models:/portafolio-inversiones-modelo@champion; cambiar de version sin reconstruir
+        la imagen (el alias se resuelve al arrancar o con un endpoint de recarga).
+[x] 2.3 (C) Esquema Pydantic igual a la firma registrada en MLflow (tipos, rangos, categorias); entrada
+        invalida -> 422 con el campo que fallo.
+[x] 2.4 (C) Features con las funciones de src/pipeline.py importadas, no copiadas. Versiones fijadas.
+[x] 2.5 (C) (27-nov: 35 lotes en PORTAFOLIO_P4.PRODUCCION.PREDICCIONES con MODELO_VERSION por fila) Cada prediccion en la tabla PREDICCIONES de Snowflake (id, timestamp, entradas, salida,
+        version del modelo, run_id, latencia ms), directa o por carga periodica con Kestra.
+
+======================================================================================
+3. PRUEBAS Y CI (PDF 3; rubrica: pruebas)
+======================================================================================
+[x] 3.1 (C) tests/test_contrato.py: 200 con el esquema; campo faltante, tipo incorrecto y categoria
+        desconocida -> 422.
+[x] 3.2 (C) tests/test_modelo.py: el modelo de tests/fixtures/ (mlflow.sklearn.save_model) reproduce la
+        metrica registrada en una muestra fija guardada en el repo, con tolerancia justificada.
+[x] 3.3 (C) tests/test_comportamiento.py: >= 2 pruebas de dominio (p. ej. mas volatilidad no debe subir
+        el puntaje de riesgo; la decision respeta el tope de volatilidad).
+[x] 3.4 (C) Respaldo: si el modelo no carga, responde con la linea base del PSet 3 (B1 media) e indica
+        que uso el respaldo.
+[x] 3.5 (C) .github/workflows/ci.yml: en cada push y PR instala dependencias, construye la imagen y corre
+        pytest. Al menos 3 pruebas por archivo; sin leer archivos fuera del repo.
+[x] 3.6 (C) (27-nov noche) 45 pruebas. test_modelo.py: firma de MLflow = contrato Pydantic (3 pruebas). Nuevo
+        test_despliegue.py: flows validos para Kestra 2.0, plantilla .env cubre el compose, versiones del modelo iguales
+        en api/modelos/fixture, rollback por /recargar. test_produccion.py: regla de promocion con los 5 casos reales y
+        enfriamiento/calendario del disparador. test_comportamiento.py: el orden de las acciones no cambia la decision.
+
+======================================================================================
+4. VERSIONADO Y REGISTRO (PDF 4; rubrica: registro)
+======================================================================================
+[x] 4.1 (C) Regla de promocion con metrica de negocio y variacion entre pliegues (challenger supera al
+        champion en Sharpe neto por mas de una desviacion de la CV, en la misma ventana).
+[x] 4.2 (C+P) (27-nov: revertir v8 -> v3 -> v8 con produccion revertir; /modelo cambia sin reconstruir; docs/figuras/rollback.png) Rollback moviendo el alias sin reconstruir la imagen; /modelo refleja el cambio (evidencia).
+[x] 4.3 (C) Cada fila de PREDICCIONES con la version que la genero.
+
+======================================================================================
+5. SIMULACION DE PRODUCCION (PDF 5)
+======================================================================================
+[x] 5.1 (C) Lotes mensuales posteriores al corte (datos de 2023-12 a 2026-10 = 35 lotes >= 8; objetivos 2024-01 a
+        2026-11, el ultimo sin etiqueta), en Snowflake.
+[x] 5.2 (C) kestra/produccion_lotes.yml: por lote lee de Snowflake, predice, guarda, y une el target
+        cuando llega (un mes despues: respeta el horizonte).
+[x] 5.3 (C+P) (27-nov: A4 en los tres lotes sinteticos en Kestra; docs/simulacion.md) Un lote con deriva inducida (p. ej. desplazar la volatilidad o alterar la relacion
+        momentum-retorno); documentar exactamente que se altero.
+
+======================================================================================
+6. MONITOREO (PDF 6; rubrica: monitoreo y deriva)
+======================================================================================
+[x] 6.1 (C) Metricas: sistema (latencia p50/p95, errores 4xx/5xx, volumen), modelo (distribucion de
+        predicciones, tasa de cada decision, MAE y Sharpe neto por lote) y datos (faltantes, fuera de
+        rango, categorias no vistas).
+[x] 6.2 (C) monitoreo/deriva.py: PSI por feature (umbral justificado) + KS (numericas) y chi-cuadrado
+        (categoricas) como respaldo; deriva conceptual = MAE del lote vs media y desviacion de la CV.
+        Tabla entradas/desempeno/diagnostico/accion.
+[x] 6.3 (C) monitoreo/alertas.py y kestra/monitoreo.yml: tabla MONITOREO en Snowflake y alertas (log de
+        Kestra y correo con el AVISO_* que ya existe). El lote con deriva dispara; los normales no.
+[x] 6.4 (C) Tablero (Streamlit) lote por lote con metricas, alertas y reentrenamientos marcados.
+
+======================================================================================
+7. REENTRENAMIENTO Y DESPLIEGUE CONTINUO (PDF 7; rubrica: reentrenamiento)
+======================================================================================
+[x] 7.1 (C) Disparador por desempeno (N lotes bajo umbral) y por calendario; la deriva sin caida no dispara.
+[x] 7.2 (C) kestra/reentrenamiento.yml + src/reentrenar.py: ventana justificada, misma preparacion de
+        src/pipeline.py e hiperparametros del champion, tag fase=reentrenamiento, version nueva @challenger,
+        evaluacion en el lote etiquetado mas reciente, regla de promocion, pausa de aprobacion humana.
+[x] 7.3 (C) (27-nov 23h: PR #15 work -> master; pset4-cd #1 en verde publico ghcr.io/virtualzen/pset4-api:5d7b1bc y latest,
+        paquete publico; docs/figuras/cd_ghcr.png) .github/workflows/cd.yml: en cada merge a main con pruebas en verde, imagen de la API en
+        GitHub Container Registry con el hash del commit; el compose usa esa imagen. Por que el modelo no
+        se despliega solo.
+[x] 7.4 (C+P) Evidencia del ciclo completo en el lote con deriva. (27-nov: A4 en 2025-05 a 07, A7 en 202507 y 202508,
+        challenger v5, comparacion y rechazo con motivo en Kestra; falta la captura para el anexo C, ver 11.1)
+[!] H3 (27-nov) Pausa de aprobacion enviada sin marcar "aprobado": v7 rechazada aunque la regla decia promover. Corregido
+        con Replay (v8 identica, aprobada) y reproceso de 2026-05 a 2026-10. Traza en REENTRENAMIENTOS (dos filas de
+        2026-04); docs/reentrenamiento.md y disclaimer 12. Pendiente (C): cambiar v7 -> v8 en el memo, presentacion
+        y guion; mejora propuesta: la pausa muestra el veredicto y pide motivo solo si la decision lo contradice.
+
+======================================================================================
+8. ETICA Y RETIRADA (PDF 8; rubrica: comunicacion y retirada)
+======================================================================================
+[x] 8.1 (C) Desempeno por subgrupo (sector o tamano de la empresa).
+[x] 8.2 (C) Costo de cada error (sobreestimar: compra una accion que cae; subestimar: deja fuera una que
+        sube) y quien lo asume (inversionista, asesor).
+[x] 8.3 (C) docs/criterio_retirada.md: >= 3 condiciones medibles con metrica, umbral y respuesta.
+[x] 8.4 (C) Interruptor de respaldo (variable de entorno o endpoint protegido) y su demostracion. (27-nov en el Mac: /respaldo
+        activar=true -> usado respaldo B1+B5 (333 acciones, igual peso); sin token 401; activar=false -> modelo v8.
+        Entrada invalida: falta vol_63d -> 422 "Field required"; texto en vol_63d -> 422 "Input should be a valid number")
+[x] 8.5 (P) (27-nov, decision de Paul; docs/criterio_retirada.md seccion 5 y memo) Se mantiene: el cliente aprueba siempre.
+        Se amplia: el asesor presenta cada mes la propuesta del modelo y la de la operacion manual (B7, challenger adicional);
+        cada mes se decide mantener, respaldo o retirar segun las alertas del reentrenamiento; el cientifico de datos
+        aprueba cada challenger en la pausa de Kestra (con veredicto visible tras el incidente v7).
+
+======================================================================================
+9. RESULTADO DE NEGOCIO (PDF 9)
+======================================================================================
+[x] 9.1 (C) Sharpe neto lote por lote vs B5 y vs no hacer nada; reentrenamientos marcados. Responder si
+        valio la pena actuar segun la prediccion (si no supera a la linea base, decirlo).
+
+======================================================================================
+10-11. PROYECTO END TO END Y COMUNICACION
+======================================================================================
+[x] 10.1 (C) (27-nov, decision de Paul: se entrega en psets/pset-04/, no en psets/proyecto/; disclaimer punto 1) Armar todo en psets/proyecto/ (decision de Paul) con la estructura del PDF; disclaimer.
+[x] 10.2 (C) docs/cambios.md: observaciones del PSet 1 (v2) y decisiones actualizadas.
+[x] 10.3 (C) Trazabilidad PREDICCIONES -> version, run_id, snapshot de la OBT, tablas Gold.
+[x] 10.5 (C) (27-nov noche) requirements.txt y .env.example en la raiz de pset-04/ (disclaimer 13).
+[x] 10.4 (C) Cifras del pitch del PSet 1 reemplazadas por las de la seccion 9.
+[x] 11.1 (C) (27-nov 23h: memo con VIDEO_URL y anexo C completo: ci_verde, cd_ghcr, kestra_pausa y rollback) docs/PSet4_memo_Gomez_Ehmig.pdf (<= 12 paginas + anexos: memos de los PSets 1-3 y cambios.md).
+[~] 11.2 (C) (27-nov: scripts/generar_presentacion.js, 11 diapositivas; revisar Paul) docs/PSet4_presentacion_Gomez_Ehmig.pdf (10-12 diapositivas, sin jerga).
+[x] 11.3 (P) (27-nov: 6:36, 1080p, con voz; https://drive.google.com/file/d/1btUpZCoxSnJRdy5f02ZRcjz0P7st4Lbu/view; enlace en
+        la portada del memo) Video de demostracion (<= 7 min) y su enlace en el documento tecnico.
+[x] 11.4 (C+P) (27-nov 22h en el Mac: predicciones 11.632, monitoreo 35, alertas 32, corridas 149, reentrenamientos 6 =
+        corridas fase=reentrenamiento + decision; notebook 07 re-ejecutado con los CSV de Kestra, sin errores; 06 y 08 con
+        salida de la VM) Exportar a docs/: predicciones.csv, monitoreo.csv, alertas.csv, corridas.csv,
+        reentrenamientos.csv. Notebooks con Restart + Run All.
+[~] 11.5 (P) Commit, PR y tag pset-04. (27-nov 23:45: PR #16, merge b926fc9, tag pset-04. 28-nov: segunda revision de
+        Codex -> PR #17 y tag movido al nuevo merge)
+[!] 11.7 (C) (28-nov, segunda revision de Codex) Julio de 2025: empate en el puesto 10 (TFC guardado, FITB en el backtest
+        de la simulacion); declarado en docs/reconciliacion.md 3, disclaimer 17 y memo. obs_252d y dias_negociados_mes no son
+        constantes en el mes (5,9 % y 86,6 %): disclaimer 16; PSI por accion como mejora futura. H8: prueba de los 4 casos
+        (53 pruebas). Video 6:36 en la portada del memo.
+[x] 11.8 (C) (28-nov 00:55) 6.2 justificado (memo 7, docs/monitoreo.md, disclaimer 16); 10.6 demostrado con
+        scripts/trazabilidad.py y docs/trazabilidad.md (v1, v3, v8: prediccion -> version -> run_id -> snapshot -> Gold);
+        notebooks 01-08 validados: celdas 1..n sin saltos y sin errores. Flow H8 en Kestra no se volvio a correr (declarado).
+        Universo sin NASDAQ por la dificultad de comprarlas: disclaimer 18, memo, pie de la presentacion, README.
+[x] 11.6 (C) (27-nov 22h) psets/proyecto/ armado con los archivos versionados de pset-04 (sin enunciado, rubrica ni plan),
+        README con mapa a las carpetas de la plantilla, .dockerignore combinado. Versiones: conftest.py no recoge pruebas si
+        las librerias no son las de api/requirements.txt (pruebas.yml del curso sale con codigo 5); pset4-ci.yml prueba
+        pset-04 y proyecto (matrix). Disclaimer puntos 1, 14 y 15. Verificado: curso 0 pruebas/codigo 5; proyecto 45 pasan.

@@ -1,0 +1,13 @@
+{
+  "modelo": "timesfm",
+  "id": "google/timesfm-2.5-200m-pytorch",
+  "desde": 201612,
+  "hasta": 202311,
+  "contexto": 512,
+  "horizonte_dias": 21,
+  "filas": 26750,
+  "latencia_ms_por_serie": 107.5464140685606,
+  "segundos_carga": 5.798946249997243,
+  "segundos_total": 2883.552877624985,
+  "sha256": "343ad46dd538578872cb30d5d211271cc460771d88f527a6c8b95cb51ae41d18"
+}

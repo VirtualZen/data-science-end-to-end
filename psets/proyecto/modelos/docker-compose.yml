@@ -1,0 +1,24 @@
+name: pset4-modelos
+services:
+  mlflow:
+    build: .
+    mem_limit: 1g
+    command: mlflow server --workers 1 --host 0.0.0.0 --port 5000 --allowed-hosts mlflow:5000,localhost:5001,127.0.0.1:5001,localhost:5000,127.0.0.1:5000 --backend-store-uri sqlite:////mlflow/tracking.db --serve-artifacts --artifacts-destination /mlflow/artifacts
+    ports: ["127.0.0.1:5001:5000"]
+    volumes: ["./mlflow:/mlflow"]
+  verificar:
+    build:
+      context: .
+      dockerfile: Dockerfile.runner
+    profiles: ["verificacion"]
+    env_file: .env
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: portafolio-inversiones
+      GIT_COMMIT: ${GIT_COMMIT:-sin_commit_registrado}
+      GIT_DIRTY: ${GIT_DIRTY:-true}
+      GIT_PYTHON_REFRESH: quiet
+    volumes: ["./:/work"]
+    command: python -m src.verificar_entorno
+    depends_on: [mlflow]
+    mem_limit: 2g

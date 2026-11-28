@@ -1,0 +1,548 @@
+{
+  "configuration" : { },
+  "description" : "PSet 3 · MSDS 6003 · Allan Paul Gómez Ehmig (00351916)",
+  "documentation" : { },
+  "id" : 0,
+  "model" : {
+    "people" : [ {
+      "description" : "Usuario de la herramienta: revisa ejecuciones y avisos, y consume la OBT (snapshot) para la decisión mensual.",
+      "id" : "1",
+      "name" : "Asesor de inversiones",
+      "properties" : {
+        "structurizr.dsl.identifier" : "asesor"
+      },
+      "relationships" : [ {
+        "description" : "Supervisa ejecuciones; lanza recargas puntuales",
+        "destinationId" : "7",
+        "id" : "16",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "UI en localhost:8090"
+      }, {
+        "description" : "Supervisa ejecuciones; lanza recargas puntuales",
+        "destinationId" : "6",
+        "id" : "17",
+        "linkedRelationshipId" : "16",
+        "sourceId" : "1",
+        "technology" : "UI en localhost:8090"
+      }, {
+        "description" : "Reconstruye la OBT tras un cambio del pipeline",
+        "destinationId" : "14",
+        "id" : "18",
+        "sourceId" : "1",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Consulta la OBT y las métricas de calidad",
+        "destinationId" : "15",
+        "id" : "41",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "Snowsight"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "description" : "Precios diarios OHLCV y cierre ajustado (API no oficial, vía yfinance): acciones, ^GSPC, ^NYA, ^IRX.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Yahoo Finance",
+      "properties" : {
+        "structurizr.dsl.identifier" : "yahoo"
+      },
+      "tags" : "Element,Software System,Externo"
+    }, {
+      "description" : "Composición histórica del S&P 500 (chinobing) y listados de bolsa (rreichel3).",
+      "documentation" : { },
+      "id" : "3",
+      "name" : "GitHub (fuentes de referencia)",
+      "properties" : {
+        "structurizr.dsl.identifier" : "github"
+      },
+      "tags" : "Element,Software System,Externo"
+    }, {
+      "description" : "Envía los avisos Success / Fail al correo del asesor (contraseña de aplicación, secreto AVISO_CLAVE_APP).",
+      "documentation" : { },
+      "id" : "4",
+      "name" : "Gmail (SMTP)",
+      "properties" : {
+        "structurizr.dsl.identifier" : "gmail"
+      },
+      "relationships" : [ {
+        "description" : "Entrega los avisos",
+        "destinationId" : "1",
+        "id" : "27",
+        "sourceId" : "4",
+        "tags" : "Relationship"
+      } ],
+      "tags" : "Element,Software System,Externo"
+    }, {
+      "description" : "psets/pset-03: src/datos.py exporta la OBT a data/obt.parquet (sha256); notebooks, MLflow y Model Registry.",
+      "documentation" : { },
+      "id" : "5",
+      "name" : "Modelado del PSet 3",
+      "properties" : {
+        "structurizr.dsl.identifier" : "modelado"
+      },
+      "relationships" : [ {
+        "description" : "Exporta la OBT con SELECT (snapshot con sha256)",
+        "destinationId" : "15",
+        "id" : "39",
+        "sourceId" : "5",
+        "tags" : "Relationship"
+      }, {
+        "description" : "Exporta la OBT con SELECT (snapshot con sha256)",
+        "destinationId" : "6",
+        "id" : "40",
+        "linkedRelationshipId" : "39",
+        "sourceId" : "5"
+      } ],
+      "tags" : "Element,Software System,Interno"
+    }, {
+      "containers" : [ {
+        "description" : "Orquestación: ingesta_diaria (L–V 18:30 NY, retries, recuperación; con RAW vacía hace el histórico desde 2010), backfill_historico (recarga por año), transformar y avisos (usfq.avisos).",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Kestra",
+        "properties" : {
+          "structurizr.dsl.identifier" : "kestra"
+        },
+        "relationships" : [ {
+          "description" : "Guarda su estado en",
+          "destinationId" : "8",
+          "id" : "22",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Ejecuta como contenedor de tarea (trigger L–V 18:30 NY; reintentos exponenciales)",
+          "destinationId" : "9",
+          "id" : "23",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Ejecuta al terminar la ingesta (subflow transformar)",
+          "destinationId" : "10",
+          "id" : "24",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Ejecuta spark-submit tras dbt",
+          "destinationId" : "11",
+          "id" : "25",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Envía Success / Fail al terminar cada ingesta (flow avisos)",
+          "destinationId" : "4",
+          "id" : "26",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "MailExecution, SMTPS"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Kestra 2.0.7 · Docker · UI :8090"
+      }, {
+        "description" : "Estado interno de Kestra (flows, ejecuciones, colas).",
+        "documentation" : { },
+        "id" : "8",
+        "name" : "Postgres",
+        "properties" : {
+          "structurizr.dsl.identifier" : "postgres"
+        },
+        "tags" : "Element,Container,BaseDatos",
+        "technology" : "PostgreSQL 18 · Docker"
+      }, {
+        "description" : "extraer_cargar.py: descarga precios, composición y listados; traduce símbolos con equivalencias_tickers; no guarda la sesión en curso; carga a RAW (append-only, con lote).",
+        "documentation" : { },
+        "id" : "9",
+        "name" : "Tarea de ingesta",
+        "properties" : {
+          "structurizr.dsl.identifier" : "ingesta"
+        },
+        "relationships" : [ {
+          "description" : "Descarga OHLCV diario (yfinance, por lotes con reintentos)",
+          "destinationId" : "2",
+          "id" : "28",
+          "sourceId" : "9",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Descarga composición histórica y listados de bolsa",
+          "destinationId" : "3",
+          "id" : "30",
+          "sourceId" : "9",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Carga RAW con write_pandas (append-only + bitácora)",
+          "destinationId" : "15",
+          "id" : "32",
+          "sourceId" : "9",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Python 3.11 · imagen pset3-ingesta"
+      }, {
+        "description" : "dbt build: Bronze (staging), Silver (calendario NYSE, imputación de huecos cortos, retornos, membresía), Gold (dos hechos y tres dimensiones) y CALIDAD (dq_metricas, dq_huecos_por_ticker, dq_universo_por_fecha); tests de integridad y negocio.",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Tarea dbt",
+        "properties" : {
+          "structurizr.dsl.identifier" : "dbt"
+        },
+        "relationships" : [ {
+          "description" : "Transforma RAW → BRONZE → SILVER → GOLD y calcula CALIDAD",
+          "destinationId" : "15",
+          "id" : "33",
+          "sourceId" : "10",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "dbt Core + dbt-snowflake · imagen pset3-dbt"
+      }, {
+        "description" : "construir_obt.py: lee Gold, construye acción por mes, verifica 17 controles (incluye mercado del mes siguiente solo con meses cerrados) y escribe OBT.",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "Driver Spark / tarea OBT",
+        "properties" : {
+          "structurizr.dsl.identifier" : "spark"
+        },
+        "relationships" : [ {
+          "description" : "Solicita recursos del clúster",
+          "destinationId" : "12",
+          "id" : "34",
+          "sourceId" : "11",
+          "tags" : "Relationship",
+          "technology" : "spark://spark-master:7077"
+        }, {
+          "description" : "Coordina tareas y resultados",
+          "destinationId" : "13",
+          "id" : "36",
+          "sourceId" : "11",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Lee GOLD y escribe OBT.OBT_ACCION_MES, OBT.OBT_ACCION_DIA y VALIDACION_OBT",
+          "destinationId" : "15",
+          "id" : "38",
+          "sourceId" : "11",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Spark 3.5.3 · pset3-spark · tarea efímera"
+      }, {
+        "description" : "Coordina los recursos del clúster; servicio persistente de Compose.",
+        "documentation" : { },
+        "id" : "12",
+        "name" : "spark-master",
+        "properties" : {
+          "structurizr.dsl.identifier" : "master"
+        },
+        "relationships" : [ {
+          "description" : "Asigna ejecutores",
+          "destinationId" : "13",
+          "id" : "35",
+          "sourceId" : "12",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Spark 3.5.3 · RPC :7077 · UI :8081"
+      }, {
+        "description" : "Ejecuta las tareas distribuidas; ofrece 2 GB al ejecutor.",
+        "documentation" : { },
+        "id" : "13",
+        "name" : "spark-worker",
+        "properties" : {
+          "structurizr.dsl.identifier" : "worker"
+        },
+        "relationships" : [ {
+          "description" : "Lee y escribe particiones mediante el conector Snowflake",
+          "destinationId" : "15",
+          "id" : "37",
+          "sourceId" : "13",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Spark 3.5.3 · pset3-spark"
+      }, {
+        "description" : "Script del asesor: pruebas (ingesta y Spark en Docker), imágenes, transformar con etiqueta origen=manual, evidencias, snapshot y aviso final.",
+        "documentation" : { },
+        "id" : "14",
+        "name" : "reconstruir_obt.sh",
+        "properties" : {
+          "structurizr.dsl.identifier" : "reconstruir"
+        },
+        "relationships" : [ {
+          "description" : "Sube flows y lanza transformar",
+          "destinationId" : "7",
+          "id" : "19",
+          "sourceId" : "14",
+          "tags" : "Relationship",
+          "technology" : "API REST"
+        }, {
+          "description" : "Envía Success / Fail del script",
+          "destinationId" : "4",
+          "id" : "20",
+          "sourceId" : "14",
+          "tags" : "Relationship",
+          "technology" : "notificar.py, SMTPS"
+        } ],
+        "tags" : "Element,Container,Script",
+        "technology" : "bash · uv · Docker"
+      }, {
+        "description" : "Esquemas RAW, BRONZE, SILVER, GOLD, OBT y CALIDAD. Bodega PSET2_WH (XSMALL, autosuspensión). La base PORTAFOLIO del PSet 2 no se modifica.",
+        "documentation" : { },
+        "id" : "15",
+        "name" : "Snowflake · base PORTAFOLIO_P3",
+        "properties" : {
+          "structurizr.dsl.identifier" : "snowflake"
+        },
+        "tags" : "Element,Container,BaseDatos",
+        "technology" : "SaaS"
+      } ],
+      "description" : "ELT reproducible: Fuente → Kestra → Raw → dbt → Bronze → Silver → Gold → Spark → OBT, en PORTAFOLIO_P3.",
+      "documentation" : { },
+      "id" : "6",
+      "name" : "Pipeline de datos del portafolio",
+      "properties" : {
+        "structurizr.dsl.identifier" : "pipeline"
+      },
+      "relationships" : [ {
+        "description" : "Envía Success / Fail del script",
+        "destinationId" : "4",
+        "id" : "21",
+        "linkedRelationshipId" : "20",
+        "sourceId" : "6",
+        "technology" : "notificar.py, SMTPS"
+      }, {
+        "description" : "Descarga OHLCV diario (yfinance, por lotes con reintentos)",
+        "destinationId" : "2",
+        "id" : "29",
+        "linkedRelationshipId" : "28",
+        "sourceId" : "6"
+      }, {
+        "description" : "Descarga composición histórica y listados de bolsa",
+        "destinationId" : "3",
+        "id" : "31",
+        "linkedRelationshipId" : "30",
+        "sourceId" : "6"
+      } ],
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Pipeline de datos del portafolio de inversiones (PSet 3)",
+  "properties" : {
+    "structurizr.inspection.error" : "21",
+    "structurizr.dsl" : "Ly8gTW9kZWxvIEM0IGRlbCBwaXBlbGluZSBjb3BpYWRvIGFsIFBTZXQgMyAocHNldHMvcHNldC0wMy9waXBlbGluZSwgYmFzZSBQT1JUQUZPTElPX1AzKS4KLy8gRGlmZXJlbmNpYXMgY29uIGVsIFBTZXQgMjogYmFzZSBQT1JUQUZPTElPX1AzLCBpbWFnZW5lcyBwc2V0My0qLCBhdmlzb3MgcG9yIGNvcnJlbywKLy8gcHJpbWVyYSBjYXJnYSBhdXRvbWF0aWNhLCBDQUxJREFEIGFtcGxpYWRhLCAxNyBjb250cm9sZXMgZW4gbGEgT0JULCBPQlQgZGlhcmlhIHkgcHJ1ZWJhcyBkZSBTcGFyay4KLy8gdmVyX2RpYWdyYW1hcy5zaCBhYnJlIGxhIFVJIChTdHJ1Y3R1cml6ciBMaXRlKSB5IGV4cG9ydGFyX2RpYWdyYW1hcy5zaCBleHBvcnRhIGNvbiBlbCBDTEkuCndvcmtzcGFjZSAiUGlwZWxpbmUgZGUgZGF0b3MgZGVsIHBvcnRhZm9saW8gZGUgaW52ZXJzaW9uZXMgKFBTZXQgMykiICJQU2V0IDMgwrcgTVNEUyA2MDAzIMK3IEFsbGFuIFBhdWwgR8OzbWV6IEVobWlnICgwMDM1MTkxNikiIHsKCiAgICBtb2RlbCB7CiAgICAgICAgYXNlc29yID0gcGVyc29uICJBc2Vzb3IgZGUgaW52ZXJzaW9uZXMiICJVc3VhcmlvIGRlIGxhIGhlcnJhbWllbnRhOiByZXZpc2EgZWplY3VjaW9uZXMgeSBhdmlzb3MsIHkgY29uc3VtZSBsYSBPQlQgKHNuYXBzaG90KSBwYXJhIGxhIGRlY2lzacOzbiBtZW5zdWFsLiIKCiAgICAgICAgeWFob28gPSBzb2Z0d2FyZVN5c3RlbSAiWWFob28gRmluYW5jZSIgIlByZWNpb3MgZGlhcmlvcyBPSExDViB5IGNpZXJyZSBhanVzdGFkbyAoQVBJIG5vIG9maWNpYWwsIHbDrWEgeWZpbmFuY2UpOiBhY2Npb25lcywgXkdTUEMsIF5OWUEsIF5JUlguIiAiRXh0ZXJubyIKICAgICAgICBnaXRodWIgPSBzb2Z0d2FyZVN5c3RlbSAiR2l0SHViIChmdWVudGVzIGRlIHJlZmVyZW5jaWEpIiAiQ29tcG9zaWNpw7NuIGhpc3TDs3JpY2EgZGVsIFMmUCA1MDAgKGNoaW5vYmluZykgeSBsaXN0YWRvcyBkZSBib2xzYSAocnJlaWNoZWwzKS4iICJFeHRlcm5vIgogICAgICAgIGdtYWlsID0gc29mdHdhcmVTeXN0ZW0gIkdtYWlsIChTTVRQKSIgIkVudsOtYSBsb3MgYXZpc29zIFN1Y2Nlc3MgLyBGYWlsIGFsIGNvcnJlbyBkZWwgYXNlc29yIChjb250cmFzZcOxYSBkZSBhcGxpY2FjacOzbiwgc2VjcmV0byBBVklTT19DTEFWRV9BUFApLiIgIkV4dGVybm8iCiAgICAgICAgbW9kZWxhZG8gPSBzb2Z0d2FyZVN5c3RlbSAiTW9kZWxhZG8gZGVsIFBTZXQgMyIgInBzZXRzL3BzZXQtMDM6IHNyYy9kYXRvcy5weSBleHBvcnRhIGxhIE9CVCBhIGRhdGEvb2J0LnBhcnF1ZXQgKHNoYTI1Nik7IG5vdGVib29rcywgTUxmbG93IHkgTW9kZWwgUmVnaXN0cnkuIiAiSW50ZXJubyIKCiAgICAgICAgcGlwZWxpbmUgPSBzb2Z0d2FyZVN5c3RlbSAiUGlwZWxpbmUgZGUgZGF0b3MgZGVsIHBvcnRhZm9saW8iICJFTFQgcmVwcm9kdWNpYmxlOiBGdWVudGUg4oaSIEtlc3RyYSDihpIgUmF3IOKGkiBkYnQg4oaSIEJyb256ZSDihpIgU2lsdmVyIOKGkiBHb2xkIOKGkiBTcGFyayDihpIgT0JULCBlbiBQT1JUQUZPTElPX1AzLiIgewogICAgICAgICAgICBrZXN0cmEgPSBjb250YWluZXIgIktlc3RyYSIgIk9ycXVlc3RhY2nDs246IGluZ2VzdGFfZGlhcmlhIChM4oCTViAxODozMCBOWSwgcmV0cmllcywgcmVjdXBlcmFjacOzbjsgY29uIFJBVyB2YWPDrWEgaGFjZSBlbCBoaXN0w7NyaWNvIGRlc2RlIDIwMTApLCBiYWNrZmlsbF9oaXN0b3JpY28gKHJlY2FyZ2EgcG9yIGHDsW8pLCB0cmFuc2Zvcm1hciB5IGF2aXNvcyAodXNmcS5hdmlzb3MpLiIgIktlc3RyYSAyLjAuNyDCtyBEb2NrZXIgwrcgVUkgOjgwOTAiCiAgICAgICAgICAgIHBvc3RncmVzID0gY29udGFpbmVyICJQb3N0Z3JlcyIgIkVzdGFkbyBpbnRlcm5vIGRlIEtlc3RyYSAoZmxvd3MsIGVqZWN1Y2lvbmVzLCBjb2xhcykuIiAiUG9zdGdyZVNRTCAxOCDCtyBEb2NrZXIiICJCYXNlRGF0b3MiCiAgICAgICAgICAgIGluZ2VzdGEgPSBjb250YWluZXIgIlRhcmVhIGRlIGluZ2VzdGEiICJleHRyYWVyX2Nhcmdhci5weTogZGVzY2FyZ2EgcHJlY2lvcywgY29tcG9zaWNpw7NuIHkgbGlzdGFkb3M7IHRyYWR1Y2Ugc8OtbWJvbG9zIGNvbiBlcXVpdmFsZW5jaWFzX3RpY2tlcnM7IG5vIGd1YXJkYSBsYSBzZXNpw7NuIGVuIGN1cnNvOyBjYXJnYSBhIFJBVyAoYXBwZW5kLW9ubHksIGNvbiBsb3RlKS4iICJQeXRob24gMy4xMSDCtyBpbWFnZW4gcHNldDMtaW5nZXN0YSIKICAgICAgICAgICAgZGJ0ID0gY29udGFpbmVyICJUYXJlYSBkYnQiICJkYnQgYnVpbGQ6IEJyb256ZSAoc3RhZ2luZyksIFNpbHZlciAoY2FsZW5kYXJpbyBOWVNFLCBpbXB1dGFjacOzbiBkZSBodWVjb3MgY29ydG9zLCByZXRvcm5vcywgbWVtYnJlc8OtYSksIEdvbGQgKGRvcyBoZWNob3MgeSB0cmVzIGRpbWVuc2lvbmVzKSB5IENBTElEQUQgKGRxX21ldHJpY2FzLCBkcV9odWVjb3NfcG9yX3RpY2tlciwgZHFfdW5pdmVyc29fcG9yX2ZlY2hhKTsgdGVzdHMgZGUgaW50ZWdyaWRhZCB5IG5lZ29jaW8uIiAiZGJ0IENvcmUgKyBkYnQtc25vd2ZsYWtlIMK3IGltYWdlbiBwc2V0My1kYnQiCiAgICAgICAgICAgIHNwYXJrID0gY29udGFpbmVyICJEcml2ZXIgU3BhcmsgLyB0YXJlYSBPQlQiICJjb25zdHJ1aXJfb2J0LnB5OiBsZWUgR29sZCwgY29uc3RydXllIGFjY2nDs24gcG9yIG1lcywgdmVyaWZpY2EgMTcgY29udHJvbGVzIChpbmNsdXllIG1lcmNhZG8gZGVsIG1lcyBzaWd1aWVudGUgc29sbyBjb24gbWVzZXMgY2VycmFkb3MpIHkgZXNjcmliZSBPQlQuIiAiU3BhcmsgMy41LjMgwrcgcHNldDMtc3BhcmsgwrcgdGFyZWEgZWbDrW1lcmEiCiAgICAgICAgICAgIG1hc3RlciA9IGNvbnRhaW5lciAic3BhcmstbWFzdGVyIiAiQ29vcmRpbmEgbG9zIHJlY3Vyc29zIGRlbCBjbMO6c3Rlcjsgc2VydmljaW8gcGVyc2lzdGVudGUgZGUgQ29tcG9zZS4iICJTcGFyayAzLjUuMyDCtyBSUEMgOjcwNzcgwrcgVUkgOjgwODEiCiAgICAgICAgICAgIHdvcmtlciA9IGNvbnRhaW5lciAic3Bhcmstd29ya2VyIiAiRWplY3V0YSBsYXMgdGFyZWFzIGRpc3RyaWJ1aWRhczsgb2ZyZWNlIDIgR0IgYWwgZWplY3V0b3IuIiAiU3BhcmsgMy41LjMgwrcgcHNldDMtc3BhcmsiCiAgICAgICAgICAgIHJlY29uc3RydWlyID0gY29udGFpbmVyICJyZWNvbnN0cnVpcl9vYnQuc2giICJTY3JpcHQgZGVsIGFzZXNvcjogcHJ1ZWJhcyAoaW5nZXN0YSB5IFNwYXJrIGVuIERvY2tlciksIGltw6FnZW5lcywgdHJhbnNmb3JtYXIgY29uIGV0aXF1ZXRhIG9yaWdlbj1tYW51YWwsIGV2aWRlbmNpYXMsIHNuYXBzaG90IHkgYXZpc28gZmluYWwuIiAiYmFzaCDCtyB1diDCtyBEb2NrZXIiICJTY3JpcHQiCiAgICAgICAgICAgIHNub3dmbGFrZSA9IGNvbnRhaW5lciAiU25vd2ZsYWtlIMK3IGJhc2UgUE9SVEFGT0xJT19QMyIgIkVzcXVlbWFzIFJBVywgQlJPTlpFLCBTSUxWRVIsIEdPTEQsIE9CVCB5IENBTElEQUQuIEJvZGVnYSBQU0VUMl9XSCAoWFNNQUxMLCBhdXRvc3VzcGVuc2nDs24pLiBMYSBiYXNlIFBPUlRBRk9MSU8gZGVsIFBTZXQgMiBubyBzZSBtb2RpZmljYS4iICJTYWFTIiAiQmFzZURhdG9zIgogICAgICAgIH0KCiAgICAgICAgYXNlc29yIC0+IGtlc3RyYSAiU3VwZXJ2aXNhIGVqZWN1Y2lvbmVzOyBsYW56YSByZWNhcmdhcyBwdW50dWFsZXMiICJVSSBlbiBsb2NhbGhvc3Q6ODA5MCIKICAgICAgICBhc2Vzb3IgLT4gcmVjb25zdHJ1aXIgIlJlY29uc3RydXllIGxhIE9CVCB0cmFzIHVuIGNhbWJpbyBkZWwgcGlwZWxpbmUiCiAgICAgICAgcmVjb25zdHJ1aXIgLT4ga2VzdHJhICJTdWJlIGZsb3dzIHkgbGFuemEgdHJhbnNmb3JtYXIiICJBUEkgUkVTVCIKICAgICAgICByZWNvbnN0cnVpciAtPiBnbWFpbCAiRW52w61hIFN1Y2Nlc3MgLyBGYWlsIGRlbCBzY3JpcHQiICJub3RpZmljYXIucHksIFNNVFBTIgogICAgICAgIGtlc3RyYSAtPiBwb3N0Z3JlcyAiR3VhcmRhIHN1IGVzdGFkbyBlbiIKICAgICAgICBrZXN0cmEgLT4gaW5nZXN0YSAiRWplY3V0YSBjb21vIGNvbnRlbmVkb3IgZGUgdGFyZWEgKHRyaWdnZXIgTOKAk1YgMTg6MzAgTlk7IHJlaW50ZW50b3MgZXhwb25lbmNpYWxlcykiCiAgICAgICAga2VzdHJhIC0+IGRidCAiRWplY3V0YSBhbCB0ZXJtaW5hciBsYSBpbmdlc3RhIChzdWJmbG93IHRyYW5zZm9ybWFyKSIKICAgICAgICBrZXN0cmEgLT4gc3BhcmsgIkVqZWN1dGEgc3Bhcmstc3VibWl0IHRyYXMgZGJ0IgogICAgICAgIGtlc3RyYSAtPiBnbWFpbCAiRW52w61hIFN1Y2Nlc3MgLyBGYWlsIGFsIHRlcm1pbmFyIGNhZGEgaW5nZXN0YSAoZmxvdyBhdmlzb3MpIiAiTWFpbEV4ZWN1dGlvbiwgU01UUFMiCiAgICAgICAgZ21haWwgLT4gYXNlc29yICJFbnRyZWdhIGxvcyBhdmlzb3MiCiAgICAgICAgaW5nZXN0YSAtPiB5YWhvbyAiRGVzY2FyZ2EgT0hMQ1YgZGlhcmlvICh5ZmluYW5jZSwgcG9yIGxvdGVzIGNvbiByZWludGVudG9zKSIKICAgICAgICBpbmdlc3RhIC0+IGdpdGh1YiAiRGVzY2FyZ2EgY29tcG9zaWNpw7NuIGhpc3TDs3JpY2EgeSBsaXN0YWRvcyBkZSBib2xzYSIKICAgICAgICBpbmdlc3RhIC0+IHNub3dmbGFrZSAiQ2FyZ2EgUkFXIGNvbiB3cml0ZV9wYW5kYXMgKGFwcGVuZC1vbmx5ICsgYml0w6Fjb3JhKSIKICAgICAgICBkYnQgLT4gc25vd2ZsYWtlICJUcmFuc2Zvcm1hIFJBVyDihpIgQlJPTlpFIOKGkiBTSUxWRVIg4oaSIEdPTEQgeSBjYWxjdWxhIENBTElEQUQiCiAgICAgICAgc3BhcmsgLT4gbWFzdGVyICJTb2xpY2l0YSByZWN1cnNvcyBkZWwgY2zDunN0ZXIiICJzcGFyazovL3NwYXJrLW1hc3Rlcjo3MDc3IgogICAgICAgIG1hc3RlciAtPiB3b3JrZXIgIkFzaWduYSBlamVjdXRvcmVzIgogICAgICAgIHNwYXJrIC0+IHdvcmtlciAiQ29vcmRpbmEgdGFyZWFzIHkgcmVzdWx0YWRvcyIKICAgICAgICB3b3JrZXIgLT4gc25vd2ZsYWtlICJMZWUgeSBlc2NyaWJlIHBhcnRpY2lvbmVzIG1lZGlhbnRlIGVsIGNvbmVjdG9yIFNub3dmbGFrZSIKICAgICAgICBzcGFyayAtPiBzbm93Zmxha2UgIkxlZSBHT0xEIHkgZXNjcmliZSBPQlQuT0JUX0FDQ0lPTl9NRVMsIE9CVC5PQlRfQUNDSU9OX0RJQSB5IFZBTElEQUNJT05fT0JUIgogICAgICAgIG1vZGVsYWRvIC0+IHNub3dmbGFrZSAiRXhwb3J0YSBsYSBPQlQgY29uIFNFTEVDVCAoc25hcHNob3QgY29uIHNoYTI1NikiCiAgICAgICAgYXNlc29yIC0+IHNub3dmbGFrZSAiQ29uc3VsdGEgbGEgT0JUIHkgbGFzIG3DqXRyaWNhcyBkZSBjYWxpZGFkIiAiU25vd3NpZ2h0IgogICAgfQoKICAgIHZpZXdzIHsKICAgICAgICBzeXN0ZW1Db250ZXh0IHBpcGVsaW5lICJjb250ZXh0byIgIk5pdmVsIDE6IGVsIHBpcGVsaW5lLCBzdSB1c3VhcmlvLCBsYXMgZnVlbnRlcywgbG9zIGF2aXNvcyB5IGVsIG1vZGVsYWRvIGRlbCBQU2V0IDMuIiB7CiAgICAgICAgICAgIGluY2x1ZGUgKgogICAgICAgICAgICBhdXRvTGF5b3V0IGxyCiAgICAgICAgfQoKICAgICAgICBjb250YWluZXIgcGlwZWxpbmUgImNvbnRlbmVkb3JlcyIgIk5pdmVsIDI6IHNlcnZpY2lvcyBwZXJzaXN0ZW50ZXMsIHRhcmVhcyBlZsOtbWVyYXMsIHNjcmlwdCBkZSByZWNvbnN0cnVjY2nDs24geSBTbm93Zmxha2UgU2FhUy4iIHsKICAgICAgICAgICAgaW5jbHVkZSAqCiAgICAgICAgICAgIGF1dG9MYXlvdXQgbHIKICAgICAgICB9CgogICAgICAgIHN0eWxlcyB7CiAgICAgICAgICAgIGVsZW1lbnQgIlBlcnNvbiIgewogICAgICAgICAgICAgICAgc2hhcGUgUGVyc29uCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICMwODQyN2IKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJDb250YWluZXIiIHsKICAgICAgICAgICAgICAgIGJhY2tncm91bmQgIzQzOGRkNQogICAgICAgICAgICAgICAgY29sb3IgI2ZmZmZmZgogICAgICAgICAgICB9CiAgICAgICAgICAgIGVsZW1lbnQgIlNvZnR3YXJlIFN5c3RlbSIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjMTE2OGJkCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiRXh0ZXJubyIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjOTk5OTk5CiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiSW50ZXJubyIgewogICAgICAgICAgICAgICAgYmFja2dyb3VuZCAjNmI4ZTIzCiAgICAgICAgICAgICAgICBjb2xvciAjZmZmZmZmCiAgICAgICAgICAgIH0KICAgICAgICAgICAgZWxlbWVudCAiU2NyaXB0IiB7CiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICM3YTdhN2EKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgICAgICBlbGVtZW50ICJCYXNlRGF0b3MiIHsKICAgICAgICAgICAgICAgIHNoYXBlIEN5bGluZGVyCiAgICAgICAgICAgICAgICBiYWNrZ3JvdW5kICMyYTZhNGYKICAgICAgICAgICAgICAgIGNvbG9yICNmZmZmZmYKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KfQ==",
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.warning" : "0"
+  },
+  "views" : {
+    "configuration" : {
+      "branding" : { },
+      "styles" : {
+        "elements" : [ {
+          "background" : "#2a6a4f",
+          "color" : "#ffffff",
+          "shape" : "Cylinder",
+          "tag" : "BaseDatos"
+        }, {
+          "background" : "#438dd5",
+          "color" : "#ffffff",
+          "tag" : "Container"
+        }, {
+          "background" : "#999999",
+          "color" : "#ffffff",
+          "tag" : "Externo"
+        }, {
+          "background" : "#6b8e23",
+          "color" : "#ffffff",
+          "tag" : "Interno"
+        }, {
+          "background" : "#08427b",
+          "color" : "#ffffff",
+          "shape" : "Person",
+          "tag" : "Person"
+        }, {
+          "background" : "#7a7a7a",
+          "color" : "#ffffff",
+          "tag" : "Script"
+        }, {
+          "background" : "#1168bd",
+          "color" : "#ffffff",
+          "tag" : "Software System"
+        } ]
+      },
+      "terminology" : { }
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "description" : "Nivel 2: servicios persistentes, tareas efímeras, script de reconstrucción y Snowflake SaaS.",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "7",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "8",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "9",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "10",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "11",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "12",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "13",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "14",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "15",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "contenedores",
+      "name" : "Container View: Pipeline de datos del portafolio",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "16"
+      }, {
+        "id" : "18"
+      }, {
+        "id" : "19"
+      }, {
+        "id" : "20"
+      }, {
+        "id" : "22"
+      }, {
+        "id" : "23"
+      }, {
+        "id" : "24"
+      }, {
+        "id" : "25"
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "28"
+      }, {
+        "id" : "30"
+      }, {
+        "id" : "32"
+      }, {
+        "id" : "33"
+      }, {
+        "id" : "34"
+      }, {
+        "id" : "35"
+      }, {
+        "id" : "36"
+      }, {
+        "id" : "37"
+      }, {
+        "id" : "38"
+      }, {
+        "id" : "39"
+      }, {
+        "id" : "41"
+      } ],
+      "softwareSystemId" : "6"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "applied" : false,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "description" : "Nivel 1: el pipeline, su usuario, las fuentes, los avisos y el modelado del PSet 3.",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "2",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "3",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "4",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "5",
+        "x" : 0,
+        "y" : 0
+      }, {
+        "id" : "6",
+        "x" : 0,
+        "y" : 0
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "contexto",
+      "name" : "System Context View: Pipeline de datos del portafolio",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "17"
+      }, {
+        "id" : "21"
+      }, {
+        "id" : "27"
+      }, {
+        "id" : "29"
+      }, {
+        "id" : "31"
+      }, {
+        "id" : "40"
+      } ],
+      "softwareSystemId" : "6"
+    } ]
+  }
+}

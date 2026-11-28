@@ -1,0 +1,73 @@
+# PSet 4 - Monitoreo de un lote: metricas de sistema (API /metricas), datos (PSI, KS, chi2, z) y modelo
+# (MAE con un lote de retraso, Sharpe de 12 lotes) -> PRODUCCION.MONITOREO y PRODUCCION.ALERTAS.
+# Si hay alertas criticas manda un correo. Lo llama produccion_lotes; tambien se puede correr solo.
+id: monitoreo
+namespace: usfq.produccion
+description: |
+  Corre `python -m monitoreo.produccion monitorear` en la imagen pset4-produccion. Devuelve si la regla de
+  reentrenamiento se dispara (A7 o calendario, con enfriamiento de 3 lotes); la deriva de datos sola no dispara.
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "4"
+
+inputs:
+  - id: anio_mes
+    type: INT
+    description: Cierre de mes del lote (AAAAMM), ya servido por produccion_lotes.
+
+tasks:
+  - id: monitorear
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset4-produccion:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+      networkMode: pset4_red
+    timeout: PT20M
+    env: &entorno
+      SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+      SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+      SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+      SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+      SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+      SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      API_URL: http://api:8000
+    commands:
+      - cd /app && python -m monitoreo.produccion monitorear --anio-mes {{ inputs.anio_mes }}
+
+  - id: si_hay_criticas
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.monitorear.vars.criticas != '' }}"
+    then:
+      - id: correo
+        type: io.kestra.plugin.email.MailSend
+        host: smtp.gmail.com
+        port: 465
+        transportStrategy: SMTPS
+        username: "{{ secret('AVISO_CORREO') }}"
+        password: "{{ secret('AVISO_CLAVE_APP') }}"
+        from: "{{ secret('AVISO_CORREO') }}"
+        to: "{{ secret('AVISO_CORREO') }}"
+        subject: "Alerta critica del portafolio: lote {{ inputs.anio_mes }} ({{ outputs.monitorear.vars.criticas }})"
+        htmlTextContent: |
+          <p>{{ outputs.monitorear.vars.resumen }}. Modelo en servicio: v{{ outputs.monitorear.vars.version }}.</p>
+          <p>Detalle y accion de cada alerta: tabla PORTAFOLIO_P4.PRODUCCION.ALERTAS (anio_mes = {{ inputs.anio_mes }})
+          y plantilla en docs/monitoreo.md. Reentrenamiento: {{ outputs.monitorear.vars.dispara_reentrenamiento }}
+          {{ outputs.monitorear.vars.motivo }}.</p>
+        allowFailure: true
+
+outputs:
+  - id: dispara
+    type: BOOL
+    value: "{{ outputs.monitorear.vars.dispara_reentrenamiento }}"
+  - id: motivo
+    type: STRING
+    value: "{{ outputs.monitorear.vars.motivo }}"
+  - id: llegada
+    type: INT
+    value: "{{ outputs.monitorear.vars.llegada }}"
+  - id: alertas
+    type: STRING
+    value: "{{ outputs.monitorear.vars.alertas }}"
