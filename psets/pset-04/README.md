@@ -67,7 +67,7 @@ basta `up -d postgres kestra mlflow api tablero` (`disclaimer.txt`, punto 6).
 
 ```bash
 uv sync --project api --frozen
-uv run --project api --frozen pytest tests -v        # 33 pruebas, sin MLflow ni Snowflake
+uv run --project api --frozen pytest tests -v        # 45 pruebas, sin MLflow ni Snowflake
 ```
 
 `tests/fixtures/` tiene la copia del champion (`mlflow.sklearn.save_model`, generada por `generar_fixtures.py` desde el

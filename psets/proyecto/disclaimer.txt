@@ -1,0 +1,95 @@
+DISCLAIMER - PSet 4 (psets/pset-04, rama work)
+Allan Paul Gomez Ehmig (00351916)
+
+GUIA RECIBIDA (CD-PSet-4.pdf) FRENTE A LA GUIA DEL REPOSITORIO (README_curso.md, rubrica.md)
+
+Se entrega con la guia recibida. Diferencias anotadas hasta ahora:
+
+1. Carpeta del proyecto final. El PDF (seccion 10 y "Repositorio") pide reunir todo en
+   proyecto_final/, con kestra/, dbt/, spark/, src/, notebooks/, api/, monitoreo/, tests/ y docs/.
+   README_curso.md pide psets/proyecto/. Se entrega en psets/pset-04/ (decision de Paul, 27-nov, que reemplaza
+   la del plan 10.1): ya tiene todas las piezas, un solo docker-compose.yml y su propia CI. Al terminar (pedido de
+   Paul, 27-nov noche) se copiaron los archivos versionados a psets/proyecto/ (sin el enunciado, la rubrica ni el
+   plan). Esa copia choca con .github/workflows/pruebas.yml por las versiones de librerias: punto 15.
+   El README tiene la tabla que mapea cada pieza del PDF a su archivo (kestra/ -> pipeline/kestra/flows/,
+   src/ -> modelos/src/, notebooks/ -> modelos/notebooks/).
+
+2. Rubrica. El PDF trae su propia rubrica con 8 criterios y pesos (15/10/10/10/10/10/15/20); rubrica.md
+   trae 5 criterios de 0 a 4. Se cubren los dos; ante diferencias, manda el PDF.
+
+3. Entregables de rubrica.md que el PDF nombra distinto: docs/resultados_tecnico.pdf y
+   docs/resultados_ejecutivo.pdf (rubrica.md) frente al documento tecnico PSet4_memo_Gomez_Ehmig.pdf y la
+   presentacion PSet4_presentacion_Gomez_Ehmig.pdf (PDF). Se entregan los del PDF; las dos diapositivas de
+   resultados de rubrica.md quedan dentro de ellos.
+
+4. Workflows. El PDF los ubica en proyecto_final/.github/workflows/ci.yml y cd.yml. GitHub Actions solo
+   lee .github/workflows/ de la raiz del repositorio: estan ahi como pset4-ci.yml y pset4-cd.yml, filtrados
+   a cambios en psets/pset-04/. El PDF dice "merge a main"; la rama principal del repositorio es master.
+
+5. Notebooks. El PDF numera 06_simulacion_produccion y 07_analisis_monitoreo. modelos/notebooks/ ya tenia
+   06_champion.ipynb (recarga del champion del PSet 3, copia sin cambios); se conserva con su nombre.
+
+6. Un solo docker-compose frente a la regla de memoria del proyecto (CLAUDE.md: no levantar MLflow junto con
+   Kestra y Spark). El PDF pide un solo compose con todo y la simulacion necesita Kestra, MLflow y la API a la vez.
+   Paul autorizo (27-nov) Kestra y MLflow juntos. Spark solo hace falta en el flow transformar: la simulacion se
+   corre con "up -d postgres kestra mlflow api tablero" y el video muestra los servicios por etapas.
+
+7. Lotes con deriva inducida. El PDF pide al menos un lote con deriva inducida. Los lotes 2025-05 a 2025-07
+   son sinteticos (docs/simulacion.md): sus metricas de negocio no son resultados reales y se marcan con
+   sintetico = True en PREDICCIONES y MONITOREO.
+
+8. Calibracion con la simulacion. Los umbrales A4 (>= 5 features) y A8 (-0,5 de Sharpe) se fijaron mirando la
+   simulacion de los lotes posteriores al corte. La regla de promocion sigue al PDF (lote etiquetado mas reciente,
+   margen de una desviacion de la CV de la metrica de negocio); la variante con 6 lotes se reporta solo como
+   sensibilidad (docs/reentrenamiento.md). Deben revisarse con lotes reales.
+
+9. Versiones del registro. Al correr produccion_lotes en Kestra, los reentrenamientos se registran como
+   versiones nuevas de portafolio-inversiones-modelo y @champion se mueve si se aprueba. La v1 (champion del
+   PSet 3) no se borra; las pruebas y el notebook 06 la piden por numero o usan la copia de tests/fixtures/.
+
+10. Nombres frente a los laboratorios. CLAUDE.md y los laboratorios de las semanas 12 a 14 usan servicio/api.py
+   (servicio_fraude.py, servicio.py), test_api.py / test_servicio.py y modelado/test_pipeline_proyecto.py. Se usan
+   los nombres del PDF del PSet 4 (api/main.py, api/esquemas.py, tests/test_contrato.py, test_modelo.py,
+   test_comportamiento.py y tests/test_produccion.py), porque el PDF manda sobre la guia del repositorio. Se
+   conserva lo que fijan los laboratorios: FastAPI con /salud, TestClient en las pruebas, Dockerfile con
+   python:3.11-slim y dependencias antes que el codigo, y un requirements.txt exportado del lock.
+
+11. Disparador por rendimiento. El PDF da como ejemplo "N lotes consecutivos"; A7 usa N = 2 lotes etiquetados
+   seguidos con MAE sobre la media de la CV + 1 desviacion (docs/monitoreo.md).
+
+12. Version 8 en lugar de 7. En la corrida de produccion_lotes en Kestra (27-nov), la pausa de la llegada 2026-04 se
+   envio sin marcar "aprobado" y la v7 quedo rechazada aunque la regla decia promover. Se repitio el reentrenamiento
+   (Replay): la v8 tiene MAE y retorno identicos a la v7 (semilla 42, mismos datos) y se aprobo. Los lotes 2026-05 a
+   2026-10 se volvieron a servir con v8. REENTRENAMIENTOS conserva las dos filas (docs/reentrenamiento.md). La simulacion
+   offline (r1 a r5) y la de Kestra (v3, v4, v5, v6, v8) dan las mismas decisiones y cifras.
+
+13. requirements.txt y .env.example en la raiz de pset-04/ (estructura del PDF). requirements.txt incluye
+   modelos/requirements.txt (exportado de modelos/uv.lock) mas pytest y httpx: una sola fuente de versiones. Las imagenes
+   del pipeline de datos usan sus propios requirements (pipeline/kestra, pipeline/dbt) porque fijan pandas 2.3.3 y
+   snowflake-connector 4.8.1, incompatibles con pandas 3.1.1 del modelo. .env.example es la plantilla completa (las
+   variables de pipeline/.env.example, que ahora incluye API_TOKEN, mas las de MLflow); docker-compose.yml sigue leyendo
+   pipeline/.env. tests/test_despliegue.py comprueba que las dos plantillas cubren el compose y que las versiones del
+   modelo coinciden en la API, el entrenamiento y la copia de tests/fixtures/.
+
+14. Carpetas de la plantilla de psets/proyecto/. La plantilla del curso trae ingesta/, orquestacion/, infra/,
+   calidad/, warehouse/, procesamiento/, modelado/, servicio/, monitoreo/ y data/{raw,processed}/ vacias. El proyecto
+   conserva la estructura del PDF del PSet 4 (que manda sobre la del repositorio) y las mismas rutas que pset-04/
+   (docker-compose.yml, flows, Dockerfiles y pruebas dependen de ellas). Las carpetas de la plantilla quedan con su
+   .gitkeep y el README de psets/proyecto/ tiene la tabla que dice donde esta cada etapa.
+
+15. Versiones de librerias frente a la CI del curso. pruebas.yml corre "pytest psets/proyecto" con el
+   requirements.txt de la raiz del repositorio (Python 3.11, scikit-learn 1.5.2, mlflow 2.17.2, pandas 2.2.2, numpy
+   1.26.4, sin lightgbm). El champion y las pruebas usan las versiones de api/uv.lock y modelos/uv.lock
+   (scikit-learn 1.9.1, mlflow 3.18.0, pandas 3.1.1, numpy 2.4.6, lightgbm 4.7.0): con las del curso el modelo
+   serializado no carga. No se cambia requirements.txt de la raiz (lo comparten los laboratorios y los PSets 2-3) ni
+   se reentrena con versiones viejas (cambiaria el champion registrado). Solucion (opcion a, decision de Paul):
+   psets/proyecto/conftest.py compara las versiones instaladas con las de api/requirements.txt; si no coinciden no
+   recoge pruebas, pytest sale con codigo 5 (que pruebas.yml acepta) y el resumen lo explica. Las 45 pruebas corren
+   con el entorno correcto en pset4-ci.yml, que ahora prueba psets/pset-04/ y psets/proyecto/ (matrix). Verificado
+   en local: con las versiones del curso, 0 pruebas y codigo 5; con las del proyecto, 45 pasan.
+
+LO ENTREGADO EN LOS PSETS 2 Y 3
+
+psets/pset-02/ y psets/pset-03/ no se modifican (tags pset-02 y pset-03, ambos 100/100 sin feedback).
+pipeline/ y modelos/ son copias para poder cambiarlas; la base de Snowflake del PSet 4 es PORTAFOLIO_P4
+(PORTAFOLIO y PORTAFOLIO_P3 no se tocan). Detalle en docs/migracion.md.

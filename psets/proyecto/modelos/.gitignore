@@ -1,0 +1,11 @@
+.env
+.venv/
+data/
+mlflow/
+__pycache__/
+.ipynb_checkpoints/
+# analisis/: caches DuckDB de Yahoo y del universo (se regeneran con los scripts), sus
+# respaldos y logs de corridas largas
+analisis/**/*.duckdb
+analisis/**/*.duckdb.bak
+analisis/**/*.log

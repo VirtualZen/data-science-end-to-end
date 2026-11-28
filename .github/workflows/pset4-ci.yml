@@ -1,5 +1,5 @@
-# PSet 4 - Integracion continua del servicio de prediccion (psets/pset-04/).
-# En cada push y pull request que toque psets/pset-04/: instala el entorno fijado de la API
+# PSet 4 - Integracion continua del servicio de prediccion (psets/pset-04/ y su copia en psets/proyecto/).
+# En cada push y pull request que toque una de las dos carpetas, una corrida por carpeta (matrix): instala el entorno fijado de la API
 # (api/uv.lock), corre las pruebas de tests/ (contrato, modelo y comportamiento, con la copia
 # del champion de tests/fixtures/, sin MLflow ni Snowflake), construye la imagen y la prueba
 # arrancada: /salud, una prediccion valida (200) y una invalida (422).
@@ -7,24 +7,27 @@ name: pset4-ci
 
 on:
   push:
-    paths: ["psets/pset-04/**", ".github/workflows/pset4-ci.yml"]
+    paths: ["psets/pset-04/**", "psets/proyecto/**", ".github/workflows/pset4-ci.yml"]
   pull_request:
-    paths: ["psets/pset-04/**", ".github/workflows/pset4-ci.yml"]
-
-defaults:
-  run:
-    working-directory: psets/pset-04
+    paths: ["psets/pset-04/**", "psets/proyecto/**", ".github/workflows/pset4-ci.yml"]
 
 jobs:
   pruebas:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        carpeta: [psets/pset-04, psets/proyecto]
+    defaults:
+      run:
+        working-directory: ${{ matrix.carpeta }}
     steps:
       - uses: actions/checkout@v6
 
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-          cache-dependency-glob: psets/pset-04/api/uv.lock
+          cache-dependency-glob: ${{ matrix.carpeta }}/api/uv.lock
 
       - name: Instalar el entorno de la API (versiones de api/uv.lock)
         run: uv sync --project api --frozen
@@ -35,6 +38,13 @@ jobs:
   imagen:
     runs-on: ubuntu-latest
     needs: pruebas
+    strategy:
+      fail-fast: false
+      matrix:
+        carpeta: [psets/pset-04, psets/proyecto]
+    defaults:
+      run:
+        working-directory: ${{ matrix.carpeta }}
     steps:
       - uses: actions/checkout@v6
 
