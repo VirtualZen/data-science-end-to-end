@@ -71,3 +71,19 @@ universo con igual peso), con `respaldo: true` y `usado: "respaldo: ..."` en cad
 
 El sistema **no ejecuta órdenes**: propone el portafolio; el asesor y el cliente deciden (fuera de alcance desde el
 PSet 1).
+
+**Revisión del juicio humano del PSet 1 (decisión de Paul, 27-nov).** El juicio se **mantiene**: el cliente aprueba
+siempre cada propuesta, aunque el modelo siga en servicio. Se amplía en tres puntos por lo que mostró la operación:
+
+1. **Dos propuestas por mes.** El asesor presenta al cliente la propuesta del modelo **y** la de la operación manual
+   (B7, que se agregó como challenger adicional y la API calcula en paralelo: `decision_operacion_manual`,
+   `peso_operacion_manual`, `n_coinciden_operacion_manual`). El cliente ve en qué coinciden y en qué difieren y elige.
+   Motivo: en la simulación la operación manual le ganó al modelo (Sharpe 0,35 frente a 0,05 con el champion fijo) y
+   A9 estuvo activa desde 2025-02.
+2. **Revisión mensual de mantener o retirar el servicio.** Cada mes, con el monitoreo del lote, el responsable del
+   producto y el asesor deciden si el modelo sigue en servicio, pasa al respaldo o se retira. Pesan sobre todo las
+   alertas alrededor del reentrenamiento: A7 repetidas, challengers rechazados seguidos (R5) y A8/A9 activas. Muchas
+   alertas en el reentrenamiento sin un challenger que gane indican que reentrenar no corrige el problema.
+3. **Aprobación del cambio de modelo.** Un científico de datos aprueba o rechaza cada challenger en la pausa de Kestra.
+   El incidente v7 → v8 (`docs/reentrenamiento.md`) mostró que esa pausa debe mostrar el veredicto de la regla junto al
+   check y pedir motivo solo cuando la decisión humana la contradice.

@@ -310,15 +310,26 @@ def revertir(args) -> None:
 
 
 def exportar(args) -> None:
-    """Copia las cuatro tablas de PRODUCCION a CSV (docs/predicciones.csv, monitoreo.csv, alertas.csv,
-    reentrenamientos.csv) para el documento y el notebook 07."""
+    """Evidencia del PDF (seccion Repositorio) en docs/: predicciones.csv, monitoreo.csv y alertas.csv desde
+    PORTAFOLIO_P4.PRODUCCION; corridas.csv con todas las corridas del experimento (mlflow.search_runs, incluidas
+    las de reentrenamiento); reentrenamientos.csv con las corridas de fase=reentrenamiento, unidas por run_id a
+    la decision humana de la tabla REENTRENAMIENTOS (aprobado, por quien y motivo)."""
+    import mlflow
     destino = Path(args.destino)
     destino.mkdir(parents=True, exist_ok=True)
-    for t in ("PREDICCIONES", "MONITOREO", "ALERTAS", "REENTRENAMIENTOS"):
+    for t in ("PREDICCIONES", "MONITOREO", "ALERTAS"):
         d = leer_tabla(t, False)
-        d.sort_values([c for c in ("anio_mes", "anio_mes_llegada", "timestamp_utc") if c in d][:1]).to_csv(
+        d.sort_values([c for c in ("anio_mes", "timestamp_utc") if c in d][:1]).to_csv(
             destino / f"{t.lower()}.csv", index=False)
         print(f"{t}: {len(d)} filas -> {destino / (t.lower() + '.csv')}")
+    corridas = mlflow.search_runs(experiment_names=[os.environ.get("MLFLOW_EXPERIMENT_NAME", "portafolio-inversiones")])
+    corridas.to_csv(destino / "corridas.csv", index=False)
+    print(f"corridas: {len(corridas)} filas -> {destino / 'corridas.csv'}")
+    reent = corridas[corridas.get("tags.fase", pd.Series(dtype=str)) == "reentrenamiento"]
+    decisiones = leer_tabla("REENTRENAMIENTOS", False).rename(columns={"run_id_challenger": "run_id"})
+    reent = reent.merge(decisiones, on="run_id", how="left").sort_values("start_time")
+    reent.to_csv(destino / "reentrenamientos.csv", index=False)
+    print(f"reentrenamientos (fase=reentrenamiento + decision): {len(reent)} filas -> {destino / 'reentrenamientos.csv'}")
 
 
 def main() -> None:

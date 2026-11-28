@@ -23,7 +23,7 @@ D, F, S = R / "docs", R / "docs" / "figuras", R / "docs" / "simulacion"
 REPO = R.parents[1]
 AZUL, GRIS, LINEA = colors.HexColor("#17384D"), colors.HexColor("#526775"), colors.HexColor("#D5DEE3")
 MAX_PAGINAS = 12
-VIDEO = os.environ.get("VIDEO_URL", "(enlace pendiente: VIDEO_URL)")
+VIDEO = os.environ.get("VIDEO_URL", "https://drive.google.com/file/d/1btUpZCoxSnJRdy5f02ZRcjz0P7st4Lbu/view?usp=sharing")
 
 
 def leer(n):
@@ -282,9 +282,11 @@ table(["Criterio", "Métrica y umbral", "Respuesta"], [
 ], [40, 210, 230])
 p("En la simulación se cumplen R1 (2025-07), R3 (−3,4 %), R5 (rechazos en 2025-03, 2025-08 y 2025-11) y R6 (desde 2025-02). <b>Interruptor:</b> "
   "USAR_RESPALDO=true al arrancar, o POST /respaldo?activar=true con X-Token sin reiniciar; responde B1 + B5 marcado "
-  "respaldo: true (pruebas y video). <b>Supervisión humana:</b> el juicio del PSet 1 (el cliente aprueba cada propuesta) "
-  "sigue siendo adecuado y se amplía: un científico de datos aprueba cada cambio de modelo y el responsable del producto "
-  "decide el respaldo ante A8, porque la simulación mostró que la regla automática sola empeora el resultado.")
+  "respaldo: true (pruebas y video). <b>Supervisión humana:</b> el juicio del PSet 1 se mantiene: el cliente aprueba siempre cada "
+  "propuesta. Se amplía: el asesor le presenta cada mes la propuesta del modelo y la de la operación manual (B7, challenger "
+  "adicional calculado en paralelo por la API); cada mes se decide mantener, pasar al respaldo o retirar el servicio según "
+  "las alertas del reentrenamiento (A7 repetidas, rechazos seguidos, A8/A9); y un científico de datos aprueba cada cambio "
+  "de modelo en la pausa de Kestra, que tras el incidente v7 debe mostrar el veredicto de la regla.")
 
 # ------------------------------------------------------------------ 9
 h("9. Resultado de negocio")

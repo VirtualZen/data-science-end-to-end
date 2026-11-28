@@ -64,6 +64,13 @@ inducida, no gana dinero), v6 rechazado (202511), v7 rechazado por error de capt
 (deriva inducida) y en 2025-04 (aranceles, ya documentado); A5 en 4 lotes de 2024 (falsa alarma documentada); A7 en 202412,
 202507, 202508 y 202603. Auditoria contra el PDF; requirements.txt y .env.example en la raiz; 11 pruebas nuevas (45 pasan).
 
+(27-nov 22h, C) Verificacion contra el PDF antes de cerrar. Hecho en el Mac: rollback (v8->v3->v8), interruptor (401 sin token),
+422 por campo faltante y por tipo, ingesta_diaria 2026-11-25 en verde hasta transformar, video de 6:36 en Drive (enlace en la
+portada del memo), CI pset4-ci #2 en verde. exportar ahora escribe corridas.csv (mlflow.search_runs del experimento) y
+reentrenamientos.csv = corridas fase=reentrenamiento unidas por run_id a la decision humana (PDF, seccion Repositorio).
+Falta: 11.4 exportar en el Mac y volver a ejecutar el notebook 07 con esos CSV; 8.5 decision de Paul sobre el juicio humano;
+11.5 PR a master (dispara pset4-cd: imagen en GHCR y captura cd_ghcr.png) y tag pset-04.
+
 ======================================================================================
 0. PREPARACION
 ======================================================================================
@@ -212,7 +219,10 @@ inducida, no gana dinero), v6 rechazado (202511), v7 rechazado por error de capt
 [x] 8.4 (C) Interruptor de respaldo (variable de entorno o endpoint protegido) y su demostracion. (27-nov en el Mac: /respaldo
         activar=true -> usado respaldo B1+B5 (333 acciones, igual peso); sin token 401; activar=false -> modelo v8.
         Entrada invalida: falta vol_63d -> 422 "Field required"; texto en vol_63d -> 422 "Input should be a valid number")
-[ ] 8.5 (P) Revisar el juicio humano del PSet 1 (el inversionista aprueba) segun el comportamiento.
+[x] 8.5 (P) (27-nov, decision de Paul; docs/criterio_retirada.md seccion 5 y memo) Se mantiene: el cliente aprueba siempre.
+        Se amplia: el asesor presenta cada mes la propuesta del modelo y la de la operacion manual (B7, challenger adicional);
+        cada mes se decide mantener, respaldo o retirar segun las alertas del reentrenamiento; el cientifico de datos
+        aprueba cada challenger en la pausa de Kestra (con veredicto visible tras el incidente v7).
 
 ======================================================================================
 9. RESULTADO DE NEGOCIO (PDF 9)
@@ -228,9 +238,16 @@ inducida, no gana dinero), v6 rechazado (202511), v7 rechazado por error de capt
 [x] 10.3 (C) Trazabilidad PREDICCIONES -> version, run_id, snapshot de la OBT, tablas Gold.
 [x] 10.5 (C) (27-nov noche) requirements.txt y .env.example en la raiz de pset-04/ (disclaimer 13).
 [x] 10.4 (C) Cifras del pitch del PSet 1 reemplazadas por las de la seccion 9.
-[~] 11.1 (C) (27-nov: generado con scripts/generar_memo.py; falta VIDEO_URL y capturas del anexo C) docs/PSet4_memo_Gomez_Ehmig.pdf (<= 12 paginas + anexos: memos de los PSets 1-3 y cambios.md).
+[~] 11.1 (C) (27-nov noche: regenerado con VIDEO_URL; anexo C con ci_verde, kestra_pausa y rollback; falta cd_ghcr.png tras el
+        merge a master) docs/PSet4_memo_Gomez_Ehmig.pdf (<= 12 paginas + anexos: memos de los PSets 1-3 y cambios.md).
 [~] 11.2 (C) (27-nov: scripts/generar_presentacion.js, 11 diapositivas; revisar Paul) docs/PSet4_presentacion_Gomez_Ehmig.pdf (10-12 diapositivas, sin jerga).
-[ ] 11.3 (P) Video de demostracion (<= 7 min) y su enlace en el documento tecnico.
-[ ] 11.4 (C) Exportar a docs/: predicciones.csv, monitoreo.csv, alertas.csv, corridas.csv,
+[x] 11.3 (P) (27-nov: 6:36, 1080p, con voz; https://drive.google.com/file/d/1btUpZCoxSnJRdy5f02ZRcjz0P7st4Lbu/view; enlace en
+        la portada del memo) Video de demostracion (<= 7 min) y su enlace en el documento tecnico.
+[x] 11.4 (C+P) (27-nov 22h en el Mac: predicciones 11.632, monitoreo 35, alertas 32, corridas 149, reentrenamientos 6 =
+        corridas fase=reentrenamiento + decision; notebook 07 re-ejecutado con los CSV de Kestra, sin errores; 06 y 08 con
+        salida de la VM) Exportar a docs/: predicciones.csv, monitoreo.csv, alertas.csv, corridas.csv,
         reentrenamientos.csv. Notebooks con Restart + Run All.
 [ ] 11.5 (P) Commit, PR y tag pset-04.
+[ ] 11.6 (C+P) Armar todo en psets/proyecto/ al terminar (pedido de Paul 27-nov). Antes: resolver que
+        .github/workflows/pruebas.yml corre pytest psets/proyecto con el requirements.txt de la raiz (scikit-learn 1.5.2,
+        mlflow 2.17.2), incompatible con el champion (1.9.1 / 3.18.0); disclaimer punto 1.
