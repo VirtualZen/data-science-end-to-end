@@ -1,0 +1,148 @@
+@startuml
+title <size:24>Container View: Pipeline de datos del portafolio</size>\n<size:24>Nivel 2: servicios persistentes, tareas efímeras, script de reconstrucción y Snowflake SaaS.</size>
+
+set separator none
+left to right direction
+skinparam ranksep 60
+skinparam nodesep 30
+hide stereotype
+
+<style>
+  root {
+    BackgroundColor: #ffffff;
+    FontColor: #444444;
+  }
+  // Element,Container
+  .Element-RWxlbWVudCxDb250YWluZXI= {
+    BackgroundColor: #438dd5;
+    LineColor: #2e6295;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Container,BaseDatos
+  .Element-RWxlbWVudCxDb250YWluZXIsQmFzZURhdG9z {
+    BackgroundColor: #2a6a4f;
+    LineColor: #1d4a37;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Container,Script
+  .Element-RWxlbWVudCxDb250YWluZXIsU2NyaXB0 {
+    BackgroundColor: #7a7a7a;
+    LineColor: #555555;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Person
+  .Element-RWxlbWVudCxQZXJzb24= {
+    BackgroundColor: #08427b;
+    LineColor: #052e56;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Software System,Externo
+  .Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0sRXh0ZXJubw== {
+    BackgroundColor: #999999;
+    LineColor: #6b6b6b;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Element,Software System,Interno
+  .Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0sSW50ZXJubw== {
+    BackgroundColor: #6b8e23;
+    LineColor: #4a6318;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+    MaximumWidth: 450;
+  }
+  // Relationship
+  .Relationship-UmVsYXRpb25zaGlw {
+    LineThickness: 2;
+    LineStyle: 10-10;
+    LineColor: #444444;
+    FontColor: #444444;
+    FontSize: 24;
+  }
+  // Pipeline de datos del portafolio
+  .Boundary-UGlwZWxpbmUgZGUgZGF0b3MgZGVsIHBvcnRhZm9saW8= {
+    BackgroundColor: #ffffff;
+    LineColor: #0b4884;
+    LineStyle: 0;
+    LineThickness: 2;
+    FontColor: #ffffff;
+    FontSize: 24;
+    HorizontalAlignment: center;
+    Shadowing: 0;
+  }
+</style>
+
+person "==Asesor de inversiones\n<size:16>[Person]</size>\n\nUsuario de la herramienta: revisa ejecuciones y avisos, y consume la OBT (snapshot) para la decisión mensual." <<Element-RWxlbWVudCxQZXJzb24=>> as Asesordeinversiones
+rectangle "==Yahoo Finance\n<size:16>[Software System]</size>\n\nPrecios diarios OHLCV y cierre ajustado (API no oficial, vía yfinance): acciones, ^GSPC, ^NYA, ^IRX." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0sRXh0ZXJubw==>> as YahooFinance
+rectangle "==GitHub (fuentes de referencia)\n<size:16>[Software System]</size>\n\nComposición histórica del S&P 500 (chinobing) y listados de bolsa (rreichel3)." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0sRXh0ZXJubw==>> as GitHubfuentesdereferencia
+rectangle "==Gmail (SMTP)\n<size:16>[Software System]</size>\n\nEnvía los avisos Success / Fail al correo del asesor (contraseña de aplicación, secreto AVISO_CLAVE_APP)." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0sRXh0ZXJubw==>> as GmailSMTP
+rectangle "==Modelado del PSet 3\n<size:16>[Software System]</size>\n\npsets/pset-03: src/datos.py exporta la OBT a data/obt.parquet (sha256); notebooks, MLflow y Model Registry." <<Element-RWxlbWVudCxTb2Z0d2FyZSBTeXN0ZW0sSW50ZXJubw==>> as ModeladodelPSet3
+
+rectangle "Pipeline de datos del portafolio\n<size:16>[Software System]</size>" <<Boundary-UGlwZWxpbmUgZGUgZGF0b3MgZGVsIHBvcnRhZm9saW8=>> {
+  rectangle "==Tarea dbt\n<size:16>[Container: dbt Core + dbt-snowflake · imagen pset3-dbt]</size>\n\ndbt build: Bronze (staging), Silver (calendario NYSE, imputación de huecos cortos, retornos, membresía), Gold (dos hechos y tres dimensiones) y CALIDAD (dq_metricas, dq_huecos_por_ticker, dq_universo_por_fecha); tests de integridad y negocio." <<Element-RWxlbWVudCxDb250YWluZXI=>> as Pipelinededatosdelportafolio.Tareadbt
+  rectangle "==Driver Spark / tarea OBT\n<size:16>[Container: Spark 3.5.3 · pset3-spark · tarea efímera]</size>\n\nconstruir_obt.py: lee Gold, construye acción por mes, verifica 17 controles (incluye mercado del mes siguiente solo con meses cerrados) y escribe OBT." <<Element-RWxlbWVudCxDb250YWluZXI=>> as Pipelinededatosdelportafolio.DriverSparktareaOBT
+  rectangle "==spark-master\n<size:16>[Container: Spark 3.5.3 · RPC :7077 · UI :8081]</size>\n\nCoordina los recursos del clúster; servicio persistente de Compose." <<Element-RWxlbWVudCxDb250YWluZXI=>> as Pipelinededatosdelportafolio.sparkmaster
+  rectangle "==spark-worker\n<size:16>[Container: Spark 3.5.3 · pset3-spark]</size>\n\nEjecuta las tareas distribuidas; ofrece 2 GB al ejecutor." <<Element-RWxlbWVudCxDb250YWluZXI=>> as Pipelinededatosdelportafolio.sparkworker
+  rectangle "==reconstruir_obt.sh\n<size:16>[Container: bash · uv · Docker]</size>\n\nScript del asesor: pruebas (ingesta y Spark en Docker), imágenes, transformar con etiqueta origen=manual, evidencias, snapshot y aviso final." <<Element-RWxlbWVudCxDb250YWluZXIsU2NyaXB0>> as Pipelinededatosdelportafolio.reconstruir_obtsh
+  database "==Snowflake · base PORTAFOLIO_P3\n<size:16>[Container: SaaS]</size>\n\nEsquemas RAW, BRONZE, SILVER, GOLD, OBT y CALIDAD. Bodega PSET2_WH (XSMALL, autosuspensión). La base PORTAFOLIO del PSet 2 no se modifica." <<Element-RWxlbWVudCxDb250YWluZXIsQmFzZURhdG9z>> as Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3
+  rectangle "==Kestra\n<size:16>[Container: Kestra 2.0.7 · Docker · UI :8090]</size>\n\nOrquestación: ingesta_diaria (L–V 18:30 NY, retries, recuperación; con RAW vacía hace el histórico desde 2010), backfill_historico (recarga por año), transformar y avisos (usfq.avisos)." <<Element-RWxlbWVudCxDb250YWluZXI=>> as Pipelinededatosdelportafolio.Kestra
+  database "==Postgres\n<size:16>[Container: PostgreSQL 18 · Docker]</size>\n\nEstado interno de Kestra (flows, ejecuciones, colas)." <<Element-RWxlbWVudCxDb250YWluZXIsQmFzZURhdG9z>> as Pipelinededatosdelportafolio.Postgres
+  rectangle "==Tarea de ingesta\n<size:16>[Container: Python 3.11 · imagen pset3-ingesta]</size>\n\nextraer_cargar.py: descarga precios, composición y listados; traduce símbolos con equivalencias_tickers; no guarda la sesión en curso; carga a RAW (append-only, con lote)." <<Element-RWxlbWVudCxDb250YWluZXI=>> as Pipelinededatosdelportafolio.Tareadeingesta
+}
+
+Asesordeinversiones --> Pipelinededatosdelportafolio.Kestra <<Relationship-UmVsYXRpb25zaGlw>> : "Supervisa ejecuciones; lanza recargas puntuales\n<size:16>[UI en localhost:8090]</size>"
+Asesordeinversiones --> Pipelinededatosdelportafolio.reconstruir_obtsh <<Relationship-UmVsYXRpb25zaGlw>> : "Reconstruye la OBT tras un cambio del pipeline"
+Pipelinededatosdelportafolio.reconstruir_obtsh --> Pipelinededatosdelportafolio.Kestra <<Relationship-UmVsYXRpb25zaGlw>> : "Sube flows y lanza transformar\n<size:16>[API REST]</size>"
+Pipelinededatosdelportafolio.reconstruir_obtsh --> GmailSMTP <<Relationship-UmVsYXRpb25zaGlw>> : "Envía Success / Fail del script\n<size:16>[notificar.py, SMTPS]</size>"
+Pipelinededatosdelportafolio.Kestra --> Pipelinededatosdelportafolio.Postgres <<Relationship-UmVsYXRpb25zaGlw>> : "Guarda su estado en"
+Pipelinededatosdelportafolio.Kestra --> Pipelinededatosdelportafolio.Tareadeingesta <<Relationship-UmVsYXRpb25zaGlw>> : "Ejecuta como contenedor de tarea (trigger L–V 18:30 NY; reintentos exponenciales)"
+Pipelinededatosdelportafolio.Kestra --> Pipelinededatosdelportafolio.Tareadbt <<Relationship-UmVsYXRpb25zaGlw>> : "Ejecuta al terminar la ingesta (subflow transformar)"
+Pipelinededatosdelportafolio.Kestra --> Pipelinededatosdelportafolio.DriverSparktareaOBT <<Relationship-UmVsYXRpb25zaGlw>> : "Ejecuta spark-submit tras dbt"
+Pipelinededatosdelportafolio.Kestra --> GmailSMTP <<Relationship-UmVsYXRpb25zaGlw>> : "Envía Success / Fail al terminar cada ingesta (flow avisos)\n<size:16>[MailExecution, SMTPS]</size>"
+GmailSMTP --> Asesordeinversiones <<Relationship-UmVsYXRpb25zaGlw>> : "Entrega los avisos"
+Pipelinededatosdelportafolio.Tareadeingesta --> YahooFinance <<Relationship-UmVsYXRpb25zaGlw>> : "Descarga OHLCV diario (yfinance, por lotes con reintentos)"
+Pipelinededatosdelportafolio.Tareadeingesta --> GitHubfuentesdereferencia <<Relationship-UmVsYXRpb25zaGlw>> : "Descarga composición histórica y listados de bolsa"
+Pipelinededatosdelportafolio.Tareadeingesta --> Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3 <<Relationship-UmVsYXRpb25zaGlw>> : "Carga RAW con write_pandas (append-only + bitácora)"
+Pipelinededatosdelportafolio.Tareadbt --> Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3 <<Relationship-UmVsYXRpb25zaGlw>> : "Transforma RAW → BRONZE → SILVER → GOLD y calcula CALIDAD"
+Pipelinededatosdelportafolio.DriverSparktareaOBT --> Pipelinededatosdelportafolio.sparkmaster <<Relationship-UmVsYXRpb25zaGlw>> : "Solicita recursos del clúster\n<size:16>[spark://spark-master:7077]</size>"
+Pipelinededatosdelportafolio.sparkmaster --> Pipelinededatosdelportafolio.sparkworker <<Relationship-UmVsYXRpb25zaGlw>> : "Asigna ejecutores"
+Pipelinededatosdelportafolio.DriverSparktareaOBT --> Pipelinededatosdelportafolio.sparkworker <<Relationship-UmVsYXRpb25zaGlw>> : "Coordina tareas y resultados"
+Pipelinededatosdelportafolio.sparkworker --> Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3 <<Relationship-UmVsYXRpb25zaGlw>> : "Lee y escribe particiones mediante el conector Snowflake"
+Pipelinededatosdelportafolio.DriverSparktareaOBT --> Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3 <<Relationship-UmVsYXRpb25zaGlw>> : "Lee GOLD y escribe OBT.OBT_ACCION_MES, OBT.OBT_ACCION_DIA y VALIDACION_OBT"
+ModeladodelPSet3 --> Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3 <<Relationship-UmVsYXRpb25zaGlw>> : "Exporta la OBT con SELECT (snapshot con sha256)"
+Asesordeinversiones --> Pipelinededatosdelportafolio.SnowflakebasePORTAFOLIO_P3 <<Relationship-UmVsYXRpb25zaGlw>> : "Consulta la OBT y las métricas de calidad\n<size:16>[Snowsight]</size>"
+
+@enduml

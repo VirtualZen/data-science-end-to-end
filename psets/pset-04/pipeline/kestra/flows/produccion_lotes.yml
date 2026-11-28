@@ -1,0 +1,95 @@
+# PSet 4 - Simulacion de produccion: pasa los lotes mensuales del hold-out, uno tras otro, por el sistema.
+# Por lote: (1) lote: lee el mes de PORTAFOLIO_P4.OBT.OBT_ACCION_MES, aplica la deriva inducida si es un lote
+# sintetico (2025-05 a 2025-07), llama a POST /predecir y guarda PRODUCCION.PREDICCIONES; (2) monitoreo
+# (subflow); (3) si la regla se dispara, reentrenamiento (subflow, con pausa de aprobacion humana) antes del
+# lote siguiente. El horizonte se respeta: el rendimiento del lote t se mide al llegar t+1.
+id: produccion_lotes
+namespace: usfq.produccion
+
+labels:
+  proyecto: portafolio-inversiones
+  pset: "4"
+
+inputs:
+  - id: desde
+    type: INT
+    defaults: 202312
+  - id: hasta
+    type: INT
+    defaults: 202609
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+tasks:
+  - id: meses
+    type: io.kestra.plugin.scripts.shell.Commands
+    containerImage: pset4-produccion:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      pullPolicy: NEVER
+    commands:
+      - >
+        python -c "import json,pandas as pd;
+        m=[p.year*100+p.month for p in pd.period_range(pd.Period('{{ inputs.desde }}'[:4]+'-'+'{{ inputs.desde }}'[4:]),
+        pd.Period('{{ inputs.hasta }}'[:4]+'-'+'{{ inputs.hasta }}'[4:]), freq='M')];
+        print('::'+json.dumps({'outputs':{'meses':m}})+'::')"
+
+  # Kestra 2.0 reemplazo ForEach por Loop (docs: migration-guide/v2.0.0/foreach-loop): el valor es item.value
+  # y las salidas de las tareas hermanas de la misma iteracion se leen sin indice. concurrencyLimit 1 = en orden.
+  - id: por_lote
+    type: io.kestra.plugin.core.flow.Loop
+    values: "{{ outputs.meses.vars.meses }}"
+    concurrencyLimit: 1
+    transmitFailed: true
+    outputs:
+      - id: alertas
+        type: STRING
+        value: "{{ item.value }}: {{ outputs.monitoreo.outputs.alertas }}"
+    tasks:
+      - id: lote
+        type: io.kestra.plugin.scripts.shell.Commands
+        containerImage: pset4-produccion:latest
+        taskRunner:
+          type: io.kestra.plugin.scripts.runner.docker.Docker
+          pullPolicy: NEVER
+          networkMode: pset4_red
+        timeout: PT20M
+        retry:
+          type: constant
+          interval: PT30S
+          maxAttempts: 2
+        env:
+          SNOWFLAKE_ACCOUNT: "{{ secret('SNOWFLAKE_ACCOUNT') }}"
+          SNOWFLAKE_USER: "{{ secret('SNOWFLAKE_USER') }}"
+          SNOWFLAKE_ROLE: "{{ secret('SNOWFLAKE_ROLE') }}"
+          SNOWFLAKE_WAREHOUSE: "{{ secret('SNOWFLAKE_WAREHOUSE') }}"
+          SNOWFLAKE_DATABASE: "{{ secret('SNOWFLAKE_DATABASE') }}"
+          SNOWFLAKE_PRIVATE_KEY: "{{ secret('SNOWFLAKE_PRIVATE_KEY') }}"
+          API_URL: http://api:8000
+        commands:
+          - cd /app && python -m monitoreo.produccion lote --anio-mes {{ item.value }}
+
+      - id: monitoreo
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: usfq.produccion
+        flowId: monitoreo
+        wait: true
+        transmitFailed: true
+        inputs:
+          anio_mes: "{{ item.value }}"
+
+      - id: si_reentrenar
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ outputs.monitoreo.outputs.dispara }}"
+        then:
+          - id: reentrenamiento
+            type: io.kestra.plugin.core.flow.Subflow
+            namespace: usfq.produccion
+            flowId: reentrenamiento
+            wait: true
+            transmitFailed: true
+            inputs:
+              anio_mes_llegada: "{{ outputs.monitoreo.outputs.llegada }}"
+              motivo: "{{ outputs.monitoreo.outputs.motivo }}"

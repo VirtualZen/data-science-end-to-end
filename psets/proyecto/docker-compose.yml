@@ -1,0 +1,210 @@
+# PSet 4 - Sistema completo del portafolio de inversiones en un solo docker-compose:
+#   pipeline de datos (Kestra + Postgres, Spark; dbt e ingesta como imagenes de tarea),
+#   MLflow (tracking + Model Registry) y la API de prediccion.
+#
+# Desde psets/pset-04/ (las variables y secretos se leen de pipeline/.env y pipeline/.env_encoded,
+# que no se suben al repositorio; API_TOKEN y API_TAG tambien van en pipeline/.env):
+#   docker compose --env-file pipeline/.env --profile herramientas build    imagenes de tarea + api
+#   docker compose --env-file pipeline/.env up -d                           kestra, spark, mlflow, api, tablero
+#   docker compose --env-file pipeline/.env up -d mlflow api                solo el servicio del modelo
+#
+# Servicios y puertos (solo en 127.0.0.1 salvo Kestra y Spark, como en el PSet 2):
+#   kestra 8090 · spark-master 8081/7077 · mlflow 5001 · api 8000 · tablero 8501
+#
+# Memoria: con todo arriba se reservan ~11 GB (Spark 8 GB por defecto). Para la API y MLflow
+# basta con `up -d mlflow api`; Spark solo hace falta mientras corre transformar (ver disclaimer.txt).
+#
+# La imagen de la API: por defecto se construye aqui (api/Dockerfile). Con API_TAG=<hash del commit>
+# se usa la imagen publicada por .github/workflows/pset4-cd.yml en GHCR:
+#   API_TAG=<hash> docker compose --env-file pipeline/.env pull api && ... up -d --no-build api
+
+name: pset4
+
+x-snowflake-env: &snowflake-env
+  env_file:
+    - path: pipeline/.env
+      required: false
+
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: kestra
+      POSTGRES_USER: kestra
+      POSTGRES_PASSWORD: ${KESTRA_DB_PASSWORD:?Define KESTRA_DB_PASSWORD en pipeline/.env}
+    volumes:
+      - datos_postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kestra -d kestra"]
+      interval: 10s
+      retries: 10
+    networks: [red]
+
+  kestra:
+    image: kestra/kestra:${KESTRA_VERSION:-v2.0.7}
+    user: "root"
+    command: server standalone
+    env_file:
+      - path: pipeline/.env_encoded
+        required: false
+    volumes:
+      - datos_kestra:/app/storage
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:5432/kestra
+            driverClassName: org.postgresql.Driver
+            username: kestra
+            password: ${KESTRA_DB_PASSWORD:?Define KESTRA_DB_PASSWORD en pipeline/.env}
+        kestra:
+          server:
+            basic-auth:
+              username: ${KESTRA_USUARIO:-admin@kestra.io}
+              password: ${KESTRA_CLAVE:?Define KESTRA_CLAVE en pipeline/.env}
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              base-path: "/app/storage"
+          queue:
+            type: postgres
+          tasks:
+            tmp-dir:
+              path: /tmp/kestra-wd/tmp
+          url: http://localhost:8090/
+    ports:
+      - "8090:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [red]
+
+  spark-master:
+    image: pset4-spark:latest
+    build:
+      context: ./pipeline/spark
+      target: runtime
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+    ports:
+      - "8081:8080"
+      - "7077:7077"
+    networks: [red]
+
+  spark-worker:
+    image: pset4-spark:latest
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_NO_DAEMONIZE: "true"
+      SPARK_WORKER_CORES: ${SPARK_WORKER_CORES:-4}
+      SPARK_WORKER_MEMORY: ${SPARK_WORKER_MEMORY:-8g}
+    depends_on:
+      - spark-master
+    networks: [red]
+
+  mlflow:
+    build: ./modelos
+    image: pset4-mlflow:latest
+    mem_limit: 1g
+    command: >
+      mlflow server --workers 1 --host 0.0.0.0 --port 5000
+      --allowed-hosts mlflow:5000,localhost:5001,127.0.0.1:5001,localhost:5000,127.0.0.1:5000
+      --backend-store-uri sqlite:////mlflow/tracking.db --serve-artifacts --artifacts-destination /mlflow/artifacts
+    ports: ["127.0.0.1:5001:5000"]
+    volumes: ["./modelos/mlflow:/mlflow"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:5000/health')\""]
+      interval: 10s
+      retries: 12
+    networks: [red]
+
+  api:
+    image: ghcr.io/virtualzen/pset4-api:${API_TAG:-local}
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    mem_limit: 1g
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MODELO_NOMBRE: portafolio-inversiones-modelo
+      MODELO_ALIAS: champion
+      API_TOKEN: ${API_TOKEN:?Define API_TOKEN en pipeline/.env}
+      USAR_RESPALDO: ${USAR_RESPALDO:-false}
+    volumes: ["./api/registros:/app/registros"]
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    networks: [red]
+
+  tablero:
+    image: pset4-produccion:latest
+    build:
+      context: .
+      dockerfile: monitoreo/Dockerfile
+    <<: *snowflake-env
+    command: streamlit run monitoreo/tablero.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports: ["127.0.0.1:8501:8501"]
+    mem_limit: 1g
+    networks: [red]
+
+  # --- Imagenes de herramientas (Kestra las lanza como contenedores de cada tarea) ---
+
+  ingesta:
+    image: pset4-ingesta:latest
+    build: ./pipeline/kestra
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    networks: [red]
+
+  dbt:
+    image: pset4-dbt:latest
+    build: ./pipeline/dbt
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    networks: [red]
+
+  # Simulacion, monitoreo y reentrenamiento: el entorno de modelos/ (mismo src/pipeline.py).
+  produccion:
+    image: pset4-produccion:latest
+    build:
+      context: .
+      dockerfile: monitoreo/Dockerfile
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      API_URL: http://api:8000
+    networks: [red]
+
+  spark-job:
+    image: pset4-spark:latest
+    profiles: ["herramientas"]
+    <<: *snowflake-env
+    command: >
+      /opt/spark/bin/spark-submit --master spark://spark-master:7077
+      --executor-memory 7g --driver-memory 2g
+      --conf spark.executor.cores=4 --conf spark.cores.max=4
+      --conf spark.sql.shuffle.partitions=32 --conf spark.sql.adaptive.enabled=true
+      /opt/jobs/construir_obt.py --modo snowflake
+    depends_on:
+      - spark-master
+      - spark-worker
+    networks: [red]
+
+networks:
+  red:
+    name: pset4_red
+
+# Los mismos volumenes del compose de pipeline/ (proyecto pset4-pipeline): Kestra conserva sus
+# flows, secretos y ejecuciones del backfill de PORTAFOLIO_P4.
+volumes:
+  datos_postgres:
+    name: pset4-pipeline_datos_postgres
+  datos_kestra:
+    name: pset4-pipeline_datos_kestra

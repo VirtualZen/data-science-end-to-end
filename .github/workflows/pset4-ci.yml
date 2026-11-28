@@ -1,0 +1,71 @@
+# PSet 4 - Integracion continua del servicio de prediccion (psets/pset-04/ y su copia en psets/proyecto/).
+# En cada push y pull request que toque una de las dos carpetas, una corrida por carpeta (matrix): instala el entorno fijado de la API
+# (api/uv.lock), corre las pruebas de tests/ (contrato, modelo y comportamiento, con la copia
+# del champion de tests/fixtures/, sin MLflow ni Snowflake), construye la imagen y la prueba
+# arrancada: /salud, una prediccion valida (200) y una invalida (422).
+name: pset4-ci
+
+on:
+  push:
+    paths: ["psets/pset-04/**", "psets/proyecto/**", ".github/workflows/pset4-ci.yml"]
+  pull_request:
+    paths: ["psets/pset-04/**", "psets/proyecto/**", ".github/workflows/pset4-ci.yml"]
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        carpeta: [psets/pset-04, psets/proyecto]
+    defaults:
+      run:
+        working-directory: ${{ matrix.carpeta }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: ${{ matrix.carpeta }}/api/uv.lock
+
+      - name: Instalar el entorno de la API (versiones de api/uv.lock)
+        run: uv sync --project api --frozen
+
+      - name: Pruebas (tests/)
+        run: uv run --project api --frozen pytest tests -v
+
+  imagen:
+    runs-on: ubuntu-latest
+    needs: pruebas
+    strategy:
+      fail-fast: false
+      matrix:
+        carpeta: [psets/pset-04, psets/proyecto]
+    defaults:
+      run:
+        working-directory: ${{ matrix.carpeta }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Construir la imagen de la API
+        run: docker build -f api/Dockerfile -t pset4-api:ci .
+
+      - name: Probar la imagen arrancada con el champion de tests/fixtures
+        run: |
+          docker run -d --name api -p 8000:8000 \
+            -e MODELO_URI=/fijas/modelo_champion -e API_TOKEN=ci \
+            -v "$PWD/tests/fixtures:/fijas:ro" pset4-api:ci
+          for i in $(seq 1 30); do curl -sf localhost:8000/salud && break; sleep 2; done
+          curl -sf localhost:8000/salud | grep -q '"estado":"ok"'
+          curl -sf localhost:8000/modelo
+          codigo=$(curl -s -o /tmp/r.json -w '%{http_code}' -H 'Content-Type: application/json' \
+            --data @tests/fixtures/lote_2024_01.json localhost:8000/predecir)
+          test "$codigo" = 200
+          codigo=$(curl -s -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' \
+            --data '{"anio_mes": 202313, "acciones": []}' localhost:8000/predecir)
+          test "$codigo" = 422
+
+      - name: Logs de la API
+        if: always()
+        run: docker logs api || true

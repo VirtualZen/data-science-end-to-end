@@ -1,0 +1,38 @@
+# Entorno de la API (PSet 4). Proyecto uv independiente, con las MISMAS versiones que modelos/uv.lock
+# para lo que toca el modelo (mlflow, scikit-learn, lightgbm, skops, pandas, numpy): el champion se
+# guardo con ellas (formato skops) y debe cargar igual que en el PSet 3.
+#
+# Uso, desde psets/pset-04/:
+#   uv sync --project api                       crea api/.venv con Python 3.11
+#   uv run --project api uvicorn api.main:app   la API en http://127.0.0.1:8000
+#   uv run --project api pytest tests           pruebas (ver tests/)
+# La imagen instala api/requirements.txt, que NO se edita a mano:
+#   uv export --project api --frozen --no-hashes --no-dev --format requirements-txt -o api/requirements.txt
+[project]
+name = "pset-04-api"
+version = "0.1.0"
+description = "PSet 4: API de prediccion del portafolio (FastAPI + modelo del Model Registry de MLflow)"
+authors = [{ name = "Paul Gomez Ehmig", email = "apgomez@estud.usfq.edu.ec" }]
+requires-python = "==3.11.*"
+dependencies = [
+    "fastapi==0.163.1",
+    "uvicorn==0.54.0",
+    "pydantic==2.14.3",
+    "mlflow==3.18.0",
+    "scikit-learn==1.9.1",
+    "lightgbm==4.7.0",
+    "skops==0.16.0",
+    "pandas==3.1.1",
+    "numpy==2.4.6",
+    "pyarrow==26.0.1",
+    "scipy==1.17.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.2.0",
+    "httpx>=0.27,<1",
+]
+
+[tool.uv]
+package = false

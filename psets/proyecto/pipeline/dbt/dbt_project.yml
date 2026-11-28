@@ -1,0 +1,64 @@
+name: 'portafolio'
+version: '1.0.0'
+config-version: 2
+profile: 'portafolio'
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # El calendario NYSE sale del seed calendario_nyse; este simbolo sirve para verificarlo
+  # (un dia con cierre del S&P 500 que no este en el seed es un error).
+  ticker_calendario: '^GSPC'
+  ticker_sp500: '^GSPC'
+  ticker_nyse_composite: '^NYA'
+  ticker_tasa_libre_riesgo: '^IRX'
+  # Corte entrenamiento/prueba del PSet 1 (sujeto a cambios).
+  fecha_corte: "{{ env_var('FECHA_CORTE_ENTRENAMIENTO', '2023-12-31') }}"
+  fecha_inicio: '2010-01-01'
+  # Dos periodos de pertenencia al indice separados por menos dias que esto se unen
+  # (huecos sueltos de la fuente de composicion).
+  tolerancia_hueco_membresia_dias: 7
+  # Huecos de hasta este numero de dias bursatiles se imputan; los mas largos se excluyen.
+  max_hueco_imputable: 5
+  # Un retorno logaritmico diario mayor a este valor absoluto se marca como extremo.
+  umbral_retorno_extremo: 0.40
+  # Si es false, los tests de la tasa libre de riesgo no se exigen (prueba local sin ^IRX).
+  exigir_tasa_libre_riesgo: true
+
+models:
+  portafolio:
+    bronze:
+      +schema: BRONZE
+      +materialized: view
+    # Persistir Silver evita recalcular ventanas y joins del histórico para Gold.
+    silver:
+      +schema: SILVER
+      +materialized: table
+    gold:
+      +schema: GOLD
+      +materialized: table
+    calidad:
+      +schema: CALIDAD
+      +materialized: table
+
+seeds:
+  portafolio:
+    +schema: BRONZE
+    calendario_nyse:
+      +column_types:
+        fecha: date
+        media_jornada: boolean
+    equivalencias_tickers:
+      +column_types:
+        ticker_antiguo: varchar
+        ticker_yahoo: varchar
+        valido_hasta: date
+        estado: varchar
+
+tests:
+  portafolio:
+    +store_failures: false

@@ -1,0 +1,9 @@
+# Registro de MLflow que se crea al probar la API fuera de modelos/mlflow/
+mlflow.db
+
+# Copia del champion para CI (tests/fixtures/generar_fixtures.py); el *.pkl de la raiz la ignoraria
+!tests/fixtures/modelo_champion/model.pkl
+
+# Salida del modo local de monitoreo/produccion.py (--obt): pruebas, no evidencia
+docs/produccion/
+docs/_memo_cuerpo.pdf

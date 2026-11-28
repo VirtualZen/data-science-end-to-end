@@ -1,0 +1,22 @@
+# requirements.txt del proyecto final (PDF, seccion "Repositorio"). No se edita a mano.
+#
+# Entorno Python de la API, las pruebas, el monitoreo, el tablero, el reentrenamiento y los notebooks
+# (Python 3.11). Se apoya en el export de modelos/uv.lock para que haya una sola fuente de versiones:
+#   modelos/requirements.txt  <- bash modelos/exportar_requirements.sh (grupos modelos y tablero)
+# Las versiones del modelo (scikit-learn 1.9.1, mlflow 3.18.0, lightgbm 4.7.0, numpy 2.4.6, pandas 3.1.1,
+# scipy 1.17.1, skops 0.16.0) y de la API (fastapi 0.163.1, uvicorn 0.54.0, pydantic 2.14.3) son las mismas
+# que fija api/uv.lock, con el que se construye la imagen de la API.
+#
+# Las imagenes del pipeline de datos (ingesta, dbt, Spark) tienen sus propios requirements en pipeline/
+# (pipeline/kestra/requirements.txt, pipeline/dbt/requirements.txt): usan snowflake-connector-python 4.8.1
+# y pandas 2.3.3, que no pueden convivir en el mismo entorno con pandas 3.1.1. Se instalan dentro de sus
+# contenedores (docker compose --profile herramientas build), no con este archivo.
+#
+# Uso, desde psets/pset-04/:
+#   python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+#   .venv/bin/python -m pytest tests
+-r modelos/requirements.txt
+
+# Pruebas (grupo dev de api/pyproject.toml, versiones de api/uv.lock)
+pytest==9.2.0
+httpx==0.29.0

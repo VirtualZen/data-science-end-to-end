@@ -1,0 +1,15 @@
+# Contexto de las imagenes construidas desde psets/pset-04/ (api/Dockerfile): solo el codigo.
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.env
+**/.env_encoded
+**/secrets
+modelos/mlflow
+modelos/data
+modelos/notebooks
+modelos/artefactos
+pipeline
+api/registros
+docs
+tests
