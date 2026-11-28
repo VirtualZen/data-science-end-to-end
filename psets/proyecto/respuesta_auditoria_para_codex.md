@@ -45,7 +45,7 @@ promoción por retorno bruto pasa a la definición unificada de H1; el interrupt
 | H6 | Corregido | `monitoreo/produccion.py::escribir`, prueba `test_reproceso_sin_alertas_borra_las_anteriores` |
 | H7 | Pendiente (declarado en memo §10) | — |
 | H8 | Corregido (hay que volver a subir el flow a Kestra) | `reentrenamiento.yml` (`aprobado and promueve`), prueba `test_promover_exige_regla_y_aprobacion` |
-| H9 | Pendiente de autorización (PR/merge) | — |
+| H9 | Cerrado: PR #15 a master; `pset4-cd` #1 en verde; imagen pública `ghcr.io/virtualzen/pset4-api:5d7b1bc` (y `latest`) | `docs/figuras/cd_ghcr.png`, anexo C del memo |
 | Deriva | PSI + chi² en la categórica; mercado = desviación equivalente | `monitoreo/deriva.py`, disclaimer 16 |
 | Cifras | 49 pruebas, A9 13/14, latencia 41,9 ms frente a 9 ms | memo, presentación, `docs/monitoreo.md`, `docs/despliegue.md` |
 | Tablero | Gráfico de solicitudes y errores 4xx/5xx por lote | `monitoreo/tablero.py` |
@@ -122,8 +122,8 @@ estrategia completa -0,06 (US$ 103.925), simulación -0,23 (US$ 94.825). Mejoras
 sentimiento con EDGAR Online, Reddit y sitios de finanzas; H7 (huella con objetivo y manifiesto); pausa de aprobación
 con veredicto visible; 6-12 meses reales en paralelo; recalibrar A4, A5 y A8 con lotes reales.
 
-Estado: H2, H3, H4, H5, H6 y H8 corregidos con pruebas (49 pasan; las 4 nuevas fallan con el código anterior); H7 y H9
-pendientes (H9 espera la autorización del merge).
+Estado: H2, H3, H4, H5, H6 y H8 corregidos con pruebas (49 pasan; las 4 nuevas fallan con el código anterior); H7 pendiente;
+H9 cerrado (PR #15, pset4-cd en verde, imagen ghcr.io/virtualzen/pset4-api:5d7b1bc).
 
 Segunda revisión que te pido, solo lectura, sobre el commit que contenga estas correcciones:
 1. Confirma con tu cálculo que la única diferencia producción/simulación es 202604 y (202609, A9), y que los textos

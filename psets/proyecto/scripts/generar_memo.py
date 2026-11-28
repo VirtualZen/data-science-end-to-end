@@ -377,7 +377,7 @@ table(["Término", "Qué significa en este documento"], [
 p("Anexo B. Modelo dimensional (Gold)", "HeadX")
 figura(D / "modelo_dimensional.png", 430, "Estrellas de precios y mercado (PSet 2).")
 p("Anexo C. Evidencia de CI/CD y Kestra", "HeadX")
-for n, t in (("ci_verde.png", "GitHub Actions: pset4-ci en verde."), ("cd_ghcr.png", "Imagen publicada en GHCR con el hash del commit."),
+for n, t in (("ci_verde.png", "GitHub Actions: pset4-ci en verde."), ("cd_ghcr.png", "pset4-cd en verde tras el merge del PR #15 a master (commit 5d7b1bc) e imagen pública ghcr.io/virtualzen/pset4-api:5d7b1bc."),
              ("kestra_pausa.png", "Kestra: reentrenamiento en pausa de aprobación."), ("rollback.png", "/modelo antes y después del rollback.")):
     if (F / n).exists():
         figura(F / n, 400, t)
