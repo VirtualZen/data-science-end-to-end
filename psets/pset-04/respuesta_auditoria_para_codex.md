@@ -94,6 +94,31 @@ las 5 decisiones de reentrenamiento con la métrica nueva y avisar si alguna cam
    efectivo, y sector y tamaño como restricciones.
 6. **Umbrales**: recalibrar A4, A5 y A8 con lotes reales (hoy se calibraron con la simulación).
 
+## Realizado después de esta respuesta (27-nov, en este orden)
+
+| # | Hecho | Evidencia |
+|---|---|---|
+| 1 | Commit `9be6cae` en `work` con las correcciones de la auditoría; push a `origin/work` | `git log`; `pset4-ci` #5 y `pruebas` #99 en verde |
+| 2 | `reentrenamiento.yml` vuelto a subir a Kestra (condición regla Y aprobación, H8) | `pipeline/kestra/subir_flows.sh` |
+| 3 | Imágenes `api` y `produccion` reconstruidas; API y tablero reiniciados con el código nuevo; `/salud` correcto | compose local |
+| 4 | PR #15 `work` → `master` (en `VirtualZen/data-science-end-to-end`) con CI en verde y merge (commit `5d7b1bc`) | `pset4-ci` #6 y #7, `pruebas` #100 y #101 |
+| 5 | `pset4-cd` #1 en verde: imagen `ghcr.io/virtualzen/pset4-api:5d7b1bc` y `latest`, paquete público (H9 cerrado) | `docs/figuras/cd_ghcr.png`, anexo C del memo |
+| 6 | Commit `c65a138` en `work`: memo con la captura del CD, `plan.txt`, H9 en esta respuesta | `psets/pset-04` y `psets/proyecto` iguales; 49 pruebas en cada una |
+
+## Pasos siguientes (Paul, desde la terminal, solo sobre `VirtualZen/data-science-end-to-end`)
+
+1. Commit de esta actualización de la respuesta y push a `origin/work`.
+2. PR #16 `work` → `master` con `gh pr create --repo VirtualZen/data-science-end-to-end --base master --head work`.
+3. Esperar la CI del PR (`gh pr checks <n> --repo VirtualZen/data-science-end-to-end --watch`) y hacer el merge
+   (`gh pr merge <n> --repo VirtualZen/data-science-end-to-end --merge`). El CD vuelve a publicar la imagen con el hash
+   del merge.
+4. Tag `pset-04` sobre `origin/master` (el merge del PR #16) y `git push origin pset-04`.
+5. Enviar a Codex el prompt de abajo para la segunda revisión, sobre el tag `pset-04`.
+
+Nota: la rama `work` tiene en su configuración local un vínculo a un PR #2 del repositorio del profesor
+(`ErickNaunay/data-science-end-to-end`), creado por la extensión de GitHub de VS Code. Ninguno de los pasos anteriores usa
+ese repositorio: todos los comandos de `gh` llevan `--repo VirtualZen/data-science-end-to-end` y el número de PR explícito.
+
 ---
 
 ## Prompt de respuesta para Codex
@@ -125,7 +150,11 @@ con veredicto visible; 6-12 meses reales en paralelo; recalibrar A4, A5 y A8 con
 Estado: H2, H3, H4, H5, H6 y H8 corregidos con pruebas (49 pasan; las 4 nuevas fallan con el código anterior); H7 pendiente;
 H9 cerrado (PR #15, pset4-cd en verde, imagen ghcr.io/virtualzen/pset4-api:5d7b1bc).
 
-Segunda revisión que te pido, solo lectura, sobre el commit que contenga estas correcciones:
+Hecho después: commit 9be6cae (correcciones), flow de reentrenamiento vuelto a subir a Kestra, PR #15 work -> master con
+merge 5d7b1bc, pset4-cd #1 en verde con la imagen pública ghcr.io/virtualzen/pset4-api:5d7b1bc (H9 cerrado), commit
+c65a138 con el memo y su anexo C completo. Siguen: PR #16 work -> master, merge y tag pset-04 sobre master.
+
+Segunda revisión que te pido, solo lectura, sobre el tag pset-04 (o, si aún no existe, sobre origin/master):
 1. Confirma con tu cálculo que la única diferencia producción/simulación es 202604 y (202609, A9), y que los textos
    ya no dicen "mismas cifras".
 2. Revisa que docs/reconciliacion.md y scripts/reconciliacion.py midan bien la trayectoria servida con la regla completa
