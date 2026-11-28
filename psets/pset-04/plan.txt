@@ -159,7 +159,7 @@ inducida, no gana dinero), v6 rechazado (202511), v7 rechazado por error de capt
 ======================================================================================
 [x] 4.1 (C) Regla de promocion con metrica de negocio y variacion entre pliegues (challenger supera al
         champion en Sharpe neto por mas de una desviacion de la CV, en la misma ventana).
-[~] 4.2 (C+P) Rollback moviendo el alias sin reconstruir la imagen; /modelo refleja el cambio (evidencia).
+[x] 4.2 (C+P) (27-nov: revertir v8 -> v3 -> v8 con produccion revertir; /modelo cambia sin reconstruir; docs/figuras/rollback.png) Rollback moviendo el alias sin reconstruir la imagen; /modelo refleja el cambio (evidencia).
 [x] 4.3 (C) Cada fila de PREDICCIONES con la version que la genero.
 
 ======================================================================================
@@ -209,7 +209,9 @@ inducida, no gana dinero), v6 rechazado (202511), v7 rechazado por error de capt
 [x] 8.2 (C) Costo de cada error (sobreestimar: compra una accion que cae; subestimar: deja fuera una que
         sube) y quien lo asume (inversionista, asesor).
 [x] 8.3 (C) docs/criterio_retirada.md: >= 3 condiciones medibles con metrica, umbral y respuesta.
-[x] 8.4 (C) Interruptor de respaldo (variable de entorno o endpoint protegido) y su demostracion.
+[x] 8.4 (C) Interruptor de respaldo (variable de entorno o endpoint protegido) y su demostracion. (27-nov en el Mac: /respaldo
+        activar=true -> usado respaldo B1+B5 (333 acciones, igual peso); sin token 401; activar=false -> modelo v8.
+        Entrada invalida: falta vol_63d -> 422 "Field required"; texto en vol_63d -> 422 "Input should be a valid number")
 [ ] 8.5 (P) Revisar el juicio humano del PSet 1 (el inversionista aprueba) segun el comportamiento.
 
 ======================================================================================
