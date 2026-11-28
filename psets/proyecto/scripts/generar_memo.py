@@ -170,7 +170,9 @@ p("<b>Ganador:</b> LightGBM (objetivo L1, 63 árboles, semilla 42), run f7596a56
 # ------------------------------------------------------------------ 5
 h("5. Despliegue")
 p("<b>Patrón: batch mensual servido por API.</b> La decisión es mensual, hay ≥ 17 h entre el cierre y la apertura, las "
-  "features cambian una vez al mes y son ~330 predicciones por lote; la API predice un lote en 9 ms (mediana; p95 12 ms). La "
+  "features cambian una vez al mes y son ~330 predicciones por lote. El modelo predice un lote en ~9 ms (medido en la VM); "
+  "en producción, la petición completa de un lote a la API en Docker tarda 41,9 ms (mediana de los 35 lotes; una "
+  "petición por lote, por eso p50 = p95 en MONITOREO). La "
   "decisión necesita el corte transversal del mes (top 10, percentil 80 de volatilidad), así que /predecir recibe el lote "
   "completo. Online solo convendría con rebalanceo intradía o alertas por noticias (docs/despliegue.md).")
 code('POST /predecir  {"anio_mes": 202312, "acciones": [{"accion_key": "...", "ticker": "JNJ", "ret_log_mes": 0.012, ... 33 features}, ...333]}\n'
@@ -181,14 +183,16 @@ code('POST /predecir  {"anio_mes": 202312, "acciones": [{"accion_key": "...", "t
 b("<b>Contrato.</b> El esquema Pydantic es la firma registrada en MLflow (33 features float, anio_mes entero); rangos del "
   "entrenamiento ± 50 % (rechaza errores de unidad como un retorno en %), campos extra prohibidos, mes 1–12. Las dos "
   "derivadas se calculan con src.pipeline.derivar, importada.")
-b("<b>Pruebas (33, pytest).</b> Contrato: 200; 422 con el campo por faltante, tipo, mes inexistente, fuera de rango, campo "
+b("<b>Pruebas (49, pytest, en pset-04 y en proyecto).</b> Contrato: 200; 422 con el campo por faltante, tipo, mes inexistente, fuera de rango, campo "
   "extra y acción repetida; 401 sin token. Modelo: la copia del champion en tests/fixtures (mlflow.sklearn.save_model) "
   "reproduce MAE 0,0673399888 con tolerancia 1e-6 (diferencias de plataforma; 10.000 veces menor que la desviación de CV), y la "
   "API predice igual que el modelo directo. Comportamiento: 10 incluidas y pesos que suman 1; ninguna sobre el percentil "
   "80 de volatilidad; la menos volátil pesa más; misma entrada, misma decisión; respaldo por interruptor y si el modelo no "
   "carga; recarga fallida conserva el modelo; cada predicción queda registrada. Producción: el mes en vivo se sirve sin "
   "objetivo, no se rellena con meses posteriores, A7 pide dos lotes y la deriva sola no dispara. Operación manual: Sharpe de 12 "
-  "meses, tope de volatilidad y rotación solo por la diferencia.")
+  "meses, tope de volatilidad y rotación solo por la diferencia. Auditoría: regla de promoción con los 5 casos reales, "
+  "promoción solo con regla y aprobación, versión atómica ante una recarga, registro fallido visible, reproceso sin alertas "
+  "y flows válidos para Kestra 2.0.")
 b("<b>Fuera de CI:</b> Snowflake, Kestra, Spark y el servidor de MLflow (credenciales y memoria); la simulación y el "
   "reentrenamiento se verifican con la corrida de produccion_lotes. CI: pset4-ci.yml (pruebas, imagen y prueba de la imagen "
   "arrancada); CD: pset4-cd.yml publica ghcr.io/virtualzen/pset4-api:&lt;hash&gt; al integrar en master (captura en el anexo).")
@@ -215,7 +219,7 @@ table(["Llegada", "Disparador", "Champion → challenger", "Evalúa en", "MAE ch
         f"{c(float(r['retorno_champion']) * 100, 1)} % / {c(float(r['retorno_challenger']) * 100, 1)} %",
         ("aprobado" if r["aprobado"] == "True" else "rechazado") + f" ({r['motivo_regla']})"] for r in reent],
       [40, 72, 62, 42, 74, 78, 112])
-p("En la corrida en Kestra los challengers son las versiones 3, 4, 5, 6 y 8, con las mismas cifras de la tabla: la v7 se rechazó por un error de captura en la pausa (no se marcó aprobado) y se repitió como v8, idéntica y aprobada; las dos filas quedan en REENTRENAMIENTOS. La regla se prueba en CI con estos cinco casos. <b>Rollback:</b> monitoreo.produccion "
+p("En la corrida en Kestra los challengers son las versiones 3, 4, 5, 6 y 8, con las mismas decisiones y comparaciones de la tabla: la v7 se rechazó por un error de captura en la pausa (no se marcó aprobado) y se repitió como v8, idéntica y aprobada; las dos filas quedan en REENTRENAMIENTOS. Al corregir se reprocesó desde 2026-05 y no desde 2026-04 (error de operación): 2026-04 quedó servido con v3. Producción y simulación coinciden en 34 de 35 lotes; difieren 2026-04 (cartera servida +5,8 % frente a −3,7 % simulada) y la alerta A9 de 2026-09, que solo aparece en la simulación (docs/reconciliacion.md). Producción es la historia observada; la simulación, el contrafactual sin el error. Desde la auditoría, Kestra promueve solo si la regla y la persona coinciden; la regla se prueba en CI con los cinco casos. <b>Rollback:</b> monitoreo.produccion "
   "revertir mueve @champion a @anterior y llama a /recargar; /modelo muestra la versión y el run_id antes y después (anexo C y "
   "video). <b>Ciclo sobre la deriva:</b> los lotes inducidos 2025-05 a 07 disparan A4 y A8 desde el primero; con el MAE de "
   "2025-05 (0,093) y 2025-06 (0,129) sobre el umbral, el monitoreo de 2025-07 dispara A7; al llegar 2025-08 se entrena r3 "
@@ -233,8 +237,9 @@ b("<b>Deriva inducida (2025-05 a 07):</b> 9 features de volatilidad y rango ×2,
   "log (crisis tipo marzo de 2020), marcados sintetico=True. Solo con features alteradas el MAE apenas cambiaba (0,0481 → 0,0495).")
 b("<b>Métricas:</b> sistema (latencia p50 y p95, solicitudes, 4xx y 5xx en la ventana del lote, vía /metricas?desde=); datos "
   "(% de nulos y fuera del rango de entrenamiento por feature, categorías no vistas, PSI con umbral = max(0,10; p95) y "
-  "max(0,25; p99) del PSI de los 132 meses de entrenamiento, KS como respaldo, chi-cuadrado en categóricas, z mensual en las "
-  "de mercado); modelo (distribución de predicciones, tasa de incluir, MAE con un lote de retraso); negocio (Sharpe de 12 "
+  "max(0,25; p99) del PSI de los 132 meses de entrenamiento, KS como respaldo; PSI con chi-cuadrado de respaldo en la categórica; z mensual en las "
+  "6 de mercado, que valen lo mismo para todas las acciones del mes y no tienen distribución transversal para un PSI: "
+  "desviación equivalente, disclaimer 16); modelo (distribución de predicciones, tasa de incluir, MAE con un lote de retraso); negocio (Sharpe de 12 "
   "lotes frente a B5).")
 table(["Id", "Métrica", "Umbral", "Ventana", "Sev.", "Quién la recibe", "Acción"], [
     ["A1", "errores 5xx", "> 0", "desde el envío", "crít.", "ing. ML", "Respaldo ya responde; recargar o revertir"],
@@ -320,6 +325,12 @@ p("<b>¿Valió la pena actuar según la predicción?</b> Con la regla de reentre
   "periodos. Por qué gana: el Sharpe de 12 meses premia acciones que suben con poca volatilidad, la misma idea de la regla de "
   "riesgo, mientras que el pronóstico del modelo empata con el promedio histórico. Estas cifras reemplazan las del pitch "
   "del PSet 1, cuya meta (superar al índice por 0,1 de Sharpe) el modelo no cumple.")
+p("<b>Reconciliación (auditoría).</b> La API decide la composición y los pesos relativos (100 % en acciones); el tope de "
+  "portafolio (1,35 veces la volatilidad del S&amp;P 500, con covarianzas diarias) y los 15 pb se aplican fuera de la API, y "
+  "A8/A9 y la promoción usan retorno bruto. Medida sobre la trayectoria realmente servida (34 lotes etiquetados, "
+  "scripts/reconciliacion.py): monitoreo bruto Sharpe 0,15 (US$ 116.291); estrategia completa con tope y costos −0,06 "
+  "(US$ 103.925); simulación −0,23 (US$ 94.825). El tope invirtió menos de 100 % en 9 meses (64,7 % en 2026-02). Ninguna "
+  "política de retirada se ejecutó en la corrida (el interruptor solo se demostró): los resultados son sin intervención.")
 
 # ------------------------------------------------------------------ 10
 h("10. Limitaciones y siguientes pasos")
@@ -334,6 +345,16 @@ b("<b>Primero, si el proyecto continúa:</b> (1) 6–12 meses reales operando co
   "(sombra), con el respaldo listo; (2) que el modelo solo la reemplace si la supera por más de una desviación de la CV en 6 "
   "lotes; (3) usar el Sharpe de 12 meses como feature o como objetivo de ranking; (4) una señal de régimen que lleve a efectivo "
   "en crisis; (5) sector y tamaño como restricciones del portafolio.")
+b("<b>Mejora futura a evaluar (opción B de la auditoría):</b> una sola definición de la estrategia en código, la misma "
+  "función de exposición (tope de portafolio con datos diarios) y de costos por rotación usada por la API (campo "
+  "exposicion), el monitoreo (Sharpe neto en A8/A9) y la regla de promoción, con columnas nuevas en PREDICCIONES y MONITOREO. "
+  "Antes de adoptarla hay que recalcular las 5 decisiones de reentrenamiento con la métrica nueva.")
+b("<b>Fuentes nuevas a evaluar:</b> un modelo de noticias y sentimiento del mercado con EDGAR Online (reportes 10-K, 10-Q y "
+  "8-K de la SEC), Reddit (foros de inversión) y sitios web de finanzas, como features adicionales o como señal de régimen; "
+  "habría que medir su aporte con la misma validación temporal y cuidar la fuga de información por la fecha de publicación.")
+b("<b>Trazabilidad del reentrenamiento (auditoría H7):</b> la huella de la OBT no incluye el objetivo y no se guarda un "
+  "manifiesto del conjunto de entrenamiento; una versión no se reconstruye exacta si cambia la OBT. Pendiente: huella con "
+  "objetivo y manifiesto como artefacto de MLflow.")
 CUERPO_FIN = len(story)
 
 # ------------------------------------------------------------------ anexos

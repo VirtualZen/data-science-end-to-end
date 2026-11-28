@@ -22,6 +22,14 @@ La guía vigente es `CD-PSet-4.pdf`. El README original del curso queda en `READ
 | `tests/{fixtures, test_contrato, test_modelo, test_comportamiento}.py` | `tests/` |
 | `docs/` | `docs/` (CSV exportados, documentos, figuras, `historial/`) |
 
+## Tres formas de reproducir (auditoría H4)
+
+| Modo | Qué necesita | Qué se obtiene |
+|---|---|---|
+| **1. Demostración con fixtures** | Solo el clon, `uv` y Docker. Sin cuentas | 49 pruebas (`uv run --project api --frozen pytest tests -v`) y la API con la copia del champion: `docker build -f api/Dockerfile -t pset4-api . && docker run -p 8000:8000 -e MODELO_URI=/fijas/modelo_champion -e API_TOKEN=demo -v "$PWD/tests/fixtures:/fijas:ro" pset4-api` y luego `/salud`, `/modelo` y `/predecir` con `tests/fixtures/lote_2024_01.json` |
+| **2. Reconstrucción con datos nuevos** | Cuenta de Snowflake (usuario de servicio), `pipeline/.env`, Docker con ~11 GB | Todo el sistema desde cero, con los pasos de abajo: ingesta, dbt y Spark → snapshot de la OBT → notebooks 01–05 (registran el champion en un MLflow vacío y crean los alias) → `produccion_lotes`. Las cifras cambian, porque Yahoo devuelve datos corregidos y el entrenamiento se repite |
+| **3. Evidencia histórica** | No es reproducible de forma exacta sin el registro de MLflow (`modelos/mlflow/`) y los snapshots (`modelos/data/`), que no se versionan | Se entrega como evidencia: `docs/*.csv` (predicciones, monitoreo, alertas, corridas, reentrenamientos), `docs/simulacion/`, los notebooks con salida, las huellas sha256 de los snapshots (`docs/datos_p4.md`) y `docs/reconciliacion.md` |
+
 ## Reproducir de punta a punta
 
 Requisitos: Docker, `uv`, una cuenta de Snowflake con el usuario de servicio del PSet 2 y `pipeline/.env` completo
@@ -38,8 +46,9 @@ docker compose --env-file pipeline/.env up -d                            # kestr
 1. **Fuente → Raw → Bronze → Silver → Gold → OBT.** En Snowsight: `pipeline/kestra/sql/snowflake_setup.sql` y
    `produccion_setup.sql`. En Kestra (http://localhost:8090): `usfq.portafolio.backfill_historico` (ingesta a RAW y
    subflow `transformar`: dbt build con tests y Spark a `OBT.OBT_ACCION_MES`). Detalle: `pipeline/README.md`.
-2. **EDA y modelo.** `modelos/notebooks/01`–`05` (PSet 3). Snapshot: `uv run --project modelos python -m src.datos
-   --salida data/obt_p4.parquet` (`docs/datos_p4.md`).
+2. **EDA y modelo.** `modelos/notebooks/01`–`05` (PSet 3). Snapshot de la OBT (el módulo está en `modelos/src`, por eso
+   se corre desde `modelos/`; la salida queda en `modelos/data/obt_p4.parquet`, fuera de git):
+   `cd modelos && uv run python -m src.datos --salida data/obt_p4.parquet && cd ..` (`docs/datos_p4.md`).
 3. **Registro.** Línea base B7 (operación manual): `cd modelos && uv run python -m src.operacion_manual --registrar`.
    MLflow en http://localhost:5001: `portafolio-inversiones-modelo` v1 = champion (LightGBM, run
    `f7596a56…`), v2 = challenger del PSet 3 (Ridge). `06_champion.ipynb` lo recarga y reproduce el MAE.
@@ -67,12 +76,12 @@ basta `up -d postgres kestra mlflow api tablero` (`disclaimer.txt`, punto 6).
 
 ```bash
 uv sync --project api --frozen
-uv run --project api --frozen pytest tests -v        # 45 pruebas, sin MLflow ni Snowflake
+uv run --project api --frozen pytest tests -v        # 49 pruebas, sin MLflow ni Snowflake
 ```
 
 `tests/fixtures/` tiene la copia del champion (`mlflow.sklearn.save_model`, generada por `generar_fixtures.py` desde el
 registro), el hold-out con objetivo y un lote válido. `pset4-ci.yml` corre las pruebas, construye la imagen y la
-prueba arrancada (200 y 422) en cada push o PR que toque `psets/pset-04/`. `pset4-cd.yml`, al integrar en `master`,
+prueba arrancada (200 y 422) en cada push o PR que toque `psets/pset-04/` o su copia `psets/proyecto/` (una corrida por carpeta). `pset4-cd.yml`, al integrar en `master`,
 publica `ghcr.io/virtualzen/pset4-api:<hash>`; `API_TAG=<hash> docker compose ... up -d --no-build api` usa esa imagen.
 
 ## Trazabilidad de una predicción
@@ -84,5 +93,5 @@ tablas Gold (`GOLD.FCT_PRECIOS_DIARIOS`, `DIM_ACCION`) de las que Spark la const
 ## Documentos
 
 `docs/despliegue.md` · `simulacion.md` · `guion_video.md` · `monitoreo.md` · `reentrenamiento.md` · `criterio_retirada.md` ·
-`cambios.md` · `datos_p4.md` · `migracion.md` · documento técnico `PSet4_memo_Gomez_Ehmig.pdf` · presentación
+`cambios.md` · `datos_p4.md` · `migracion.md` · `reconciliacion.md` · documento técnico `PSet4_memo_Gomez_Ehmig.pdf` · presentación
 `PSet4_presentacion_Gomez_Ehmig.pdf` · `historial/` (memos y pitch de los PSets 1–3).

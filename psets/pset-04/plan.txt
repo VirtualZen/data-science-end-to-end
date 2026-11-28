@@ -71,6 +71,18 @@ reentrenamientos.csv = corridas fase=reentrenamiento unidas por run_id a la deci
 Falta: 11.4 exportar en el Mac y volver a ejecutar el notebook 07 con esos CSV; 8.5 decision de Paul sobre el juicio humano;
 11.5 PR a master (dispara pset4-cd: imagen en GHCR y captura cd_ghcr.png) y tag pset-04.
 
+(27-nov 23h-00h, C) Auditoria de Codex (prompt_auditoria_para_claude.md; respuesta en respuesta_auditoria_para_codex.md).
+Opcion A autorizada por Paul + H5 + tablero. Hecho: H2 reconciliado sin reescribir produccion (34 de 35 lotes iguales;
+2026-04 servido con v3 por error de operacion en el reproceso; docs/reconciliacion.md); H1 medido sobre la trayectoria
+servida con la estrategia completa (scripts/reconciliacion.py: bruto 0,15, completa -0,06, simulacion -0,23) y declarado
+como limitacion (disclaimer 17; opcion B como mejora futura junto con noticias y sentimiento: EDGAR, Reddit, sitios de
+finanzas); H3 registrado:bool + registro_fallido en /metricas; H4 README con tres modos y comando corregido; H5 par
+(modelo, info) atomico y alias resuelto una vez; H6 borrado antes del retorno vacio; H8 promocion = regla Y aprobacion;
+PSI+chi2 en la categorica (disclaimer 16); tablero con solicitudes y errores 4xx/5xx; cifras (49 pruebas, A9 13/14,
+latencia 41,9 ms). 49 pruebas; las 4 nuevas fallan con el codigo anterior. Memo y presentacion regenerados.
+Pendiente: H7 (huella con objetivo y manifiesto), opcion B; Paul: volver a subir reentrenamiento.yml a Kestra, PR/merge
+(H9, CD y cd_ghcr.png), tag pset-04.
+
 ======================================================================================
 0. PREPARACION
 ======================================================================================

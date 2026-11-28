@@ -97,6 +97,12 @@ col2.subheader("Sistema: latencia p50 y p95 (ms)")
 lat = mon.melt(id_vars="fecha", value_vars=["latencia_p50_ms", "latencia_p95_ms"], var_name="serie").dropna()
 col2.altair_chart(marcas(alt.Chart(lat).mark_line(point=True).encode(x=alt.X("fecha:T", title="lote"), y="value:Q",
                                                                       color="serie:N")), width="stretch")
+st.subheader("Sistema: solicitudes y errores 4xx / 5xx por lote")
+err = mon.melt(id_vars="fecha", value_vars=[c for c in ("solicitudes", "errores_4xx", "errores_5xx") if c in mon],
+               var_name="serie").dropna()
+st.altair_chart(marcas(alt.Chart(err).mark_bar(opacity=0.8).encode(
+    x=alt.X("fecha:T", title="lote"), y=alt.Y("value:Q", title="peticiones"), color="serie:N",
+    xOffset="serie:N")), width="stretch")
 st.subheader("Alertas")
 st.dataframe(al[["anio_mes", "id_alerta", "severidad", "metrica", "accion", "quien_la_recibe"]], width="stretch")
 st.subheader("Reentrenamientos")

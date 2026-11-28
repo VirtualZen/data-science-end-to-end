@@ -78,8 +78,10 @@ def leer_tabla(tabla: str, local: bool, where: str = "") -> pd.DataFrame:
 
 
 def escribir(tabla: str, d: pd.DataFrame, local: bool, borrar_mes: int | None = None) -> None:
-    """Agrega filas. Con borrar_mes primero borra las de ese anio_mes: re-ejecutar un lote no duplica."""
-    if d.empty:
+    """Agrega filas. Con borrar_mes primero borra las de ese anio_mes, aunque no haya filas nuevas: re-ejecutar un
+    lote no duplica, y un reproceso sin alertas deja el lote sin alertas (ALERTAS es el estado vigente por lote; el
+    historial de cada corrida queda en los logs de Kestra)."""
+    if d.empty and borrar_mes is None:
         return
     if local:
         SALIDA_LOCAL.mkdir(parents=True, exist_ok=True)
@@ -93,6 +95,8 @@ def escribir(tabla: str, d: pd.DataFrame, local: bool, borrar_mes: int | None = 
     with _conexion() as con:
         if borrar_mes is not None:
             con.cursor().execute(f"DELETE FROM {ESQUEMA}.{tabla} WHERE ANIO_MES = %s", (borrar_mes,))
+        if d.empty:
+            return
         out = d.copy()
         out.columns = [c.upper() for c in out.columns]
         write_pandas(con, out, tabla, schema=ESQUEMA, quote_identifiers=False, use_logical_type=True)

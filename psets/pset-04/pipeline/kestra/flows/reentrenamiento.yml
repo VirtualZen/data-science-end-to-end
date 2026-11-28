@@ -90,9 +90,11 @@ tasks:
         --aprobado {{ outputs.aprobacion.onResume.aprobado }} --por "{{ outputs.aprobacion.onResume.revisor }}"
         --motivo "{{ outputs.aprobacion.onResume.motivo }}"
 
+  # Se promueve solo si se cumplen las dos condiciones: la regla cuantitativa (outputs.entrenar.vars.promueve) y la
+  # aprobacion humana. Un "si" humano contra la regla no promueve: queda registrado como decision y el champion sigue.
   - id: si_aprobado
     type: io.kestra.plugin.core.flow.If
-    condition: "{{ outputs.aprobacion.onResume.aprobado }}"
+    condition: "{{ outputs.aprobacion.onResume.aprobado and outputs.entrenar.vars.promueve }}"
     then:
       - id: promover
         type: io.kestra.plugin.scripts.shell.Commands
@@ -110,7 +112,7 @@ tasks:
     else:
       - id: se_queda_el_champion
         type: io.kestra.plugin.core.log.Log
-        message: "Rechazado ({{ outputs.aprobacion.onResume.motivo }}): @champion sigue en v{{ outputs.entrenar.vars.version_champion }}; v{{ outputs.entrenar.vars.version_challenger }} queda como @challenger."
+        message: "No se promueve (aprobado={{ outputs.aprobacion.onResume.aprobado }}, regla={{ outputs.entrenar.vars.promueve ? 'PROMOVER' : 'NO promover' }}; motivo: {{ outputs.aprobacion.onResume.motivo }}): @champion sigue en v{{ outputs.entrenar.vars.version_champion }}; v{{ outputs.entrenar.vars.version_challenger }} queda como @challenger."
 
 outputs:
   - id: aprobado

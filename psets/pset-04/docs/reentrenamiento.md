@@ -89,7 +89,9 @@ el alias en la UI de MLflow (Models → portafolio-inversiones-modelo → Aliase
 | 2026-04 | A7 | r1 → r5 | 2026-02 / 2026-03 | 0,0662 / 0,0655 | 4,1 % / 7,3 % | promover | aprobado |
 
 **Corrida en Kestra + Snowflake (27-nov).** Las cinco decisiones de la tabla se repitieron en `produccion_lotes`, con
-las mismas cifras (`PORTAFOLIO_P4.PRODUCCION.REENTRENAMIENTOS`, `docs/reentrenamientos.csv`). En el registro de MLflow, r1 a
+las mismas comparaciones de champion y challenger (`PORTAFOLIO_P4.PRODUCCION.REENTRENAMIENTOS`,
+`docs/reentrenamientos.csv`). Las series de producción y simulación coinciden en 34 de 35 lotes; difiere 2026-04 por el
+incidente de abajo (`docs/reconciliacion.md`). En el registro de MLflow, r1 a
 r5 son las versiones 3, 4, 5, 6 y **8** (v1 y v2 son las del PSet 3). La prueba
 `tests/test_produccion.py::test_regla_de_promocion_casos_reales` recorre las cinco filas con las cifras de Snowflake y
 verifica que la regla dé la misma decisión y el mismo motivo. Así, cada mitad de la regla tiene un caso real que la
@@ -103,10 +105,15 @@ coincidía con su motivo, se corrigió así:
 (2) se volvió a ejecutar `reentrenamiento` desde Kestra (Replay). El nuevo entrenamiento, con semilla 42 y los mismos
 datos, registró la **v8**, con MAE 0,06551 y retorno 7,28 %, idénticos a los de v7, y el revisor la aprobó;
 (3) se volvieron a correr los lotes 2026-05 a 2026-10, que se habían servido con v3, para que quedaran servidos con v8.
-Las escrituras por lote son idempotentes, así que no hubo filas duplicadas.
+Las escrituras por lote son idempotentes, así que no hubo filas duplicadas. **Error de operación:** el reproceso debió
+empezar en 2026-04, porque el reentrenamiento con llegada 2026-04 corre antes de servir ese lote; 2026-04 quedó servido
+con v3. No se reprocesó después para no reescribir la historia: producción es lo observado y la simulación el
+contrafactual (`docs/reconciliacion.md`).
 `REENTRENAMIENTOS` conserva las dos filas de 2026-04 (v7 rechazada y v8 aprobada) como traza de auditoría; no se borró
 ninguna. Lección para la operación: la pausa debería mostrar el veredicto de la regla junto al check y pedir el motivo
-solo cuando la decisión humana la contradice (sección 10 del documento técnico).
+solo cuando la decisión humana la contradice (sección 10 del documento técnico). Desde la auditoría, `si_aprobado`
+exige la regla **y** la aprobación (`reentrenamiento.yml`; prueba `test_promover_exige_regla_y_aprobacion`): un "sí"
+humano contra la regla queda registrado como decisión pero no promueve.
 
 **Ciclo completo sobre la deriva inducida** (alerta → reentrenamiento → challenger → comparación → decisión). Los lotes
 2025-05 a 07 disparan A4 (datos) y A8 (negocio) desde el primer lote. Al medir 2025-06 (MAE 0,129) con 2025-05 también

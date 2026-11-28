@@ -107,3 +107,39 @@ def test_el_orden_de_las_acciones_no_cambia_la_decision(cliente, peticion):
     directo = por_accion(_respuesta(cliente, peticion))
     peticion["acciones"] = peticion["acciones"][::-1]
     assert por_accion(_respuesta(cliente, peticion)) == directo
+
+
+def test_registro_fallido_se_informa(cliente, peticion, monkeypatch, tmp_path):
+    """Auditoria H3: si no se puede escribir el registro, la prediccion responde igual pero con registrado=false y
+    /metricas lo cuenta (antes el fallo quedaba solo en el log)."""
+    bloqueo = tmp_path / "archivo"
+    bloqueo.write_text("no es carpeta")
+    monkeypatch.setenv("REGISTRO_PREDICCIONES", str(bloqueo / "predicciones.jsonl"))
+    antes = cliente.get("/metricas").json()["sistema"]["registro_fallido"]
+    c = _respuesta(cliente, peticion)
+    assert c["registrado"] is False
+    assert cliente.get("/metricas").json()["sistema"]["registro_fallido"] == antes + 1
+
+
+def test_version_sale_del_mismo_modelo_que_predijo(cliente, peticion):
+    """Auditoria H5: una recarga a mitad de la prediccion no cambia la version informada; la respuesta lleva la
+    version del modelo que calculo las predicciones."""
+    from api.main import ESTADO
+    original_modelo, original_info = ESTADO.vigente()
+    otra_info = original_info.model_copy(update={"version": "999", "run_id": "otro"})
+
+    class RecargaDurantePrediccion:
+        def predict(self, x):
+            y = original_modelo.predict(x)
+            with ESTADO.bloqueo:                       # /recargar termina mientras esta peticion sigue en curso
+                ESTADO.modelo, ESTADO.info = original_modelo, otra_info
+            return y
+
+    with ESTADO.bloqueo:
+        ESTADO.modelo = RecargaDurantePrediccion()
+    try:
+        c = _respuesta(cliente, peticion)
+        assert c["modelo"]["version"] == original_info.version != "999"
+    finally:
+        with ESTADO.bloqueo:
+            ESTADO.modelo, ESTADO.info = original_modelo, original_info

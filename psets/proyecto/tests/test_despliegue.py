@@ -115,3 +115,10 @@ def test_rollback_moviendo_la_referencia_sin_reconstruir(cliente, token, monkeyp
     monkeypatch.setenv("MODELO_URI", str(original))               # rollback
     assert cliente.post("/recargar", headers=token).status_code == 200
     assert cliente.get("/modelo").json()["version"] == "1"
+
+
+def test_promover_exige_regla_y_aprobacion():
+    """Auditoria H8: el flow de reentrenamiento promueve solo si la regla cuantitativa Y la persona lo aprueban."""
+    flujo = yaml.safe_load((RAIZ / "pipeline" / "kestra" / "flows" / "reentrenamiento.yml").read_text())
+    condicion = next(t for t in flujo["tasks"] if t["id"] == "si_aprobado")["condition"]
+    assert "onResume.aprobado" in condicion and "outputs.entrenar.vars.promueve" in condicion and " and " in condicion

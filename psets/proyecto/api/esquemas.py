@@ -99,3 +99,4 @@ class RespuestaPrediccion(BaseModel):
     n_coinciden_operacion_manual: int = Field(..., description="Acciones incluidas por el modelo y por la operacion manual.")
     acciones: list[AccionSalida]
     latencia_ms: float
+    registrado: bool = Field(True, description="Si cada prediccion quedo en el registro local (JSONL). El registro oficial en Snowflake (PREDICCIONES) lo escribe produccion_lotes con esta respuesta; false = revisar el log y /metricas.")

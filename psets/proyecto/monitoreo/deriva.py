@@ -125,9 +125,12 @@ class Referencia:
             obs = lote[c].astype(bool).value_counts().reindex(ref.index, fill_value=0)
             esperado = ref * obs.sum()
             p = float(stats.chisquare(obs, esperado).pvalue) if (esperado > 0).all() else 1.0
-            filas.append({"feature": c, "tipo": "categorica", "prueba": "chi2 lote", "chi2_p": p,
-                          "umbral_alerta": 0.01, "umbral_critico": 0.001,
-                          "estado": "critico" if p < 0.001 else "alerta" if p < 0.01 else "ok"})
+            # PSI decide (umbrales clasicos 0,10 / 0,25 para categorias); chi2 es el respaldo (PDF 6.2): si el PSI
+            # no alerta pero chi2 da p < 0,001, el estado sube a "alerta".
+            psi = _psi(ref.to_numpy(dtype=float), (obs / max(obs.sum(), 1)).to_numpy(dtype=float))
+            estado = "critico" if psi > 0.25 else "alerta" if psi > 0.10 or p < 0.001 else "ok"
+            filas.append({"feature": c, "tipo": "categorica", "prueba": "PSI+chi2 lote", "psi": psi, "chi2_p": p,
+                          "umbral_alerta": 0.10, "umbral_critico": 0.25, "estado": estado})
         if ventana is not None and len(ventana["anio_mes"].unique()) >= 12:
             for c, ref in self.cat_ventana.items():
                 meses = ventana.groupby("anio_mes")[c].first().value_counts().reindex(ref.index, fill_value=0)

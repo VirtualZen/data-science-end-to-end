@@ -103,3 +103,15 @@ def test_enfriamiento_y_calendario_del_disparador(monkeypatch, tmp_path):
     (tmp_path / "alertas.csv").unlink()
     assert prod.disparo(202510, meses, local=True) == (False, None)
     assert prod.disparo(202511, meses, local=True) == (True, "calendario (12 lotes)")
+
+
+def test_reproceso_sin_alertas_borra_las_anteriores(monkeypatch, tmp_path):
+    """Auditoria H6: lote con A7 -> reproceso sin alertas -> ninguna alerta vigente para ese lote (ALERTAS es el
+    estado actual por lote; el historial queda en los logs de Kestra)."""
+    import monitoreo.produccion as prod
+    monkeypatch.setattr(prod, "SALIDA_LOCAL", tmp_path)
+    prod.escribir("ALERTAS", pd.DataFrame({"anio_mes": [202509, 202510], "id_alerta": ["A7", "A7"]}), True,
+                  borrar_mes=202509)
+    prod.escribir("ALERTAS", pd.DataFrame(columns=["anio_mes", "id_alerta"]), True, borrar_mes=202509)
+    vigentes = prod.leer_tabla("ALERTAS", True)
+    assert list(vigentes["anio_mes"]) == [202510]

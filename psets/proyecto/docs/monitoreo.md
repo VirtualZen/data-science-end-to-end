@@ -76,7 +76,7 @@ de Kestra y en `ALERTAS`.
 Tabla por lote completa: `docs/diagnostico_lotes.csv`. Figuras: `docs/figuras/{psi_por_lote, mae_por_lote,
 sharpe_12_lotes}.png`.
 
-**A9 en la simulación** se enciende en 15 de los 35 lotes: desde 2024-12, cuando hay 12 lotes de historia, hasta
+**A9** se enciende en 14 lotes en la simulación y en 13 en producción (la diferencia es 2026-09, `docs/reconciliacion.md`): desde 2024-12, cuando hay 12 lotes de historia, hasta
 2025-12, y otra vez en 2026-09. El modelo y la operación manual casi no eligen las mismas acciones (0 a 2 de 10 por lote).
 No es una falsa alarma: es la evidencia de que la regla simple le gana al modelo (`docs/simulacion/competidores.csv`).
 

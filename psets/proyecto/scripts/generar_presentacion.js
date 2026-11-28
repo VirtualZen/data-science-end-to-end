@@ -172,7 +172,7 @@ async function icono(Comp, color, size = 256) {
   const est = [[fa.FaBolt, "Qué hicimos", "Tres meses de crisis inventada: riesgo al doble y caídas de 10 % en todas las acciones."],
                [fa.FaBell, "Qué detectó", "En el primer mes: los datos cambiaron y el portafolio quedó por debajo de la alternativa simple."],
                [fa.FaRedo, "Reentrenar no bastó", "El modelo nuevo, entrenado ya con la crisis, no rindió más: la regla y una persona lo rechazaron."],
-               [fa.FaHandPaper, "Qué protege", "El freno de mano: responde la alternativa simple hasta que pase la crisis."]];
+               [fa.FaHandPaper, "Qué protege", "El freno de mano: responde la alternativa simple. Probado y listo; en la simulación no se activó."]];
   for (let i = 0; i < 4; i++) {
     const x = 0.5 + i * 2.28;
     tarjeta(s, x, 1.35, 2.1, 3.55, i === 3 ? H.accent1 : H.lt2, est[i][1]);
@@ -191,7 +191,7 @@ async function icono(Comp, color, size = 256) {
     ["¿Los datos se parecen a los de siempre?", "La propuesta puede apoyarse en un mercado que el modelo no conoce", "Tasas de interés altas en 2024; choque de aranceles en abril de 2025; la crisis simulada"],
     ["¿Acierta igual que antes?", "Se entrena un modelo nuevo y una persona decide si lo usa", "Cinco veces; dos modelos nuevos aprobados, tres rechazados"],
     ["¿Gana a comprar todo por igual?", "Se activa el freno de mano y se revisa con el asesor", "Durante y después de la crisis simulada"],
-    ["¿Gana a la operación manual?", "El asesor opera con la operación manual y el modelo queda en paralelo", "En 15 de 35 meses no: la regla simple le gana"],
+    ["¿Gana a la operación manual?", "El asesor opera con la operación manual y el modelo queda en paralelo", "En 13 de 35 meses no (14 en la simulación): la regla simple le gana"],
   ], { x: 0.5, y: 1.2, w: 9.0, colW: [2.6, 3.2, 3.2], fontSize: 11, color: H.dk1, border: { type: "solid", pt: 0.5, color: "D5DEE3" },
        fill: { color: H.lt1 }, rowH: 0.6, valign: "middle", margin: [0.04, 0.1, 0.04, 0.1] });
 
@@ -216,7 +216,7 @@ async function icono(Comp, color, size = 256) {
     "Recomendación: ajustar. No escalar a compra automática. El asesor opera con la operación manual, una regla de hoja de cálculo que ganó en la prueba real y en la simulación, y el modelo corre en paralelo durante 6 a 12 meses reales; solo la reemplaza si le gana durante medio año y una persona lo aprueba. Lo que se necesita: un responsable que apruebe cada cambio de modelo y vigile las alertas; agregar el sector de cada empresa para controlar concentración; una señal que lleve a efectivo en crisis; y mantener el costo bajo: hoy corre en una sola computadora con servicios gratuitos salvo la base de datos.");
   const rec = [[fa.FaUserCheck, "Operación manual", "El asesor arma el portafolio con las 10 de mejor Sharpe bajo el riesgo aprobado; el cliente aprueba."],
                [fa.FaUserShield, "Modelo en paralelo", "Propone cada mes sin decidir compras; reemplaza a la regla solo si le gana medio año y una persona lo aprueba."],
-               [fa.FaLayerGroup, "Mejorar el modelo", "Usar el Sharpe de 12 meses como señal, sector de cada empresa y una señal de crisis."],
+               [fa.FaLayerGroup, "Mejorar el modelo", "Sharpe de 12 meses, sector y señal de crisis; evaluar noticias y sentimiento (EDGAR, Reddit, sitios de finanzas)."],
                [fa.FaFlagCheckered, "Decidir en 12 meses", "Escalar si supera a la alternativa simple con datos reales; si no, retirar."]];
   for (let i = 0; i < 4; i++) {
     const x = 0.5 + i * 2.28;
@@ -237,8 +237,8 @@ async function icono(Comp, color, size = 256) {
     ["Error del pronóstico (MAE)", "0,068 por mes; igual al promedio histórico (0,064 ± 0,016)", "El valor viene de la regla de riesgo, no de adivinar retornos"],
     ["Hold-out real sin crisis (PSet 3)", "Sharpe 0,87 modelo · 1,20 operación manual · 0,68 todo por igual", "La regla simple le gana al modelo"],
     ["Validación cruzada 2017-2023", "0,30 modelo · 0,50 operación manual · 0,58 media por acción · 0,54 todo por igual", "Ninguna regla gana en todos los periodos"],
-    ["Tiempo de la propuesta", "9 ms por mes (333 acciones)", "La propuesta está lista mucho antes de la apertura"],
-    ["Pruebas automáticas", "33 pruebas en cada cambio; imagen publicada", "Un cambio que rompe la propuesta no llega a producción"],
+    ["Tiempo de la propuesta", "42 ms por mes en producción (333 acciones)", "La propuesta está lista mucho antes de la apertura"],
+    ["Pruebas automáticas", "49 pruebas en cada cambio; imagen publicada al integrar", "Un cambio que rompe la propuesta no llega a producción"],
     ["Cambios de modelo", "5 propuestos, 2 aprobados, 3 rechazados; reversión en un paso", "Ningún modelo cambia sin que una persona lo apruebe"],
   ], { x: 0.5, y: 1.15, w: 9.0, colW: [2.1, 3.7, 3.2], fontSize: 8.5, color: H.dk1, border: { type: "solid", pt: 0.5, color: "D5DEE3" },
        fill: { color: H.lt1 }, rowH: 0.4, valign: "middle", margin: [0.03, 0.06, 0.03, 0.06] });

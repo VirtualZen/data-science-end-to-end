@@ -20,8 +20,11 @@ Si el modelo no carga, o el interruptor esta activo, responde la linea base del 
 (media del entrenamiento) y decision B5 (todo el universo candidato con igual peso, la referencia de
 negocio), e indica en la respuesta que uso el respaldo.
 
-Cada prediccion se agrega a REGISTRO_PREDICCIONES (JSONL) con su id, hora, entradas, salida, version
-del modelo, run_id y latencia; un flujo de Kestra la carga a la tabla PREDICCIONES de Snowflake.
+Registro (auditoria H3): el registro oficial es la tabla PREDICCIONES de Snowflake, que escribe el flow
+produccion_lotes (monitoreo.produccion lote) con la respuesta de cada lote (patron batch). Ademas, cada prediccion se
+agrega a REGISTRO_PREDICCIONES (JSONL local) con su id, hora, entradas, salida, version, run_id y latencia; las
+llamadas sueltas a /predecir (fuera de produccion_lotes) quedan solo ahi. Si ese registro falla, la respuesta trae
+registrado=false y /metricas cuenta registro_fallido: el fallo no es silencioso.
 
 Uso local, desde psets/pset-04/:
     uv run --project api uvicorn api.main:app --port 8000
@@ -92,30 +95,35 @@ class Estado:
         uri = _uri()
         try:
             inicio = time.perf_counter()
-            modelo = mlflow.sklearn.load_model(uri)
             version = alias = None
-            # run_id del archivo MLmodel: no consulta el servidor de tracking (sirve tambien para la
-            # copia local de tests/fixtures/, en CI no hay MLflow, que guarda el run_id y la version
-            # registrados en sus metadatos).
-            mlmodel = mlflow.models.Model.load(uri)
-            extra = mlmodel.metadata or {}
-            run_id = mlmodel.run_id or extra.get("run_id_registrado")
-            version = extra.get("version_registrada")
+            fija = uri                       # referencia inmutable que se carga (auditoria H5)
             if uri.startswith("models:/"):
+                # El alias es mutable: se resuelve UNA vez a un numero de version y todo (artefacto, firma,
+                # run_id) se lee de models:/<nombre>/<version>. Si el alias se mueve durante la carga, la
+                # API queda con una version coherente y la siguiente /recargar toma la nueva.
                 nombre_ref = uri.removeprefix("models:/")
                 cliente = MlflowClient()
                 if "@" in nombre_ref:
                     nombre, alias = nombre_ref.split("@", 1)
                     mv = cliente.get_model_version_by_alias(nombre, alias)
                 else:
-                    nombre, version = nombre_ref.split("/", 1)
-                    mv = cliente.get_model_version(nombre, version)
+                    nombre, _ = nombre_ref.split("/", 1)
+                    mv = cliente.get_model_version(nombre, _)
                 version, run_id = str(mv.version), mv.run_id
+                fija = f"models:/{nombre}/{mv.version}"
+            modelo = mlflow.sklearn.load_model(fija)
+            if not uri.startswith("models:/"):
+                # Copia local (tests/fixtures/ en CI, sin MLflow): run_id y version registrados en sus metadatos.
+                mlmodel = mlflow.models.Model.load(fija)
+                extra = mlmodel.metadata or {}
+                run_id = mlmodel.run_id or extra.get("run_id_registrado")
+                version = extra.get("version_registrada")
+            info = InfoModelo(nombre=NOMBRE, version=version, alias=alias, run_id=run_id, uri=uri,
+                              respaldo=self.interruptor,
+                              motivo_respaldo="interruptor activo" if self.interruptor else None)
             with self.bloqueo:
-                self.modelo = modelo
-                self.info = InfoModelo(nombre=NOMBRE, version=version, alias=alias, run_id=run_id, uri=uri,
-                                       respaldo=self.interruptor,
-                                       motivo_respaldo="interruptor activo" if self.interruptor else None)
+                # Un solo intercambio: modelo e info siempre van juntos (ver vigente()).
+                self.modelo, self.info = modelo, info
             log.info("Modelo cargado de %s (version %s, run %s) en %.1f s", uri, version, run_id,
                      time.perf_counter() - inicio)
         except Exception as e:  # el servicio sigue arriba con el respaldo
@@ -129,6 +137,12 @@ class Estado:
     @property
     def usa_respaldo(self) -> bool:
         return self.interruptor or self.modelo is None
+
+    def vigente(self):
+        """Par (modelo, info) leido bajo el mismo bloqueo: la prediccion y la version que se informa salen del mismo
+        modelo aunque /recargar lo cambie a mitad de la peticion (auditoria H5)."""
+        with self.bloqueo:
+            return self.modelo, self.info
 
     def info_actual(self) -> InfoModelo:
         motivo = ("interruptor activo" if self.interruptor else self.info.motivo_respaldo if self.modelo is None
@@ -144,6 +158,7 @@ class Metricas:
         self.peticiones = deque(maxlen=ventana)          # (hora, ruta, codigo, ms)
         self.predicciones = deque(maxlen=ventana)        # (hora, retorno)
         self.decisiones = deque(maxlen=ventana)          # (hora, decision)
+        self.registro_fallido = 0                         # lotes que no se pudieron escribir en el JSONL
         self.inicio = datetime.now(timezone.utc)
         self.bloqueo = threading.Lock()
 
@@ -177,6 +192,7 @@ class Metricas:
                 "errores_4xx": sum(v for k, v in codigos.items() if 400 <= k < 500),
                 "errores_5xx": sum(v for k, v in codigos.items() if k >= 500),
                 "codigos": {str(k): v for k, v in sorted(codigos.items())},
+                "registro_fallido": self.registro_fallido,
             },
             "modelo": {
                 "predicciones": int(len(pred)),
@@ -272,10 +288,9 @@ def respaldo(activar: bool, x_token: str | None = Header(default=None)) -> InfoM
     return ESTADO.info_actual()
 
 
-def _predecir_modelo(d: pd.DataFrame) -> np.ndarray:
-    with ESTADO.bloqueo:
-        modelo = ESTADO.modelo
-    return np.asarray(modelo.predict(d[COLUMNAS_MODELO]), dtype=float)
+def _predecir_modelo(d: pd.DataFrame) -> tuple[np.ndarray, "InfoModelo"]:
+    modelo, info = ESTADO.vigente()
+    return np.asarray(modelo.predict(d[COLUMNAS_MODELO]), dtype=float), info
 
 
 @app.post("/predecir", response_model=RespuestaPrediccion)
@@ -288,9 +303,10 @@ def predecir(peticion: PeticionPrediccion) -> RespuestaPrediccion:
     d[FEATURES_ENTRADA + ["dispersion_mes"]] = d[FEATURES_ENTRADA + ["dispersion_mes"]].astype(float)
 
     usado = "modelo"
+    info_modelo = None
     if not ESTADO.usa_respaldo:
         try:
-            d["pred"] = _predecir_modelo(d)
+            d["pred"], info_modelo = _predecir_modelo(d)
         except Exception:
             log.exception("Fallo la prediccion del modelo; responde el respaldo")
             usado = NOMBRE_RESPALDO
@@ -302,6 +318,8 @@ def predecir(peticion: PeticionPrediccion) -> RespuestaPrediccion:
         d["pred"] = RESPALDO_B1
         w = pd.Series(1.0 / len(d), index=d["accion_key"])     # B5: todo el universo con igual peso
     info = ESTADO.info_actual()
+    if usado == "modelo" and info_modelo is not None:
+        info = info_modelo.model_copy(update={"respaldo": False, "motivo_respaldo": None})
     if usado != "modelo":
         info = info.model_copy(update={"respaldo": True,
                                        "motivo_respaldo": info.motivo_respaldo or "fallo la prediccion del modelo"})
@@ -327,13 +345,17 @@ def predecir(peticion: PeticionPrediccion) -> RespuestaPrediccion:
                                     acciones=acciones,
                                     latencia_ms=round(latencia, 3))
     METRICAS.prediccion(d["pred"], d["decision"])
-    _registrar(respuesta, d)
+    if not _registrar(respuesta, d):
+        with METRICAS.bloqueo:
+            METRICAS.registro_fallido += 1
+        respuesta = respuesta.model_copy(update={"registrado": False})
     return respuesta
 
 
-def _registrar(respuesta: RespuestaPrediccion, d: pd.DataFrame) -> None:
+def _registrar(respuesta: RespuestaPrediccion, d: pd.DataFrame) -> bool:
     """Una linea JSON por accion: lo que pide la tabla PREDICCIONES (id, hora, entradas, salida,
-    version, run_id, latencia). Un fallo al escribir no tumba la prediccion: queda en el log."""
+    version, run_id, latencia). Un fallo al escribir no tumba la prediccion, pero devuelve False: la respuesta lo
+    informa (registrado=false) y /metricas lo cuenta."""
     ahora = datetime.now(timezone.utc).isoformat()
     m = respuesta.modelo
     try:
@@ -353,5 +375,7 @@ def _registrar(respuesta: RespuestaPrediccion, d: pd.DataFrame) -> None:
                     "run_id": m.run_id, "respaldo": m.respaldo, "usado": respuesta.usado,
                     "latencia_ms": respuesta.latencia_ms,
                 }) + "\n")
+        return True
     except Exception:
         log.exception("No se pudo registrar la prediccion %s", respuesta.id_lote)
+        return False

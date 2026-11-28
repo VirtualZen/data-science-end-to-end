@@ -14,7 +14,8 @@ experimento está en [`../../pset-03/README.md`](../../pset-03/README.md); los c
 
 El registro trae `portafolio-inversiones-modelo` v1 `@champion` (LightGBM, run
 `f7596a565f8a458492057238f245cf89`) y v2 `@challenger` (Ridge). `mlflow/`, `data/` y `.env` no se
-suben a git.
+suben a git: en un clon nuevo el registro empieza vacío y se llena corriendo los notebooks 01–05 (modo 2 del README de
+`pset-04`); la evidencia histórica de este registro está en `docs/corridas.csv` y `docs/reentrenamientos.csv`.
 
 Desde `psets/pset-04/modelos/`:
 
